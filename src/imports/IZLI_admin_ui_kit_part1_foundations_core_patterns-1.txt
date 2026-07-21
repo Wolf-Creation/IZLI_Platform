@@ -1,0 +1,190 @@
+IZLI — ADMIN UI KIT
+Part 1 — Foundations & Core Patterns
+Version: v1
+
+1) DESIGN PRINCIPLES
+- Premium Editorial Utility : un admin premium, éditorial et culturel, mais très fonctionnel.
+- Clear Operational Hierarchy : navigation, actions, statuts et données critiques très lisibles.
+- Calm Visual Density : beaucoup d’information mais sans bruit visuel.
+- Relationship-first Interface : montrer les liens produit / collection / story / challenge / contribution / lab.
+
+2) BRAND TRANSLATION FOR ADMIN
+Positionnement UI
+- minimaliste premium
+- clair, doux, éditorial
+- sérieux, proche d’un archive system ou museum system
+- pas de startup flashy
+- pas de dark brutal tech UI
+
+Palette admin recommandée
+- Background principal : Linen Beige #E7DFD2
+- Surface card : #F5F1EA
+- Surface secondaire : #EFE8DD
+- Texte principal : Deep Charcoal #2E2E2E
+- Texte secondaire : Washed Indigo #506681
+- Accent principal : Indigo #1E2F44
+- Accent secondaire : Clay Brown #8C6B52
+- Bordures : #D8D0C4
+
+3) FOUNDATIONS
+Layout grid desktop
+- max width content area 1440 px
+- sidebar fixe à gauche
+- topbar contextuelle
+- contenu en grille 12 colonnes
+- gutter 24 px
+- marge externe 32 px
+
+Spacing system
+- 4 / 8 / 12 / 16 / 24 / 32 / 40 / 48 / 64
+
+Border radius
+- cards 18–24 px
+- inputs / buttons / chips 12–14 px
+- pills 999 px
+
+Borders & shadows
+- bordures importantes pour structurer
+- ombres très légères
+- éviter glassmorphism et effets flashy
+
+4) TYPOGRAPHY SYSTEM
+Direction
+- serif élégante seulement pour grands titres de pages et cartes narratives
+- sans-serif nette pour tout le corps UI
+- monospace pour SKU, IDs, logs
+
+Hiérarchie
+- Page Title : 30–36 px
+- Section Title : 20–24 px
+- Card Title : 16–18 px
+- Body : 14–15 px
+- Caption : 12–13 px
+- Micro labels : 11–12 px
+
+5) CORE LAYOUT PATTERNS
+App Shell
+- sidebar gauche fixe
+- topbar horizontale
+- content area scrollable
+- panneau latéral contextuel optionnel
+
+Sidebar
+- largeur 260–280 px
+- logo IZLI admin
+- overview / commerce / website / journal / community / challenges / lab / analytics / system
+- item actif avec fond indigo très clair
+- possibilité de collapse
+
+Topbar
+- breadcrumb
+- titre page
+- actions principales
+- search globale
+- quick create
+- notifications
+- avatar / rôle
+
+Page Header
+- titre
+- sous-texte
+- actions principales
+- quick stats optionnelles
+- tabs secondaires si besoin
+
+6) NAVIGATION COMPONENTS
+- Sidebar Item : default / hover / active / disabled
+- Tabs : pour Product Editor, Member Profile, Challenge Editor, Lab Project Editor
+- Breadcrumb visible dans tous les écrans de détail
+
+7) DATA DISPLAY COMPONENTS
+KPI Cards
+- valeur
+- label
+- delta
+- micro contexte
+- sparkline optionnelle
+
+Data Table
+Pages concernées
+- Products
+- Orders
+- Members
+- Contributions
+- Challenges
+- Stories
+
+Structure
+- sticky header
+- tri / filtres / bulk actions
+- row click
+- status chips
+- mini avatars / thumbnails
+
+Detail Summary Cards
+- statut
+- auteur
+- relation principale
+- dates
+- quick actions
+
+8) FORM & EDITOR COMPONENTS
+Form layout
+- contenu principal à gauche
+- colonne latérale sticky à droite pour statut, visibilité, SEO, relations, publish
+
+Input family
+- text input
+- textarea
+- rich text editor
+- select
+- multi-select
+- tag input
+- date picker
+- upload area
+- slug field
+- number input
+- SKU / inventory inputs
+
+Section cards
+Exemple Product Editor
+- Basic Info
+- Variants
+- Media
+- Storytelling
+- Construction
+- Related Content
+- SEO
+
+Sticky Publish Panel
+- statut
+- preview
+- publish / schedule
+- visibility
+- timestamps
+- owner
+
+9) MEDIA & CONTENT COMPONENTS
+Media Uploader
+- drag & drop
+- multi upload
+- reorder
+- cover image
+- alt text
+- tags
+
+Content Builder Blocks
+- text block
+- image block
+- quote block
+- gallery block
+- CTA block
+- product grid block
+- story spotlight block
+
+Inline Relation Cards
+- produit lié
+- story liée
+- challenge lié
+- membre lié
+- lab project lié

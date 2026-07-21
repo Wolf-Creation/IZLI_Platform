@@ -1,0 +1,164 @@
+IZLI — ADMIN UI KIT
+Part 2 — Community, Challenges, Templates & Priority Screens
+Version: v1
+
+10) COMMUNITY-SPECIFIC COMPONENTS
+Member Card
+- avatar
+- nom
+- niveau
+- badges
+- stats rapides
+- statut
+- quick actions
+
+Contribution Card
+- aperçu texte / image
+- auteur
+- challenge source
+- tags
+- statut review
+- actions rapides
+
+Moderation Panel
+- approve
+- reject
+- request edits
+- convert to story
+- send to lab
+- add note
+
+Activity Timeline
+- utile dans Member Profile ou Order Detail
+
+11) CHALLENGE & LAB COMPONENTS
+Challenge Summary Card
+- titre
+- dates
+- nombre de soumissions
+- statut
+- CTA voir submissions / éditer
+
+Submission Review Card
+- contribution
+- auteur
+- score
+- tags
+- quick decision actions
+
+Lab Project Card
+- titre projet
+- statut
+- participants
+- outputs
+- prochaine milestone
+- linked contributions count
+
+Relation Map / Source Panel
+- story ← contribution source
+- lab project ← challenge source
+- produit ← collection + story
+
+12) STATUS SYSTEM
+Statuts principaux
+- Draft
+- In Review
+- Published
+- Scheduled
+- Archived
+- Open
+- Closed
+- Selected
+- Rejected
+- Active
+- Paused
+- Completed
+
+Rendu
+- chips pills sobres
+- fond léger teinté
+- texte foncé lisible
+- jamais saturé
+
+13) ACTION SYSTEM
+Primary Button
+- Publish
+- Save
+- Create Product
+- Create Challenge
+
+Secondary Button
+- Preview
+- Duplicate
+- Export
+
+Ghost Button
+- cancel
+- low priority actions
+
+Danger Button
+- archive
+- delete
+- reject
+
+Quick Actions Menu
+- Edit
+- Duplicate
+- Archive
+- View public page
+- Copy link
+
+14) PAGE TEMPLATES À STANDARDISER
+List Page Template
+- Page Header
+- Filters Row
+- Data Table ou Card Grid
+- Bulk Actions
+- Pagination
+
+Editor Page Template
+- Header + actions
+- Main form column
+- Sticky side panel
+- optional preview drawer
+
+Profile / Detail Page Template
+- Hero summary
+- tabs
+- left main content
+- right meta / actions / relations
+
+Dashboard Template
+- page intro
+- KPI cards
+- blocs analytiques
+- recent activity
+- quick actions
+- alerts
+
+15) PRIORITY SCREENS FOR UI DESIGN
+Priorité 1
+- Dashboard
+- Products List
+- Product Editor
+- Collections List
+- Home Builder
+- Stories List
+- Story Editor
+- Story Review Queue
+- Members List
+- Member Profile Admin
+- Contributions List
+- Challenges List
+- Challenge Editor
+- Challenge Submissions
+
+Priorité 2
+- Order Detail
+- Site Page Editor
+- Community Analytics
+- Lab Project Editor
+- Contribution Detail
+
+16) RECOMMANDATION VISUELLE GLOBALE
+Un back-office premium clair, calme et éditorial, à mi-chemin entre un commerce system, un CMS de marque et un archive/community operating system.
