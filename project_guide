@@ -1,0 +1,33 @@
+# Project Guide — IZLI Platform
+
+## 1. Lecture initiale
+
+1. Commencer par lire `project_summary.md` pour comprendre la vision, la structure et les règles du projet.
+2. Lire ensuite `IZLI-DOCS/` pour aligner les changements avec la documentation officielle.
+3. Consulter `.github/agents/` pour connaître les agents spécialisés et leur rôle.
+
+## 2. Règles de travail
+
+1. Respecter l’architecture existante avant de créer ou modifier du code.
+2. Éviter de mélanger les responsabilités entre Website, Admin et backend.
+3. Utiliser les fichiers de documentation comme source de contexte et de cohérence.
+4. Vérifier les fichiers liés avant d’ajouter une nouvelle fonctionnalité.
+
+## 3. Suivi des changements
+
+1. Noter chaque session importante dans `History_session_001`.
+2. Enregistrer les modifications effectuées, la date, l’heure et le résultat.
+3. Garder une trace courte, claire et chronologique.
+4. Lors de chaque commande ou action tapée dans le chat de session, ajouter une nouvelle entrée en bas de `History_session_001`, sous les entrées précédentes.
+
+## 4. Ordre recommandé
+
+1. Lire `project_summary.md`.
+2. Lire `IZLI-DOCS/`.
+3. Vérifier les agents spécialisés dans `.github/agents/`.
+4. Appliquer les changements demandés.
+5. Documenter les changements dans `History_session_001`.
+
+## 5. Référence d’historique
+
+L’historique complet des sessions et des changements se trouve dans `History_session_001` pour consultation, suivi des modifications, dates et timing.

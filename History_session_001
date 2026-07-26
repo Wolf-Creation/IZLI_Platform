@@ -1,0 +1,19 @@
+# History Session 001
+
+## Format de suivi
+
+- Date: YYYY-MM-DD
+- Time: HH:MM
+- Session: short session title
+- Changes: what was created, updated, moved, or validated
+- Notes: any relevant context or validation result
+
+## Log
+
+No entries yet.
+
+### 2026-07-26 18:52
+
+- Session: Conversation history bootstrap
+- Changes: Created `project_guide`, created `History_session_001`, and added the rule to append each session command or action at the bottom of the history file.
+- Notes: This entry starts the conversation log for the current workspace session.
