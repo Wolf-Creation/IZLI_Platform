@@ -5,8 +5,10 @@
 .env.test
 
 
-node_modules/
-src/apps/api/node_modules/
+# Tous les node_modules du dépôt
+**/node_modules/
+
+
 dist/
 build/
 coverage/
