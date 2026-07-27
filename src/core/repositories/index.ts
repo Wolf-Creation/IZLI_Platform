@@ -1,4 +1,5 @@
 type ID = string
+import { coreApi } from '../api'
 
 export interface Repository<T> {
   findById(id: ID): Promise<T | null>
@@ -30,37 +31,40 @@ export interface IStoryRepository extends Repository<{ id: ID; title: string; st
 }
 
 // Stub implementations
-function createRepo<T>(): Repository<T> {
+function createRepo<T>(collection: string): Repository<T> {
   return {
-    async findById(_id: ID) { return null },
-    async findAll(_filters?: Record<string, unknown>) { return [] },
-    async save(entity: T) { return entity },
-    async delete(_id: ID) {},
-    async count(_filters?: Record<string, unknown>) { return 0 },
+    async findById(id: ID) { return coreApi.get<T>(`/resources/${collection}/${id}`).catch(() => null) },
+    async findAll(filters?: Record<string, unknown>) { return coreApi.get<T[]>(`/resources/${collection}`).catch(() => []) },
+    async save(entity: T) { return coreApi.post<T>(`/resources/${collection}`, entity as Record<string, unknown>) },
+    async delete(id: ID) { await coreApi.del(`/resources/${collection}/${id}`) },
+    async count(_filters?: Record<string, unknown>) {
+      const items = await coreApi.get<T[]>(`/resources/${collection}`).catch(() => [])
+      return items.length
+    },
   }
 }
 
 export const ProductRepository: IProductRepository = {
-  ...createRepo<{ id: ID; name: string; status: string; collectionId?: ID; price: number }>(),
+  ...createRepo<{ id: ID; name: string; status: string; collectionId?: ID; price: number }>('products'),
   async findByCollection(_collectionId: ID) { return [] },
   async findByStatus(_status: string) { return [] },
 }
 
 export const ArchiveRepository: IArchiveRepository = {
-  ...createRepo<{ id: ID; name: string; status: string; keeperCount: number; releaseDate: string }>(),
+  ...createRepo<{ id: ID; name: string; status: string; keeperCount: number; releaseDate: string }>('archives'),
   async findActive() { return [] },
   async findByStatus(_status: string) { return [] },
 }
 
 export const KeeperRepository: IKeeperRepository = {
-  ...createRepo<{ id: ID; memberId: ID; level: string; points: number; archiveIds: ID[] }>(),
+  ...createRepo<{ id: ID; memberId: ID; level: string; points: number; archiveIds: ID[] }>('keepers'),
   async findByMember(_memberId: ID) { return null },
   async findByLevel(_level: string) { return [] },
   async findByArchive(_archiveId: ID) { return [] },
 }
 
 export const StoryRepository: IStoryRepository = {
-  ...createRepo<{ id: ID; title: string; status: string; authorId: ID }>(),
+  ...createRepo<{ id: ID; title: string; status: string; authorId: ID }>('stories'),
   async findPublished() { return [] },
   async findByAuthor(_authorId: ID) { return [] },
 }

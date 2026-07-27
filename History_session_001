@@ -35,3 +35,31 @@ No entries yet.
 - Session: Exposed agents to Workspace
 - Changes: Created workspace copies in `.vscode/agents/` so the VS Code Agents view shows agents under Workspace scope; added `IZLI README.md` in the agents folder.
 - Notes: Verify by opening the Agents view with scope set to Workspace and reload the window if agents do not appear immediately.
+
+### 2026-07-27 17:10
+
+- Session: Création de tous les modèles Mongoose MongoDB
+- Changes:
+  - **Users/Auth**: `modules/users/model.js` (User avec bcrypt hook, rôles admin), `modules/auth/model.js` (AuthSession avec TTL index et userAgent/ip)
+  - **Content**: `modules/categories/model.js` (Category + Tag + Media), `modules/stories/model.js` (Story), `modules/heritage/model.js` (Heritage)
+  - **Commerce**: `modules/products/model.js` (Product), `modules/collections/model.js` (Collection), `modules/orders/model.js` (Order), `modules/cart/model.js` (Cart avec TTL), `modules/wishlist/model.js` (Wishlist)
+  - **Community**: `modules/community/model.js` (CommunityMember + Contribution), `modules/events/model.js` (Challenge + Submission + Event + LabProject + OpenCall)
+  - **Legacy**: `modules/keepers/model.js` (Keeper + Archive + VotingSession + Vote + LegacyReward + KeeperInvitation), `modules/notifications/model.js` (Notification)
+  - **Production**: `modules/uploads/model.js` (ProductPassport + ProductionTemplate + GeneratedAsset + BatchJob + PrintPreset)
+  - **Analytics**: `modules/analytics/model.js` (AnalyticEvent)
+  - **Style/Recommendation**: `modules/search/model.js` (StyleGuide + RecommendationHub)
+  - **Admin**: `modules/admin/model.js` (AuditLog + GlobalSetting)
+  - **Payments**: `modules/payments/model.js` (Payment)
+  - **Customer**: Nouveau module `modules/customers/model.js` créé (Customer avec bcrypt, multi-address, keeperCircle link)
+- Notes: Tous les modèles utilisent l'architecture Mongoose (schema + index + export named model). Aucun accès MongoDB direct depuis controllers. Collections prêtes pour MongoDB Atlas.
+
+### 2026-07-27 17:45
+
+- Session: Synchronisation complète front/admin/backend
+- Changes:
+  - Added `src/apps/api/src/routes/resources.routes.js` as a generic MongoDB-backed CRUD router for all registered models.
+  - Added `src/apps/api/scripts/seedInitialData.js` and `npm run seed` to create initial admin, website, and content records in Atlas.
+  - Updated `src/shared/services/*` to query the backend API first and keep local fallback data only as a backup.
+  - Updated `src/core/api.ts`, `src/core/providers/index.ts`, `src/core/repositories/index.ts`, `src/core/services/index.ts`, and the core engines to use the API/MongoDB source of truth instead of in-memory mocks.
+  - Updated Vite proxy so the front reaches the API through `/api` during development.
+- Notes: Front build validated successfully after the sync. Atlas seed completed successfully.

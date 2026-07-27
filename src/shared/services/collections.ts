@@ -1,4 +1,5 @@
 import type { Collection } from '../../entities'
+import { api } from './api'
 
 const COLLECTIONS: Collection[] = [
   {
@@ -60,15 +61,26 @@ const COLLECTIONS: Collection[] = [
 ]
 
 export async function getCollections(): Promise<Collection[]> {
-  return Promise.resolve([...COLLECTIONS])
+  try {
+    return await api.get<Collection[]>('/resources/collections')
+  } catch {
+    return Promise.resolve([...COLLECTIONS])
+  }
 }
 
 export async function getCollection(id: string): Promise<Collection | null> {
-  return Promise.resolve(COLLECTIONS.find(c => c.id === id) ?? null)
+  try {
+    return await api.get<Collection>(`/resources/collections/${id}`)
+  } catch {
+    return Promise.resolve(COLLECTIONS.find(c => c.id === id) ?? null)
+  }
 }
 
 export async function createCollection(data: Partial<Collection>): Promise<Collection> {
-  const collection: Collection = {
+  try {
+    return await api.post<Collection>('/resources/collections', data as Record<string, unknown>)
+  } catch {
+    const collection: Collection = {
     id: `col-${Date.now()}`,
     slug: data.slug ?? `collection-${Date.now()}`,
     name: data.name ?? 'New Collection',
@@ -82,13 +94,18 @@ export async function createCollection(data: Partial<Collection>): Promise<Colle
     createdAt: new Date().toISOString(),
     ...data,
   }
-  COLLECTIONS.push(collection)
-  return Promise.resolve(collection)
+    COLLECTIONS.push(collection)
+    return Promise.resolve(collection)
+  }
 }
 
 export async function updateCollection(id: string, data: Partial<Collection>): Promise<Collection | null> {
-  const idx = COLLECTIONS.findIndex(c => c.id === id)
-  if (idx === -1) return Promise.resolve(null)
-  COLLECTIONS[idx] = { ...COLLECTIONS[idx], ...data }
-  return Promise.resolve(COLLECTIONS[idx])
+  try {
+    return await api.patch<Collection>(`/resources/collections/${id}`, data as Record<string, unknown>)
+  } catch {
+    const idx = COLLECTIONS.findIndex(c => c.id === id)
+    if (idx === -1) return Promise.resolve(null)
+    COLLECTIONS[idx] = { ...COLLECTIONS[idx], ...data }
+    return Promise.resolve(COLLECTIONS[idx])
+  }
 }

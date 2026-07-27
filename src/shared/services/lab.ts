@@ -1,4 +1,5 @@
 import type { LabProject, OpenCall } from '../../entities'
+import { api } from './api'
 
 const LAB_PROJECTS: LabProject[] = [
   {
@@ -104,19 +105,37 @@ const OPEN_CALLS: OpenCall[] = [
 ]
 
 export async function getLabProjects(filters?: { status?: string }): Promise<LabProject[]> {
-  let results = [...LAB_PROJECTS]
-  if (filters?.status) results = results.filter(p => p.status === filters.status)
-  return Promise.resolve(results)
+  try {
+    let results = await api.get<LabProject[]>('/resources/labProjects')
+    if (filters?.status) results = results.filter(p => p.status === filters.status)
+    return results
+  } catch {
+    let results = [...LAB_PROJECTS]
+    if (filters?.status) results = results.filter(p => p.status === filters.status)
+    return Promise.resolve(results)
+  }
 }
 
 export async function getLabProject(id: string): Promise<LabProject | null> {
-  return Promise.resolve(LAB_PROJECTS.find(p => p.id === id) ?? null)
+  try {
+    return await api.get<LabProject>(`/resources/labProjects/${id}`)
+  } catch {
+    return Promise.resolve(LAB_PROJECTS.find(p => p.id === id) ?? null)
+  }
 }
 
 export async function getOpenCalls(): Promise<OpenCall[]> {
-  return Promise.resolve([...OPEN_CALLS])
+  try {
+    return await api.get<OpenCall[]>('/resources/openCalls')
+  } catch {
+    return Promise.resolve([...OPEN_CALLS])
+  }
 }
 
 export async function getOpenCall(id: string): Promise<OpenCall | null> {
-  return Promise.resolve(OPEN_CALLS.find(o => o.id === id) ?? null)
+  try {
+    return await api.get<OpenCall>(`/resources/openCalls/${id}`)
+  } catch {
+    return Promise.resolve(OPEN_CALLS.find(o => o.id === id) ?? null)
+  }
 }

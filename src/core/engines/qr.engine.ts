@@ -1,4 +1,5 @@
 type ID = string
+import { coreApi } from '../api'
 
 export interface IQREngine {
   generateQR(passportId: ID, productId: ID): Promise<{ qrDataUrl: string; qrCode: string; landingUrl: string }>
@@ -19,14 +20,11 @@ class QREngineImpl implements IQREngine {
   }
 
   async getPassport(id: ID) {
-    return { id, productId: 'prod-1', qrCode: `IZLI-${id}`.toUpperCase(), scanCount: 14, status: 'active' }
+    return coreApi.get<{ id: ID; productId: ID; qrCode: string; scanCount: number; status: string } | null>(`/resources/productPassports/${id}`)
   }
 
   async listPassports(_filters?: { status?: string }) {
-    return [
-      { id: 'passport-1', productId: 'prod-1', scanCount: 14 },
-      { id: 'passport-2', productId: 'prod-2', scanCount: 7 },
-    ]
+    return coreApi.get<Array<{ id: ID; productId: ID; scanCount: number }>>('/resources/productPassports').catch(() => [])
   }
 
   async recordScan(_passportId: ID, _context?: { device?: string; location?: string; referrer?: string }) {

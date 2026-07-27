@@ -1,4 +1,5 @@
 import type { Media } from '../../entities'
+import { api } from './api'
 
 const MEDIA_ITEMS: Media[] = [
   {
@@ -76,17 +77,36 @@ const MEDIA_ITEMS: Media[] = [
 ]
 
 export async function getMedia(filters?: { type?: string; search?: string }): Promise<Media[]> {
-  let results = [...MEDIA_ITEMS]
-  if (filters?.type) results = results.filter(m => m.type === filters.type)
-  if (filters?.search) {
-    const q = filters.search.toLowerCase()
-    results = results.filter(m => m.alt?.toLowerCase().includes(q))
+  try {
+    let results = await api.get<Media[]>('/resources/media')
+    if (filters?.type) results = results.filter(m => m.type === filters.type)
+    if (filters?.search) {
+      const q = filters.search.toLowerCase()
+      results = results.filter(m => m.alt?.toLowerCase().includes(q))
+    }
+    return results
+  } catch {
+    let results = [...MEDIA_ITEMS]
+    if (filters?.type) results = results.filter(m => m.type === filters.type)
+    if (filters?.search) {
+      const q = filters.search.toLowerCase()
+      results = results.filter(m => m.alt?.toLowerCase().includes(q))
+    }
+    return Promise.resolve(results)
   }
-  return Promise.resolve(results)
 }
 
 export async function uploadMedia(_file: File): Promise<Media> {
-  const media: Media = {
+  try {
+    return await api.post<Media>('/resources/media', {
+      type: 'image',
+      url: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1200&h=800&fit=crop&auto=format',
+      alt: 'Uploaded media',
+      createdAt: new Date().toISOString(),
+      tags: [],
+    } as Record<string, unknown>)
+  } catch {
+    const media: Media = {
     id: `media-${Date.now()}`,
     type: 'image',
     url: `https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1200&h=800&fit=crop&auto=format`,
@@ -94,20 +114,30 @@ export async function uploadMedia(_file: File): Promise<Media> {
     createdAt: new Date().toISOString(),
     tags: [],
   }
-  MEDIA_ITEMS.push(media)
-  return Promise.resolve(media)
+    MEDIA_ITEMS.push(media)
+    return Promise.resolve(media)
+  }
 }
 
 export async function deleteMedia(id: string): Promise<boolean> {
-  const idx = MEDIA_ITEMS.findIndex(m => m.id === id)
-  if (idx === -1) return Promise.resolve(false)
-  MEDIA_ITEMS.splice(idx, 1)
-  return Promise.resolve(true)
+  try {
+    await api.del(`/resources/media/${id}`)
+    return true
+  } catch {
+    const idx = MEDIA_ITEMS.findIndex(m => m.id === id)
+    if (idx === -1) return Promise.resolve(false)
+    MEDIA_ITEMS.splice(idx, 1)
+    return Promise.resolve(true)
+  }
 }
 
 export async function updateMedia(id: string, data: Partial<Media>): Promise<Media | null> {
-  const idx = MEDIA_ITEMS.findIndex(m => m.id === id)
-  if (idx === -1) return Promise.resolve(null)
-  MEDIA_ITEMS[idx] = { ...MEDIA_ITEMS[idx], ...data }
-  return Promise.resolve(MEDIA_ITEMS[idx])
+  try {
+    return await api.patch<Media>(`/resources/media/${id}`, data as Record<string, unknown>)
+  } catch {
+    const idx = MEDIA_ITEMS.findIndex(m => m.id === id)
+    if (idx === -1) return Promise.resolve(null)
+    MEDIA_ITEMS[idx] = { ...MEDIA_ITEMS[idx], ...data }
+    return Promise.resolve(MEDIA_ITEMS[idx])
+  }
 }

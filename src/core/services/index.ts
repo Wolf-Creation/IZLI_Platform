@@ -1,5 +1,7 @@
 // Platform services — higher-level operations that orchestrate multiple engines
 
+import { coreApi } from '../api'
+
 export interface IProductService {
   publish(productId: string): Promise<{
     productId: string
@@ -62,50 +64,44 @@ export interface ISearchService {
 // Mock implementations
 class ProductServiceImpl implements IProductService {
   async publish(productId: string) {
-    return {
-      productId,
-      passportId: `PASS-${productId}`,
-      qrCode: `IZLI-QR-${productId.toUpperCase()}`,
-      landingUrl: `https://izli.com/p/${productId}`,
-      assetsQueued: 3,
-    }
+    const product = await coreApi.get<{ id: string; name: string; status: string }>(`/resources/products/${productId}`)
+    const passport = await coreApi.post<{ id: string; qrCode: string }>(`/resources/productPassports`, { productId, status: 'active', qrCode: `IZLI-QR-${productId.toUpperCase()}`, qrImageUrl: '', views: 0, scans: 0 })
+    await coreApi.patch(`/resources/products/${productId}`, { status: 'published' })
+    return { productId, passportId: passport.id, qrCode: passport.qrCode, landingUrl: `/p/${productId}`, assetsQueued: product ? 1 : 0 }
   }
 
   async archive(_productId: string) {
+    await coreApi.patch(`/resources/products/${_productId}`, { status: 'archived' })
     return { success: true }
   }
 
   async getWithRelations(productId: string) {
+    const product = await coreApi.get<{ id: string; name: string; status: string } | null>(`/resources/products/${productId}`).catch(() => null)
+    const passports = await coreApi.get<Array<{ id: string; productId: string; qrCode: string }>>(`/resources/productPassports?productId=${encodeURIComponent(productId)}`).catch(() => [])
     return {
-      product: { id: productId, name: 'Product', status: 'published' },
-      passport: { id: `PASS-${productId}`, qrCode: `IZLI-QR-${productId}` },
-      styleGuides: [],
-      recommendations: [],
-      productionTemplates: [],
+      product,
+      passport: passports.find(passport => passport.productId === productId) ?? null,
+      styleGuides: await coreApi.get<Array<{ id: string; name: string }>>('/resources/styleGuides').catch(() => []),
+      recommendations: await coreApi.get<Array<{ hubId: string; name: string }>>('/resources/recommendationHubs').catch(() => []),
+      productionTemplates: await coreApi.get<Array<{ id: string; name: string }>>('/resources/productionTemplates').catch(() => []),
     }
   }
 }
 
 class KeeperServiceImpl implements IKeeperService {
   async onPurchaseCompleted(memberId: string, _productIds: string[], _archiveId?: string) {
-    return {
-      keeperCreated: true,
-      keeperId: `KPR-${memberId}`,
-      level: 'keeper',
-      badgesGranted: ['first-purchase'],
-      rewardsGranted: [],
-      votingEnabled: true,
-      pointsAwarded: 500,
-    }
+    const keeper = await coreApi.post<{ id: string; level: string }>(`/resources/keepers`, { memberId, level: 'keeper', points: 500, archiveIds: [] }).catch(() => null)
+    return { keeperCreated: !!keeper, keeperId: keeper?.id, level: keeper?.level ?? 'keeper', badgesGranted: ['first-purchase'], rewardsGranted: [], votingEnabled: true, pointsAwarded: 500 }
   }
 
   async getKeeperDashboard(memberId: string) {
+    const keeper = await coreApi.get<{ id: string; level: string; points: number }>(`/resources/keepers/${memberId}`).catch(() => null)
     return {
-      keeper: { id: `KPR-${memberId}`, level: 'keeper', points: 500 },
-      ownedProducts: [],
-      availableVotes: [],
+      keeper,
+      ownedProducts: await coreApi.get<Array<{ id: string; name: string; archiveId: string }>>('/resources/products').catch(() => []),
+      availableVotes: await coreApi.get<Array<{ sessionId: string; title: string; closesAt: string }>>('/resources/votingSessions').catch(() => []),
       achievements: [],
-      rewards: [],
+      rewards: await coreApi.get<Array<{ id: string; title: string; status: string }>>('/resources/legacyRewards').catch(() => []),
     }
   }
 }

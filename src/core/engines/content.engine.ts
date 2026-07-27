@@ -1,5 +1,6 @@
 type ID = string
 type ISODate = string
+import { coreApi } from '../api'
 
 export interface IContentEngine {
   getStory(id: ID): Promise<{ id: ID; title: string; status: string; authorId: ID } | null>
@@ -12,14 +13,12 @@ export interface IContentEngine {
 
 class ContentEngineImpl implements IContentEngine {
   async getStory(id: ID) {
-    return { id, title: 'Mock Story', status: 'draft', authorId: 'member-1' }
+    return coreApi.get<{ id: ID; title: string; status: string; authorId: ID } | null>(`/resources/stories/${id}`)
   }
 
   async listStories(filters?: { status?: string; authorId?: ID }) {
-    return [
-      { id: 'story-1', title: 'The Weaver\'s Tale', status: filters?.status ?? 'published' },
-      { id: 'story-2', title: 'Threads of Time', status: filters?.status ?? 'draft' },
-    ]
+    const stories = await coreApi.get<Array<{ id: ID; title: string; status: string; authorId: ID }>>('/resources/stories')
+    return filters?.status ? stories.filter(story => story.status === filters.status) : stories
   }
 
   async publishStory(_id: ID) {
@@ -27,18 +26,15 @@ class ContentEngineImpl implements IContentEngine {
   }
 
   async getHeritageItem(id: ID) {
-    return { id, title: 'Mock Heritage Item', category: 'textile' }
+    return coreApi.get<{ id: ID; title: string; category: string } | null>(`/resources/heritage/${id}`)
   }
 
   async listHeritageItems() {
-    return [
-      { id: 'heritage-1', title: 'Ancestral Loom', category: 'tool' },
-      { id: 'heritage-2', title: 'Indigo Dyeing Technique', category: 'technique' },
-    ]
+    return coreApi.get<Array<{ id: ID; title: string; category: string }>>('/resources/heritage').catch(() => [])
   }
 
   async getMediaItem(id: ID) {
-    return { id, url: `https://cdn.example.com/media/${id}`, type: 'image', name: 'mock-media.jpg' }
+    return coreApi.get<{ id: ID; url: string; type: string; name: string } | null>(`/resources/media/${id}`)
   }
 }
 

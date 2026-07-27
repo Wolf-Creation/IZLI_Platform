@@ -1,4 +1,5 @@
 import type { CommunityMember, Contribution } from '../../entities'
+import { api } from './api'
 
 const MEMBERS: CommunityMember[] = [
   {
@@ -129,39 +130,73 @@ const CONTRIBUTIONS: Contribution[] = [
 ]
 
 export async function getMembers(filters?: { level?: number; status?: string; search?: string }): Promise<CommunityMember[]> {
-  let results = [...MEMBERS]
-  if (filters?.level !== undefined) results = results.filter(m => m.level === filters.level)
-  if (filters?.status) results = results.filter(m => m.status === filters.status)
-  if (filters?.search) {
-    const q = filters.search.toLowerCase()
-    results = results.filter(m => m.displayName.toLowerCase().includes(q) || m.email.toLowerCase().includes(q))
+  try {
+    let results = await api.get<CommunityMember[]>('/resources/community')
+    if (filters?.level !== undefined) results = results.filter(m => m.level === filters.level)
+    if (filters?.status) results = results.filter(m => m.status === filters.status)
+    if (filters?.search) {
+      const q = filters.search.toLowerCase()
+      results = results.filter(m => m.displayName.toLowerCase().includes(q) || m.email.toLowerCase().includes(q))
+    }
+    return results
+  } catch {
+    let results = [...MEMBERS]
+    if (filters?.level !== undefined) results = results.filter(m => m.level === filters.level)
+    if (filters?.status) results = results.filter(m => m.status === filters.status)
+    if (filters?.search) {
+      const q = filters.search.toLowerCase()
+      results = results.filter(m => m.displayName.toLowerCase().includes(q) || m.email.toLowerCase().includes(q))
+    }
+    return Promise.resolve(results)
   }
-  return Promise.resolve(results)
 }
 
 export async function getMember(id: string): Promise<CommunityMember | null> {
-  return Promise.resolve(MEMBERS.find(m => m.id === id) ?? null)
+  try {
+    return await api.get<CommunityMember>(`/resources/community/${id}`)
+  } catch {
+    return Promise.resolve(MEMBERS.find(m => m.id === id) ?? null)
+  }
 }
 
 export async function getContributions(filters?: { status?: string; type?: string }): Promise<Contribution[]> {
-  let results = [...CONTRIBUTIONS]
-  if (filters?.status) results = results.filter(c => c.status === filters.status)
-  if (filters?.type) results = results.filter(c => c.type === filters.type)
-  return Promise.resolve(results)
+  try {
+    let results = await api.get<Contribution[]>('/resources/contributions')
+    if (filters?.status) results = results.filter(c => c.status === filters.status)
+    if (filters?.type) results = results.filter(c => c.type === filters.type)
+    return results
+  } catch {
+    let results = [...CONTRIBUTIONS]
+    if (filters?.status) results = results.filter(c => c.status === filters.status)
+    if (filters?.type) results = results.filter(c => c.type === filters.type)
+    return Promise.resolve(results)
+  }
 }
 
 export async function getContribution(id: string): Promise<Contribution | null> {
-  return Promise.resolve(CONTRIBUTIONS.find(c => c.id === id) ?? null)
+  try {
+    return await api.get<Contribution>(`/resources/contributions/${id}`)
+  } catch {
+    return Promise.resolve(CONTRIBUTIONS.find(c => c.id === id) ?? null)
+  }
 }
 
 export async function moderateContribution(id: string, status: string, notes?: string): Promise<Contribution | null> {
-  const idx = CONTRIBUTIONS.findIndex(c => c.id === id)
-  if (idx === -1) return Promise.resolve(null)
-  CONTRIBUTIONS[idx] = {
-    ...CONTRIBUTIONS[idx],
-    status: status as Contribution['status'],
-    reviewNotes: notes,
-    reviewedAt: new Date().toISOString(),
+  try {
+    return await api.patch<Contribution>(`/resources/contributions/${id}`, {
+      status,
+      reviewNotes: notes,
+      reviewedAt: new Date().toISOString(),
+    })
+  } catch {
+    const idx = CONTRIBUTIONS.findIndex(c => c.id === id)
+    if (idx === -1) return Promise.resolve(null)
+    CONTRIBUTIONS[idx] = {
+      ...CONTRIBUTIONS[idx],
+      status: status as Contribution['status'],
+      reviewNotes: notes,
+      reviewedAt: new Date().toISOString(),
+    }
+    return Promise.resolve(CONTRIBUTIONS[idx])
   }
-  return Promise.resolve(CONTRIBUTIONS[idx])
 }

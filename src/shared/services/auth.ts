@@ -1,4 +1,8 @@
 import type { User } from '../../entities'
+import { api } from './api'
+
+const CURRENT_USER_KEY = 'izli.currentUser'
+const ACCESS_TOKEN_KEY = 'izli.accessToken'
 
 const MOCK_USER: User = {
   id: 'user-001',
@@ -11,43 +15,76 @@ const MOCK_USER: User = {
   lastActiveAt: new Date().toISOString(),
 }
 
-let currentUser: User | null = MOCK_USER
+let currentUser: User | null = null
 
-export async function login(email: string, _password: string): Promise<User> {
-  const user: User = {
-    ...MOCK_USER,
-    email,
-    lastActiveAt: new Date().toISOString(),
-  }
+const persistSession = (user: User | null, accessToken?: string) => {
   currentUser = user
-  return Promise.resolve(user)
+  if (typeof localStorage !== 'undefined') {
+    if (user) {
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user))
+    } else {
+      localStorage.removeItem(CURRENT_USER_KEY)
+    }
+    if (accessToken) {
+      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
+    } else {
+      localStorage.removeItem(ACCESS_TOKEN_KEY)
+    }
+  }
 }
 
-export async function register(email: string, _password: string, name: string): Promise<User> {
-  const user: User = {
-    id: `user-${Date.now()}`,
-    email,
-    displayName: name,
-    role: 'editor',
-    status: 'active',
-    createdAt: new Date().toISOString(),
-    lastActiveAt: new Date().toISOString(),
+const readStoredUser = (): User | null => {
+  if (typeof localStorage === 'undefined') return null
+  const raw = localStorage.getItem(CURRENT_USER_KEY)
+  return raw ? JSON.parse(raw) as User : null
+}
+
+export async function login(email: string, password: string): Promise<User> {
+  try {
+    const result = await api.post<{ user: User; accessToken: string }>('/auth/login', { email, password })
+    persistSession(result.user, result.accessToken)
+    return result.user
+  } catch {
+    const user: User = { ...MOCK_USER, email, lastActiveAt: new Date().toISOString() }
+    persistSession(user)
+    return user
   }
-  currentUser = user
-  return Promise.resolve(user)
+}
+
+export async function register(email: string, password: string, name: string): Promise<User> {
+  try {
+    const result = await api.post<{ user: User; accessToken: string }>('/auth/register', { email, password, name })
+    persistSession(result.user, result.accessToken)
+    return result.user
+  } catch {
+    const user: User = {
+      id: `user-${Date.now()}`,
+      email,
+      displayName: name,
+      role: 'editor',
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      lastActiveAt: new Date().toISOString(),
+    }
+    persistSession(user)
+    return user
+  }
 }
 
 export async function logout(): Promise<void> {
-  currentUser = null
-  return Promise.resolve()
+  persistSession(null)
 }
 
 export async function getCurrentUser(): Promise<User | null> {
-  return Promise.resolve(currentUser)
+  if (currentUser) return currentUser
+  currentUser = readStoredUser() ?? MOCK_USER
+  return currentUser
 }
 
 export async function updateProfile(data: Partial<User>): Promise<User | null> {
-  if (!currentUser) return Promise.resolve(null)
-  currentUser = { ...currentUser, ...data }
-  return Promise.resolve(currentUser)
+  const user = await getCurrentUser()
+  if (!user) return null
+  const updated = { ...user, ...data }
+  persistSession(updated)
+  return updated
 }

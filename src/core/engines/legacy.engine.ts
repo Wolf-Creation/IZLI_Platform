@@ -1,4 +1,5 @@
 type ID = string
+import { coreApi } from '../api'
 
 export interface ILegacyEngine {
   getArchive(id: ID): Promise<{ id: ID; name: string; status: string; keeperCount: number } | null>
@@ -14,26 +15,25 @@ export interface ILegacyEngine {
 
 class LegacyEngineImpl implements ILegacyEngine {
   async getArchive(id: ID) {
-    return { id, name: 'Mock Archive', status: 'active', keeperCount: 5 }
+    return coreApi.get<{ id: ID; name: string; status: string; keeperCount: number } | null>(`/resources/archives/${id}`)
   }
 
   async listArchives(filters?: { status?: string }) {
-    return [
-      { id: 'archive-1', name: 'Founding Collection', status: filters?.status ?? 'active', keeperCount: 8 },
-      { id: 'archive-2', name: 'Heritage Series', status: filters?.status ?? 'active', keeperCount: 3 },
-    ]
+    const archives = await coreApi.get<Array<{ id: ID; name: string; status: string; keeperCount: number }>>('/resources/archives')
+    return filters?.status ? archives.filter(archive => archive.status === filters.status) : archives
   }
 
   async getKeeper(memberId: ID) {
-    return { id: `keeper-${memberId}`, memberId, level: 'guardian', points: 450, archiveIds: ['archive-1', 'archive-2'] }
+    return coreApi.get<{ id: ID; memberId: ID; level: string; points: number; archiveIds: ID[] } | null>(`/resources/keepers/${memberId}`)
   }
 
   async createKeeper(memberId: ID, archiveId: ID) {
-    return { keeperId: `keeper-${memberId}-${archiveId}`, level: 'apprentice' }
+    const keeper = await coreApi.post<{ id: ID; level: string }>(`/resources/keepers`, { memberId, archiveIds: [archiveId], level: 'apprentice', points: 0 })
+    return { keeperId: keeper.id, level: keeper.level }
   }
 
   async getVotingSession(id: ID) {
-    return { id, archiveId: 'archive-1', status: 'open', totalVotes: 27 }
+    return coreApi.get<{ id: ID; archiveId: ID; status: string; totalVotes: number } | null>(`/resources/votingSessions/${id}`)
   }
 
   async submitVote(_sessionId: ID, _memberId: ID, _option: string) {

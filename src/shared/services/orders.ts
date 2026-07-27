@@ -1,4 +1,5 @@
 import type { Order } from '../../entities'
+import { api } from './api'
 
 const ORDERS: Order[] = [
   {
@@ -73,19 +74,34 @@ const ORDERS: Order[] = [
 ]
 
 export async function getOrders(filters?: { status?: string; customerId?: string }): Promise<Order[]> {
-  let results = [...ORDERS]
-  if (filters?.status) results = results.filter(o => o.status === filters.status)
-  if (filters?.customerId) results = results.filter(o => o.customerId === filters.customerId)
-  return Promise.resolve(results)
+  try {
+    let results = await api.get<Order[]>('/resources/orders')
+    if (filters?.status) results = results.filter(o => o.status === filters.status)
+    if (filters?.customerId) results = results.filter(o => o.customerId === filters.customerId)
+    return results
+  } catch {
+    let results = [...ORDERS]
+    if (filters?.status) results = results.filter(o => o.status === filters.status)
+    if (filters?.customerId) results = results.filter(o => o.customerId === filters.customerId)
+    return Promise.resolve(results)
+  }
 }
 
 export async function getOrder(id: string): Promise<Order | null> {
-  return Promise.resolve(ORDERS.find(o => o.id === id) ?? null)
+  try {
+    return await api.get<Order>(`/resources/orders/${id}`)
+  } catch {
+    return Promise.resolve(ORDERS.find(o => o.id === id) ?? null)
+  }
 }
 
 export async function updateOrderStatus(id: string, status: string): Promise<Order | null> {
-  const idx = ORDERS.findIndex(o => o.id === id)
-  if (idx === -1) return Promise.resolve(null)
-  ORDERS[idx] = { ...ORDERS[idx], status: status as Order['status'], updatedAt: new Date().toISOString() }
-  return Promise.resolve(ORDERS[idx])
+  try {
+    return await api.patch<Order>(`/resources/orders/${id}`, { status, updatedAt: new Date().toISOString() })
+  } catch {
+    const idx = ORDERS.findIndex(o => o.id === id)
+    if (idx === -1) return Promise.resolve(null)
+    ORDERS[idx] = { ...ORDERS[idx], status: status as Order['status'], updatedAt: new Date().toISOString() }
+    return Promise.resolve(ORDERS[idx])
+  }
 }

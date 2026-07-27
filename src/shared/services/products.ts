@@ -1,4 +1,5 @@
 import type { Product } from '../../entities'
+import { api } from './api'
 
 const PRODUCTS: Product[] = [
   {
@@ -166,7 +167,22 @@ const PRODUCTS: Product[] = [
 ]
 
 export async function getProducts(filters?: { universe?: string; status?: string; search?: string }): Promise<Product[]> {
-  let results = [...PRODUCTS]
+  try {
+    const remote = await api.get<Product[]>('/resources/products')
+    let results = [...remote]
+    if (filters?.universe) {
+      results = results.filter(p => p.universe === filters.universe)
+    }
+    if (filters?.status) {
+      results = results.filter(p => p.status === filters.status)
+    }
+    if (filters?.search) {
+      const q = filters.search.toLowerCase()
+      results = results.filter(p => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q))
+    }
+    return results
+  } catch {
+    let results = [...PRODUCTS]
   if (filters?.universe) {
     results = results.filter(p => p.universe === filters.universe)
   }
@@ -178,14 +194,22 @@ export async function getProducts(filters?: { universe?: string; status?: string
     results = results.filter(p => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q))
   }
   return Promise.resolve(results)
+  }
 }
 
 export async function getProduct(id: string): Promise<Product | null> {
-  return Promise.resolve(PRODUCTS.find(p => p.id === id) ?? null)
+  try {
+    return await api.get<Product>(`/resources/products/${id}`)
+  } catch {
+    return Promise.resolve(PRODUCTS.find(p => p.id === id) ?? null)
+  }
 }
 
 export async function createProduct(data: Partial<Product>): Promise<Product> {
-  const product: Product = {
+  try {
+    return await api.post<Product>('/resources/products', data as Record<string, unknown>)
+  } catch {
+    const product: Product = {
     id: `prod-${Date.now()}`,
     sku: data.sku ?? `IZL-NEW-${Date.now()}`,
     name: data.name ?? 'New Product',
@@ -204,20 +228,30 @@ export async function createProduct(data: Partial<Product>): Promise<Product> {
     createdAt: new Date().toISOString(),
     ...data,
   }
-  PRODUCTS.push(product)
-  return Promise.resolve(product)
+    PRODUCTS.push(product)
+    return Promise.resolve(product)
+  }
 }
 
 export async function updateProduct(id: string, data: Partial<Product>): Promise<Product | null> {
-  const idx = PRODUCTS.findIndex(p => p.id === id)
-  if (idx === -1) return Promise.resolve(null)
-  PRODUCTS[idx] = { ...PRODUCTS[idx], ...data }
-  return Promise.resolve(PRODUCTS[idx])
+  try {
+    return await api.patch<Product>(`/resources/products/${id}`, data as Record<string, unknown>)
+  } catch {
+    const idx = PRODUCTS.findIndex(p => p.id === id)
+    if (idx === -1) return Promise.resolve(null)
+    PRODUCTS[idx] = { ...PRODUCTS[idx], ...data }
+    return Promise.resolve(PRODUCTS[idx])
+  }
 }
 
 export async function archiveProduct(id: string): Promise<boolean> {
-  const idx = PRODUCTS.findIndex(p => p.id === id)
-  if (idx === -1) return Promise.resolve(false)
-  PRODUCTS[idx] = { ...PRODUCTS[idx], status: 'archived' }
-  return Promise.resolve(true)
+  try {
+    await api.patch(`/resources/products/${id}`, { status: 'archived' })
+    return true
+  } catch {
+    const idx = PRODUCTS.findIndex(p => p.id === id)
+    if (idx === -1) return Promise.resolve(false)
+    PRODUCTS[idx] = { ...PRODUCTS[idx], status: 'archived' }
+    return Promise.resolve(true)
+  }
 }

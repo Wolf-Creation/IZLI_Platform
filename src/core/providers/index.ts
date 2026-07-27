@@ -1,7 +1,8 @@
 // Providers abstract where data comes from.
-// In production these would call an API. Here they are typed stubs.
+// This implementation uses the backend API as the source of truth.
 
 type ID = string
+import { coreApi } from '../api'
 
 export interface IDataProvider {
   get<T>(collection: string, id: ID): Promise<T | null>
@@ -24,38 +25,38 @@ export interface ICacheProvider {
   flush(): Promise<void>
 }
 
-class MemoryDataProvider implements IDataProvider {
-  private store = new Map<string, Map<string, unknown>>()
-
-  private collection(name: string) {
-    if (!this.store.has(name)) this.store.set(name, new Map())
-    return this.store.get(name)!
-  }
-
+class ApiDataProvider implements IDataProvider {
   async get<T>(collection: string, id: ID): Promise<T | null> {
-    return (this.collection(collection).get(id) as T) ?? null
+    try {
+      return await coreApi.get<T>(`/resources/${collection}/${id}`)
+    } catch {
+      return null
+    }
   }
 
-  async list<T>(collection: string, _filters?: Record<string, unknown>): Promise<T[]> {
-    return [...this.collection(collection).values()] as T[]
+  async list<T>(collection: string, filters?: Record<string, unknown>): Promise<T[]> {
+    try {
+      const query = new URLSearchParams()
+      Object.entries(filters ?? {}).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') query.set(key, String(value))
+      })
+      const suffix = query.toString() ? `?${query.toString()}` : ''
+      return await coreApi.get<T[]>(`/resources/${collection}${suffix}`)
+    } catch {
+      return []
+    }
   }
 
   async create<T>(collection: string, data: Omit<T, 'id'>): Promise<T> {
-    const id = `${collection}-${Date.now()}-${Math.random().toString(36).slice(2)}`
-    const record = { ...data, id } as T
-    this.collection(collection).set(id, record)
-    return record
+    return coreApi.post<T>(`/resources/${collection}`, data as Record<string, unknown>)
   }
 
   async update<T>(collection: string, id: ID, data: Partial<T>): Promise<T> {
-    const existing = this.collection(collection).get(id) as T
-    const updated = { ...existing, ...data }
-    this.collection(collection).set(id, updated)
-    return updated
+    return coreApi.patch<T>(`/resources/${collection}/${id}`, data as Record<string, unknown>)
   }
 
   async delete(collection: string, id: ID): Promise<void> {
-    this.collection(collection).delete(id)
+    await coreApi.del(`/resources/${collection}/${id}`)
   }
 }
 
@@ -85,5 +86,5 @@ class MemoryCacheProvider implements ICacheProvider {
   }
 }
 
-export const DataProvider: IDataProvider = new MemoryDataProvider()
+export const DataProvider: IDataProvider = new ApiDataProvider()
 export const CacheProvider: ICacheProvider = new MemoryCacheProvider()

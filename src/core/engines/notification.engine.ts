@@ -1,5 +1,6 @@
 type ID = string
 type ISODate = string
+import { coreApi } from '../api'
 
 export interface INotificationEngine {
   send(recipientId: ID, template: string, data?: Record<string, unknown>): Promise<{ notificationId: ID }>
@@ -10,7 +11,8 @@ export interface INotificationEngine {
 
 class NotificationEngineImpl implements INotificationEngine {
   async send(recipientId: ID, _template: string, _data?: Record<string, unknown>) {
-    return { notificationId: `notif-${recipientId}-${Date.now()}` }
+    const notification = await coreApi.post<{ id: ID }>(`/resources/notifications`, { recipientId, recipientType: 'User', type: 'system', title: _template, body: JSON.stringify(_data ?? {}), read: false })
+    return { notificationId: notification.id }
   }
 
   async sendBulk(recipientIds: ID[], _template: string, _data?: Record<string, unknown>) {
@@ -18,10 +20,7 @@ class NotificationEngineImpl implements INotificationEngine {
   }
 
   async getNotifications(_memberId: ID) {
-    return [
-      { id: 'notif-1', template: 'product-published', read: false, createdAt: '2024-06-01T10:00:00Z' },
-      { id: 'notif-2', template: 'keeper-leveled-up', read: true, createdAt: '2024-05-28T14:30:00Z' },
-    ]
+    return coreApi.get<Array<{ id: ID; template: string; read: boolean; createdAt: ISODate }>>('/resources/notifications').catch(() => [])
   }
 
   async markRead(_notificationId: ID): Promise<void> {

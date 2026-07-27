@@ -1,3 +1,5 @@
+import { api } from './api'
+
 export interface BrandSettings {
   name: string
   tagline: string
@@ -85,17 +87,37 @@ let SETTINGS: AppSettings = {
 }
 
 export async function getSettings(): Promise<AppSettings> {
-  return Promise.resolve({ ...SETTINGS })
+  try {
+    const records = await api.get<Array<{ key: string; value: AppSettings }>>('/resources/globalSettings')
+    const record = records.find(item => item.key === 'app-settings')
+    return record?.value ?? { ...SETTINGS }
+  } catch {
+    return Promise.resolve({ ...SETTINGS })
+  }
 }
 
 export async function updateSettings(section: string, data: Record<string, unknown>): Promise<AppSettings> {
-  SETTINGS = {
+  const nextSettings: AppSettings = {
     ...SETTINGS,
     [section]: {
       ...(SETTINGS[section as keyof AppSettings] as unknown as Record<string, unknown>),
       ...data,
     },
   }
+
+  try {
+    const records = await api.get<Array<{ id: string; key: string; value: AppSettings }>>('/resources/globalSettings')
+    const existing = records.find(item => item.key === 'app-settings')
+    if (existing) {
+      await api.patch(`/resources/globalSettings/${existing.id}`, { value: nextSettings })
+    } else {
+      await api.post('/resources/globalSettings', { key: 'app-settings', value: nextSettings })
+    }
+  } catch {
+    SETTINGS = nextSettings
+  }
+
+  SETTINGS = nextSettings
   return Promise.resolve({ ...SETTINGS })
 }
 

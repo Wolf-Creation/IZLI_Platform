@@ -1,4 +1,5 @@
 type ID = string
+import { coreApi } from '../api'
 
 export interface IStyleIntelligenceEngine {
   getStyleGuide(id: ID): Promise<{ id: ID; name: string; season: string; isActive: boolean } | null>
@@ -10,14 +11,11 @@ export interface IStyleIntelligenceEngine {
 
 class StyleIntelligenceEngineImpl implements IStyleIntelligenceEngine {
   async getStyleGuide(id: ID) {
-    return { id, name: 'Mock Style Guide', season: 'autumn-winter', isActive: true }
+    return coreApi.get<{ id: ID; name: string; season: string; isActive: boolean } | null>(`/resources/styleGuides/${id}`)
   }
 
   async listStyleGuides() {
-    return [
-      { id: 'style-1', name: 'Earthy Minimalism', season: 'autumn-winter' },
-      { id: 'style-2', name: 'Coastal Ease', season: 'spring-summer' },
-    ]
+    return coreApi.get<Array<{ id: ID; name: string; season: string }>>('/resources/styleGuides').catch(() => [])
   }
 
   async getStyleRecommendations(_productId: ID) {

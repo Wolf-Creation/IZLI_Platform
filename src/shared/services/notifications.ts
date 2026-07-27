@@ -1,4 +1,5 @@
 import type { Notification } from '../../entities'
+import { api } from './api'
 
 const NOTIFICATIONS: Notification[] = [
   {
@@ -52,25 +53,46 @@ const NOTIFICATIONS: Notification[] = [
 ]
 
 export async function getNotifications(recipientId: string): Promise<Notification[]> {
-  return Promise.resolve(NOTIFICATIONS.filter(n => n.recipientId === recipientId))
+  try {
+    const notifications = await api.get<Notification[]>('/resources/notifications')
+    return notifications.filter(n => n.recipientId === recipientId)
+  } catch {
+    return Promise.resolve(NOTIFICATIONS.filter(n => n.recipientId === recipientId))
+  }
 }
 
 export async function markRead(id: string): Promise<Notification | null> {
-  const idx = NOTIFICATIONS.findIndex(n => n.id === id)
-  if (idx === -1) return Promise.resolve(null)
-  NOTIFICATIONS[idx] = { ...NOTIFICATIONS[idx], read: true }
-  return Promise.resolve(NOTIFICATIONS[idx])
+  try {
+    return await api.patch<Notification>(`/resources/notifications/${id}`, { read: true })
+  } catch {
+    const idx = NOTIFICATIONS.findIndex(n => n.id === id)
+    if (idx === -1) return Promise.resolve(null)
+    NOTIFICATIONS[idx] = { ...NOTIFICATIONS[idx], read: true }
+    return Promise.resolve(NOTIFICATIONS[idx])
+  }
 }
 
 export async function markAllRead(recipientId: string): Promise<void> {
-  NOTIFICATIONS.forEach((n, idx) => {
-    if (n.recipientId === recipientId) {
-      NOTIFICATIONS[idx] = { ...n, read: true }
-    }
-  })
+  try {
+    const notifications = await api.get<Notification[]>('/resources/notifications')
+    await Promise.all(
+      notifications.filter(n => n.recipientId === recipientId && !n.read).map(n => api.patch(`/resources/notifications/${n.id}`, { read: true })),
+    )
+  } catch {
+    NOTIFICATIONS.forEach((n, idx) => {
+      if (n.recipientId === recipientId) {
+        NOTIFICATIONS[idx] = { ...n, read: true }
+      }
+    })
+  }
   return Promise.resolve()
 }
 
 export async function getUnreadCount(recipientId: string): Promise<number> {
-  return Promise.resolve(NOTIFICATIONS.filter(n => n.recipientId === recipientId && !n.read).length)
+  try {
+    const notifications = await getNotifications(recipientId)
+    return notifications.filter(n => !n.read).length
+  } catch {
+    return Promise.resolve(NOTIFICATIONS.filter(n => n.recipientId === recipientId && !n.read).length)
+  }
 }

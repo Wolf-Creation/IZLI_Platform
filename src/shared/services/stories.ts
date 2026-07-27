@@ -1,4 +1,5 @@
 import type { Story } from '../../entities'
+import { api } from './api'
 
 const STORIES: Story[] = [
   {
@@ -75,18 +76,32 @@ const STORIES: Story[] = [
 ]
 
 export async function getStories(filters?: { type?: string; status?: string }): Promise<Story[]> {
-  let results = [...STORIES]
-  if (filters?.type) results = results.filter(s => s.type === filters.type)
-  if (filters?.status) results = results.filter(s => s.status === filters.status)
-  return Promise.resolve(results)
+  try {
+    let results = await api.get<Story[]>('/resources/stories')
+    if (filters?.type) results = results.filter(s => s.type === filters.type)
+    if (filters?.status) results = results.filter(s => s.status === filters.status)
+    return results
+  } catch {
+    let results = [...STORIES]
+    if (filters?.type) results = results.filter(s => s.type === filters.type)
+    if (filters?.status) results = results.filter(s => s.status === filters.status)
+    return Promise.resolve(results)
+  }
 }
 
 export async function getStory(id: string): Promise<Story | null> {
-  return Promise.resolve(STORIES.find(s => s.id === id) ?? null)
+  try {
+    return await api.get<Story>(`/resources/stories/${id}`)
+  } catch {
+    return Promise.resolve(STORIES.find(s => s.id === id) ?? null)
+  }
 }
 
 export async function createStory(data: Partial<Story>): Promise<Story> {
-  const story: Story = {
+  try {
+    return await api.post<Story>('/resources/stories', data as Record<string, unknown>)
+  } catch {
+    const story: Story = {
     id: `story-${Date.now()}`,
     slug: data.slug ?? `story-${Date.now()}`,
     title: data.title ?? 'Untitled Story',
@@ -103,15 +118,20 @@ export async function createStory(data: Partial<Story>): Promise<Story> {
     createdAt: new Date().toISOString(),
     ...data,
   }
-  STORIES.push(story)
-  return Promise.resolve(story)
+    STORIES.push(story)
+    return Promise.resolve(story)
+  }
 }
 
 export async function updateStory(id: string, data: Partial<Story>): Promise<Story | null> {
-  const idx = STORIES.findIndex(s => s.id === id)
-  if (idx === -1) return Promise.resolve(null)
-  STORIES[idx] = { ...STORIES[idx], ...data }
-  return Promise.resolve(STORIES[idx])
+  try {
+    return await api.patch<Story>(`/resources/stories/${id}`, data as Record<string, unknown>)
+  } catch {
+    const idx = STORIES.findIndex(s => s.id === id)
+    if (idx === -1) return Promise.resolve(null)
+    STORIES[idx] = { ...STORIES[idx], ...data }
+    return Promise.resolve(STORIES[idx])
+  }
 }
 
 export async function publishStory(id: string): Promise<Story | null> {

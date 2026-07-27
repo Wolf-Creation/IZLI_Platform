@@ -1,5 +1,6 @@
 type ID = string
 type ISODate = string
+import { coreApi } from '../api'
 
 export interface ICommunityEngine {
   getMember(id: ID): Promise<{ id: ID; name: string; role: string; joinedAt: ISODate } | null>
@@ -13,25 +14,23 @@ export interface ICommunityEngine {
 
 class CommunityEngineImpl implements ICommunityEngine {
   async getMember(id: ID) {
-    return { id, name: 'Mock Member', role: 'member', joinedAt: '2024-01-15T00:00:00Z' }
+    const member = await coreApi.get<{ id: ID; displayName: string; level: number; joinedAt: ISODate } | null>(`/resources/community/${id}`)
+    return member ? { id: member.id, name: member.displayName, role: `level-${member.level}`, joinedAt: member.joinedAt } : null
   }
 
   async listMembers(filters?: { role?: string }) {
-    return [
-      { id: 'member-1', name: 'Alice Durand', role: filters?.role ?? 'member' },
-      { id: 'member-2', name: 'Bashir Okafor', role: filters?.role ?? 'keeper' },
-    ]
+    const members = await coreApi.get<Array<{ id: ID; displayName: string; level: number }>>('/resources/community')
+    return members.map(member => ({ id: member.id, name: member.displayName, role: `level-${member.level}` }))
   }
 
   async getChallenge(id: ID) {
-    return { id, title: 'Heritage Photo Challenge', status: 'active', submissionCount: 42 }
+    const challenge = await coreApi.get<{ id: ID; title: string; status: string; submissionsCount: number } | null>(`/resources/challenges/${id}`)
+    return challenge ? { id: challenge.id, title: challenge.title, status: challenge.status, submissionCount: challenge.submissionsCount } : null
   }
 
   async listChallenges(filters?: { status?: string }) {
-    return [
-      { id: 'challenge-1', title: 'Heritage Photo Challenge', status: filters?.status ?? 'active' },
-      { id: 'challenge-2', title: 'Story Craft Challenge', status: filters?.status ?? 'active' },
-    ]
+    const challenges = await coreApi.get<Array<{ id: ID; title: string; status: string }>>('/resources/challenges')
+    return filters?.status ? challenges.filter(challenge => challenge.status === filters.status) : challenges
   }
 
   async submitChallenge(challengeId: ID, memberId: ID, _content: string) {
@@ -39,7 +38,7 @@ class CommunityEngineImpl implements ICommunityEngine {
   }
 
   async getLabProject(id: ID) {
-    return { id, title: 'Mock Lab Project', status: 'in-progress' }
+    return coreApi.get<{ id: ID; title: string; status: string } | null>(`/resources/labProjects/${id}`)
   }
 
   async createReferral(referrerId: ID, _inviteeEmail: string) {

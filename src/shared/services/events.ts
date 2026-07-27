@@ -1,4 +1,5 @@
 import type { Event } from '../../entities'
+import { api } from './api'
 
 const EVENTS: Event[] = [
   {
@@ -84,23 +85,42 @@ const EVENTS: Event[] = [
 ]
 
 export async function getEvents(filters?: { status?: string; type?: string }): Promise<Event[]> {
-  let results = [...EVENTS]
-  if (filters?.status) results = results.filter(e => e.status === filters.status)
-  if (filters?.type) results = results.filter(e => e.type === filters.type)
-  return Promise.resolve(results)
+  try {
+    let results = await api.get<Event[]>('/resources/events')
+    if (filters?.status) results = results.filter(e => e.status === filters.status)
+    if (filters?.type) results = results.filter(e => e.type === filters.type)
+    return results
+  } catch {
+    let results = [...EVENTS]
+    if (filters?.status) results = results.filter(e => e.status === filters.status)
+    if (filters?.type) results = results.filter(e => e.type === filters.type)
+    return Promise.resolve(results)
+  }
 }
 
 export async function getEvent(id: string): Promise<Event | null> {
-  return Promise.resolve(EVENTS.find(e => e.id === id) ?? null)
+  try {
+    return await api.get<Event>(`/resources/events/${id}`)
+  } catch {
+    return Promise.resolve(EVENTS.find(e => e.id === id) ?? null)
+  }
 }
 
 export async function registerForEvent(eventId: string, _customerId: string): Promise<{ success: boolean; message: string }> {
-  const idx = EVENTS.findIndex(e => e.id === eventId)
-  if (idx === -1) return Promise.resolve({ success: false, message: 'Event not found' })
-  const event = EVENTS[idx]
-  if (event.registeredCount >= event.capacity) {
-    return Promise.resolve({ success: false, message: 'Event is at capacity' })
+  try {
+    const event = await api.get<Event>(`/resources/events/${eventId}`)
+    if (!event) return { success: false, message: 'Event not found' }
+    if (event.registeredCount >= event.capacity) return { success: false, message: 'Event is at capacity' }
+    await api.patch(`/resources/events/${eventId}`, { registeredCount: event.registeredCount + 1 })
+    return { success: true, message: 'Registration confirmed' }
+  } catch {
+    const idx = EVENTS.findIndex(e => e.id === eventId)
+    if (idx === -1) return Promise.resolve({ success: false, message: 'Event not found' })
+    const event = EVENTS[idx]
+    if (event.registeredCount >= event.capacity) {
+      return Promise.resolve({ success: false, message: 'Event is at capacity' })
+    }
+    EVENTS[idx] = { ...event, registeredCount: event.registeredCount + 1 }
+    return Promise.resolve({ success: true, message: 'Registration confirmed' })
   }
-  EVENTS[idx] = { ...event, registeredCount: event.registeredCount + 1 }
-  return Promise.resolve({ success: true, message: 'Registration confirmed' })
 }

@@ -1,4 +1,5 @@
 import type { Customer } from '../../entities'
+import { api } from './api'
 
 const CUSTOMERS: Customer[] = [
   {
@@ -76,26 +77,48 @@ const CUSTOMERS: Customer[] = [
 ]
 
 export async function getCustomers(filters?: { segment?: string; search?: string }): Promise<Customer[]> {
-  let results = [...CUSTOMERS]
-  if (filters?.segment) results = results.filter(c => c.segment === filters.segment)
-  if (filters?.search) {
-    const q = filters.search.toLowerCase()
-    results = results.filter(c =>
-      c.firstName.toLowerCase().includes(q) ||
-      c.lastName.toLowerCase().includes(q) ||
-      c.email.toLowerCase().includes(q)
-    )
+  try {
+    let results = await api.get<Customer[]>('/resources/customers')
+    if (filters?.segment) results = results.filter(c => c.segment === filters.segment)
+    if (filters?.search) {
+      const q = filters.search.toLowerCase()
+      results = results.filter(c =>
+        c.firstName.toLowerCase().includes(q) ||
+        c.lastName.toLowerCase().includes(q) ||
+        c.email.toLowerCase().includes(q)
+      )
+    }
+    return results
+  } catch {
+    let results = [...CUSTOMERS]
+    if (filters?.segment) results = results.filter(c => c.segment === filters.segment)
+    if (filters?.search) {
+      const q = filters.search.toLowerCase()
+      results = results.filter(c =>
+        c.firstName.toLowerCase().includes(q) ||
+        c.lastName.toLowerCase().includes(q) ||
+        c.email.toLowerCase().includes(q)
+      )
+    }
+    return Promise.resolve(results)
   }
-  return Promise.resolve(results)
 }
 
 export async function getCustomer(id: string): Promise<Customer | null> {
-  return Promise.resolve(CUSTOMERS.find(c => c.id === id) ?? null)
+  try {
+    return await api.get<Customer>(`/resources/customers/${id}`)
+  } catch {
+    return Promise.resolve(CUSTOMERS.find(c => c.id === id) ?? null)
+  }
 }
 
 export async function updateCustomer(id: string, data: Partial<Customer>): Promise<Customer | null> {
-  const idx = CUSTOMERS.findIndex(c => c.id === id)
-  if (idx === -1) return Promise.resolve(null)
-  CUSTOMERS[idx] = { ...CUSTOMERS[idx], ...data }
-  return Promise.resolve(CUSTOMERS[idx])
+  try {
+    return await api.patch<Customer>(`/resources/customers/${id}`, data as Record<string, unknown>)
+  } catch {
+    const idx = CUSTOMERS.findIndex(c => c.id === id)
+    if (idx === -1) return Promise.resolve(null)
+    CUSTOMERS[idx] = { ...CUSTOMERS[idx], ...data }
+    return Promise.resolve(CUSTOMERS[idx])
+  }
 }

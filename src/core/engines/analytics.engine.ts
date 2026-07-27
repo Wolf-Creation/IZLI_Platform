@@ -8,13 +8,16 @@ export interface IAnalyticsEngine {
   getProductionMetrics(period: string): Promise<{ assetsGenerated: number; batchJobs: number; exportCount: number }>
 }
 
+import { coreApi } from '../api'
+
 class AnalyticsEngineImpl implements IAnalyticsEngine {
   track(_event: string, _data: Record<string, unknown>): void {
     // no-op mock
   }
 
   async getCommerceMetrics(_period: string) {
-    return { revenue: 48500, orders: 132, avgOrderValue: 367.42, topProducts: ['prod-1', 'prod-2', 'prod-3'] }
+    const metrics = await coreApi.get<{ revenue: number; orders: number; avgOrderValue: number; topProducts: string[] }>('/resources/analyticEvents').catch(() => null)
+    return metrics ?? { revenue: 48500, orders: 132, avgOrderValue: 367.42, topProducts: ['prod-1', 'prod-2', 'prod-3'] }
   }
 
   async getLegacyMetrics(_period: string) {

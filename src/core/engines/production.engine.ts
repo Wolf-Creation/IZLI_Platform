@@ -1,5 +1,6 @@
 type ID = string
 type ISODate = string
+import { coreApi } from '../api'
 
 export interface IProductionEngine {
   getTemplate(id: ID): Promise<{ id: ID; name: string; type: string; status: string } | null>
@@ -12,14 +13,11 @@ export interface IProductionEngine {
 
 class ProductionEngineImpl implements IProductionEngine {
   async getTemplate(id: ID) {
-    return { id, name: 'Mock Template', type: 'lookbook', status: 'active' }
+    return coreApi.get<{ id: ID; name: string; type: string; status: string } | null>(`/resources/productionTemplates/${id}`)
   }
 
   async listTemplates(filters?: { type?: string }) {
-    return [
-      { id: 'template-1', name: 'Lookbook A4', type: filters?.type ?? 'lookbook' },
-      { id: 'template-2', name: 'Product Card', type: filters?.type ?? 'card' },
-    ]
+    return coreApi.get<Array<{ id: ID; name: string; type: string }>>('/resources/productionTemplates').catch(() => [])
   }
 
   async generateAsset(templateId: ID, productId: ID, _config?: Record<string, unknown>) {
@@ -27,7 +25,7 @@ class ProductionEngineImpl implements IProductionEngine {
   }
 
   async getBatchJob(id: ID) {
-    return { id, status: 'running', progress: 65, totalAssets: 20 }
+    return coreApi.get<{ id: ID; status: string; progress: number; totalAssets: number } | null>(`/resources/batchJobs/${id}`)
   }
 
   async startBatchJob(_productIds: ID[], _templateIds: ID[]) {

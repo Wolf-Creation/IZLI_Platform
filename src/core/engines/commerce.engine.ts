@@ -1,4 +1,5 @@
 type ID = string
+import { coreApi } from '../api'
 
 export interface ICommerceEngine {
   getProduct(id: ID): Promise<{ id: ID; name: string; price: number; status: string } | null>
@@ -10,14 +11,12 @@ export interface ICommerceEngine {
 
 class CommerceEngineImpl implements ICommerceEngine {
   async getProduct(id: ID) {
-    return { id, name: 'Mock Product', price: 120.0, status: 'active' }
+    return coreApi.get<{ id: ID; name: string; price: number; status: string } | null>(`/resources/products/${id}`)
   }
 
   async listProducts(filters?: { status?: string; collectionId?: ID }) {
-    return [
-      { id: 'prod-1', name: 'Heritage Jacket', price: 320.0, status: filters?.status ?? 'active' },
-      { id: 'prod-2', name: 'Artisan Bag', price: 185.0, status: filters?.status ?? 'active' },
-    ]
+    const products = await coreApi.get<Array<{ id: ID; name: string; price: number; status: string }>>('/resources/products')
+    return filters?.status ? products.filter(product => product.status === filters.status) : products
   }
 
   async publishProduct(id: ID) {
@@ -25,14 +24,13 @@ class CommerceEngineImpl implements ICommerceEngine {
   }
 
   async getCollection(id: ID) {
-    return { id, name: 'Mock Collection', productCount: 12 }
+    const collection = await coreApi.get<{ id: ID; name: string; productIds?: ID[] } | null>(`/resources/collections/${id}`)
+    return collection ? { id: collection.id, name: collection.name, productCount: collection.productIds?.length ?? 0 } : null
   }
 
   async listOrders(filters?: { status?: string; memberId?: ID }) {
-    return [
-      { id: 'order-1', total: 320.0, status: filters?.status ?? 'completed', memberId: filters?.memberId ?? 'member-1' },
-      { id: 'order-2', total: 185.0, status: filters?.status ?? 'completed', memberId: filters?.memberId ?? 'member-2' },
-    ]
+    const orders = await coreApi.get<Array<{ id: ID; total: number; status: string; customerId: ID }>>('/resources/orders')
+    return orders.map(order => ({ id: order.id, total: order.total, status: order.status, memberId: order.customerId }))
   }
 }
 
