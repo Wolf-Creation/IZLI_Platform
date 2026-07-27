@@ -5,8 +5,8 @@
   "type": "module",
   "main": "src/app.js",
   "scripts": {
-    "dev": "node --watch src/app.js",
-    "start": "node src/app.js",
+    "dev": "node --watch start.js",
+    "start": "node start.js",
     "lint": "echo \"No lint configured yet\""
   },
   "dependencies": {

@@ -17,3 +17,21 @@ No entries yet.
 - Session: Conversation history bootstrap
 - Changes: Created `project_guide`, created `History_session_001`, and added the rule to append each session command or action at the bottom of the history file.
 - Notes: This entry starts the conversation log for the current workspace session.
+
+### 2026-07-26 19:00
+
+- Session: Lecture `project_guide`
+- Changes: Lu et résumé `project_guide` (priorités de lecture, règles de travail, suivi des changements, ordre recommandé).
+- Notes: Demande de l'utilisateur confirmée pour ajouter cette entrée.
+
+### 2026-07-26 19:05
+
+- Session: Importation des agents
+- Changes: Ajout d'une section `Agents` dans `AGENTS.md` listant les fichiers contenus dans `.github/agents/`.
+- Notes: Les fichiers listés référencent les agents métiers (Project Director, Product Owner, AI Architect, etc.).
+
+### 2026-07-26 19:12
+
+- Session: Exposed agents to Workspace
+- Changes: Created workspace copies in `.vscode/agents/` so the VS Code Agents view shows agents under Workspace scope; added `IZLI README.md` in the agents folder.
+- Notes: Verify by opening the Agents view with scope set to Workspace and reload the window if agents do not appear immediately.
