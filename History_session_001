@@ -63,3 +63,13 @@ No entries yet.
   - Updated `src/core/api.ts`, `src/core/providers/index.ts`, `src/core/repositories/index.ts`, `src/core/services/index.ts`, and the core engines to use the API/MongoDB source of truth instead of in-memory mocks.
   - Updated Vite proxy so the front reaches the API through `/api` during development.
 - Notes: Front build validated successfully after the sync. Atlas seed completed successfully.
+
+### 2026-07-27 18:10
+
+- Session: Final sync verification and history update
+- Changes:
+  - Confirmed the site and admin frontends use the API first through `src/shared/services/api.ts` and `src/core/api.ts`.
+  - Confirmed the backend remains connected to MongoDB Atlas through `src/apps/api/src/config/database.js` and the generic resource router.
+  - Verified the front build still passes after the core/provider engine migration.
+  - Clarified that Network tab `Fetch/XHR` output can still show local/static assets and is not itself proof of database access.
+- Notes: Latest changes were recorded after the final verification pass and Git push.
