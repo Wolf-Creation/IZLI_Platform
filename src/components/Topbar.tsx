@@ -37,6 +37,7 @@ const BREADCRUMBS: Partial<Record<Screen, string[]>> = {
   'team-roles': ['System', 'Team & Roles'],
   'global-settings': ['System', 'Global Settings'],
   'audit-log': ['System', 'Audit Log'],
+  'legacies': ['Legacy', 'Legacies'],
   'style-guides': ['Commerce', 'Style Guides'],
   'style-guide-editor': ['Commerce', 'Style Guides', 'Sage Collection Style Guide'],
   'recommendation-hub': ['Commerce', 'Recommendation Hub'],

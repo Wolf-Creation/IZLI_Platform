@@ -58,3 +58,4 @@ export type Screen =
   | 'system-automation'
   | 'production-analytics'
   | 'recommendation-analytics'
+  | 'legacies'

@@ -1,0 +1,41 @@
+LEGACY RELATIONSHIP
+------------------------------------------------------------
+
+The platform hierarchy becomes:
+
+Legacy
+    ↓
+Archive
+    ↓
+Collection
+    ↓
+Product
+    ↓
+Legacy Release
+    ↓
+Product Passport
+    ↓
+QR Experience
+    ↓
+Keeper
+    ↓
+Community
+    ↓
+Voting
+    ↓
+Next Legacy Release
+
+Universe is NOT above Legacy.
+
+Universe is an editorial layer attached to Products.
+
+Product contains
+
+- Legacy
+- Archive
+- Collection
+- Universe
+- Style Guide
+- Recommendation Hub
+- Product Passport
+- Legacy Releases

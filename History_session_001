@@ -103,3 +103,13 @@ No entries yet.
 - Session: Iconify sidebar migration
 - Changes: Installed `@iconify/react` and replaced the Admin sidebar menu glyphs with Iconify icons for main menu items and submenu items.
 - Notes: Build validated successfully after the icon migration.
+
+### 2026-07-28 09:10
+
+- Session: Legacy Management System root module
+- Changes:
+  - Added a real `Legacy` Mongoose model in `src/apps/api/src/modules/legacy/model.js` and registered it with the Atlas startup flow.
+  - Exposed the model through the generic resource router as `/api/resources/legacies`.
+  - Added a new admin entry point screen `Legacies` with API-backed CRUD, auto-saved drafts, relation cards, content graph, analytics, AI helper, and version history.
+  - Updated admin navigation, breadcrumbs, and routing so `Legacies` is the entry point for the Legacy module.
+- Notes: Front build validated successfully after the module wiring, and the new backend model loads without syntax errors.

@@ -29,6 +29,7 @@ import '../modules/community/model.js';
 import '../modules/events/model.js';
 
 // Legacy
+import '../modules/legacy/model.js';
 import '../modules/keepers/model.js';
 import '../modules/notifications/model.js';
 

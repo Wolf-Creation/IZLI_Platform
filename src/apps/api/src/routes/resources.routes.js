@@ -27,6 +27,7 @@ const RESOURCE_MODELS = {
   openCalls: 'OpenCall',
   keepers: 'Keeper',
   archives: 'Archive',
+  legacies: 'Legacy',
   votingSessions: 'VotingSession',
   votes: 'Vote',
   legacyRewards: 'LegacyReward',

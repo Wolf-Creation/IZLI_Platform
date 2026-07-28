@@ -53,6 +53,7 @@ export const ADMIN_ROUTES = {
   COMMERCE_ANALYTICS: '/admin/analytics/commerce',
   COMMUNITY_ANALYTICS: '/admin/analytics/community',
   CONTENT_ANALYTICS: '/admin/analytics/content',
+  LEGACY: '/admin/legacy',
 
   // System
   TEAM_ROLES: '/admin/system/team',
@@ -109,6 +110,7 @@ export function adminPathForScreen(screen: Screen, productId?: string | null) {
     case 'print-presets': return '/admin/production/print-presets'
     case 'batch-generator': return '/admin/production/batch-jobs'
     case 'export-center': return '/admin/production/exports'
+    case 'legacies': return ADMIN_ROUTES.LEGACY
     case 'legacy-archives': return '/admin/legacy/archives'
     case 'legacy-timeline': return '/admin/legacy/timeline'
     case 'legacy-keeper-circle': return '/admin/legacy/keeper-circle'
@@ -141,6 +143,8 @@ export function adminStateFromPath(pathname: string): { screen: Screen; productE
   if (pathname === '/admin/commerce/recommendation-hub/editor') return { screen: 'recommendation-hub-editor', productEditorId: null }
   if (pathname === '/admin/commerce/product-passports') return { screen: 'product-passports', productEditorId: null }
   if (pathname === '/admin/commerce/product-passports/editor') return { screen: 'product-passport-editor', productEditorId: null }
+  if (pathname === ADMIN_ROUTES.LEGACY) return { screen: 'legacies', productEditorId: null }
+  if (pathname === `${ADMIN_ROUTES.LEGACY}/`) return { screen: 'legacies', productEditorId: null }
 
   if (pathname === ADMIN_ROUTES.PRODUCTS || pathname === `${ADMIN_ROUTES.PRODUCTS}/`) {
     return { screen: 'products', productEditorId: null }

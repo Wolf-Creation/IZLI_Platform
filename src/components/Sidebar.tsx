@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Icon } from '@iconify/react'
 import type { Screen } from '../types'
 
 const INDIGO = '#1E2F44'
@@ -12,6 +11,81 @@ interface NavItem {
   screen?: Screen
   icon: string
   children?: { label: string; screen: Screen; icon: string }[]
+}
+
+function Icon({ icon, width = 20, height = 20, style }: { icon: string; width?: number; height?: number; style?: React.CSSProperties }) {
+  const glyph = ICON_GLYPHS[icon] ?? '◌'
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        width,
+        height,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: Math.min(width, height) * 0.9,
+        lineHeight: 1,
+        userSelect: 'none',
+        ...style,
+      }}
+    >
+      {glyph}
+    </span>
+  )
+}
+
+const ICON_GLYPHS: Record<string, string> = {
+  'mdi:view-dashboard-outline': '⌂',
+  'mdi:shopping-outline': '🛍',
+  'mdi:tshirt-crew-outline': '👕',
+  'mdi:folder-multiple-outline': '🗂',
+  'mdi:package-variant-closed-outline': '📦',
+  'mdi:book-open-page-variant-outline': '📖',
+  'mdi:newspaper-variant-outline': '📰',
+  'mdi:archive-outline': '🗄',
+  'mdi:archive-star-outline': '★',
+  'mdi:image-multiple-outline': '🖼',
+  'mdi:palette-outline': '🎨',
+  'mdi:web-outline': '🌐',
+  'mdi:file-document-outline': '📄',
+  'mdi:graph-outline': '⟡',
+  'mdi:brush-outline': '🖌',
+  'mdi:lightbulb-outline': '💡',
+  'mdi:card-account-details-outline': '🪪',
+  'mdi:qrcode-scan': '▣',
+  'mdi:account-group-outline': '👥',
+  'mdi:account-multiple-outline': '👤',
+  'mdi:hand-heart-outline': '🤝',
+  'mdi:flag-outline': '⚑',
+  'mdi:flask-outline': '⚗',
+  'mdi:timeline-outline': '≋',
+  'mdi:account-heart-outline': '♡',
+  'mdi:stairs-up': '↟',
+  'mdi:vote-outline': '✓',
+  'mdi:gift-outline': '🎁',
+  'mdi:trophy-outline': '🏆',
+  'mdi:email-outline': '✉',
+  'mdi:share-variant-outline': '⇪',
+  'mdi:factory': '🏭',
+  'mdi:monitor-dashboard': '🖥',
+  'mdi:file-document-multiple-outline': '📑',
+  'mdi:folder-multiple-image': '🖼',
+  'mdi:layers-outline': '⬚',
+  'mdi:export': '⤴',
+  'mdi:shape-outline': '⬡',
+  'mdi:chart-box-outline': '📊',
+  'mdi:chart-line': '📈',
+  'mdi:chart-timeline-variant': '📉',
+  'mdi:account-chart-outline': '📋',
+  'mdi:file-chart-outline': '🗒',
+  'mdi:star-four-points-outline': '✦',
+  'mdi:cog-outline': '⚙',
+  'mdi:account-cog-outline': '🛠',
+  'mdi:robot-outline': '🤖',
+  'mdi:tune-variant': '🎚',
+  'mdi:file-search-outline': '🔎',
+  'mdi:chevron-down': '⌄',
 }
 
 const NAV: NavItem[] = [
@@ -61,6 +135,7 @@ const NAV: NavItem[] = [
     label: 'Legacy',
     icon: 'mdi:archive-outline',
     children: [
+      { label: 'Legacies', screen: 'legacies', icon: 'mdi:archive-star-outline' },
       { label: 'Archives', screen: 'legacy-archives', icon: 'mdi:archive-outline' },
       { label: 'Legacy Timeline', screen: 'legacy-timeline', icon: 'mdi:timeline-outline' },
       { label: 'Keeper Circle', screen: 'legacy-keeper-circle', icon: 'mdi:account-heart-outline' },
@@ -205,9 +280,11 @@ function NavSection({ item, active, onNavigate, collapsed, open, onToggle }: { i
             color: isChildActive ? INDIGO : TEXT_SEC,
             cursor: 'pointer', userSelect: 'none', width: '100%', background: 'transparent', border: 'none', textAlign: 'left',
           }}>
-          <Icon icon={item.icon} width={20} height={20} style={{ color: isChildActive ? INDIGO : TEXT_SEC, opacity: 0.8, flexShrink: 0 }} />
+          <Icon icon={item.icon} width={20} height={20} style={{ color: isChildActive ? INDIGO : TEXT_SEC, opacity: 0.8, flexShrink: 0, marginLeft: collapsed ? 'auto' : 0, marginRight: collapsed ? 'auto' : 0 }} />
           {!collapsed && item.label}
-          <Icon icon="mdi:chevron-down" width={20} height={20} style={{ marginLeft: 'auto', color: TEXT_SEC, opacity: collapsed ? 0 : 0.7, paddingRight: collapsed ? 0 : 20, lineHeight: 1, transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.18s ease' }} />
+          {!collapsed && (
+            <Icon icon="mdi:chevron-down" width={20} height={20} style={{ marginLeft: 'auto', color: TEXT_SEC, opacity: 0.7, paddingRight: 20, lineHeight: 1, transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.18s ease' }} />
+          )}
         </button>
         {open && !collapsed && item.children.map(child => (
           <button key={child.label} onClick={() => onNavigate(child.screen)}
@@ -246,7 +323,7 @@ function NavSection({ item, active, onNavigate, collapsed, open, onToggle }: { i
       onMouseEnter={e => { if (!isActive && item.screen) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(30,47,68,0.05)' }}
       onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = isActive ? '#E8EDF3' : 'transparent' }}
     >
-      <Icon icon={item.icon} width={20} height={20} style={{ color: isActive ? INDIGO : '#B7AA91', width: 20, lineHeight: 1, flexShrink: 0, opacity: 0.8 }} />
+      <Icon icon={item.icon} width={20} height={20} style={{ color: isActive ? INDIGO : '#B7AA91', width: 20, lineHeight: 1, flexShrink: 0, opacity: 0.8, marginLeft: collapsed ? 'auto' : 0, marginRight: collapsed ? 'auto' : 0 }} />
       {!collapsed && item.label}
     </button>
   )

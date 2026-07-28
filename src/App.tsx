@@ -60,6 +60,7 @@ import LegacyAchievements from './screens/LegacyAchievements'
 import LegacyInvitations from './screens/LegacyInvitations'
 import LegacyReferral from './screens/LegacyReferral'
 import LegacyAnalytics from './screens/LegacyAnalytics'
+import Legacies from './screens/Legacies'
 import HeritageLibrary from './screens/HeritageLibrary'
 import BrandAssets from './screens/BrandAssets'
 import QRExperiences from './screens/QRExperiences'
@@ -203,6 +204,7 @@ export default function App() {
       case 'print-presets': return <PrintPresets onNavigate={navigate} />
       case 'batch-generator': return <BatchGenerator onNavigate={navigate} />
       case 'export-center': return <ExportCenter onNavigate={navigate} />
+      case 'legacies': return <Legacies onNavigate={navigate} />
       case 'legacy-archives': return <LegacyArchives onNavigate={navigate} />
       case 'legacy-timeline': return <LegacyTimeline onNavigate={navigate} />
       case 'legacy-keeper-circle': return <LegacyKeeperCircle onNavigate={navigate} />
