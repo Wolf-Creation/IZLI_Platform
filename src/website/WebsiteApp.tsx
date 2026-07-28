@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { WebPage } from './types'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -18,16 +18,46 @@ import Profile from './pages/Profile'
 import Legacy from './pages/Legacy'
 import Archives from './pages/Archives'
 import KeeperCircle from './pages/KeeperCircle'
+import { websitePageFromPath, websitePathForPage } from '../routes/website'
+import type { User } from '../entities'
 
 const PAGES_WITHOUT_FOOTER: WebPage[] = ['login']
 
-export default function WebsiteApp() {
-  const [page, setPage] = useState<WebPage>('home')
+interface Props {
+  onAdminRequest?: () => void
+}
+
+export default function WebsiteApp({ onAdminRequest }: Props) {
+  const [page, setPage] = useState<WebPage>(() => websitePageFromPath(window.location.pathname))
   const [cartCount] = useState(2)
 
+  useEffect(() => {
+    const syncPage = () => {
+      setPage(websitePageFromPath(window.location.pathname))
+    }
+
+    window.addEventListener('popstate', syncPage)
+    return () => window.removeEventListener('popstate', syncPage)
+  }, [])
+
   const navigate = (p: WebPage) => {
+    const path = websitePathForPage(p)
+
+    if (window.location.pathname !== path) {
+      window.history.pushState({}, '', path)
+    }
+
     setPage(p)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleAuthenticated = (user: User) => {
+    if (user.role === 'admin') {
+      onAdminRequest?.()
+      return
+    }
+
+    navigate('profile')
   }
 
   const renderPage = () => {
@@ -43,7 +73,7 @@ export default function WebsiteApp() {
       case 'events':         return <Events onNavigate={navigate} />
       case 'about':          return <About onNavigate={navigate} />
       case 'cart':           return <Cart onNavigate={navigate} />
-      case 'login':          return <Login onNavigate={navigate} />
+      case 'login':          return <Login onNavigate={navigate} onAuthenticated={handleAuthenticated} />
       case 'profile':        return <Profile onNavigate={navigate} />
       case 'legacy':         return <Legacy onNavigate={navigate} />
       case 'archives':       return <Archives onNavigate={navigate} />

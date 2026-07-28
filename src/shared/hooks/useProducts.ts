@@ -51,5 +51,13 @@ export function useProduct(id: string): UseProductResult {
       .finally(() => setLoading(false))
   }, [id])
 
+  useEffect(() => {
+    if (!id) {
+      setProduct(null)
+      setLoading(false)
+      setError(null)
+    }
+  }, [id])
+
   return { product, loading, error }
 }

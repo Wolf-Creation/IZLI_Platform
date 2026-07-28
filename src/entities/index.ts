@@ -104,6 +104,7 @@ export interface CommunityMember {
 export type ProductStatus = 'published' | 'draft' | 'archived' | 'out-of-stock'
 export type ProductUniverse = 'Heritage' | 'Essentials' | 'Studio' | 'Community Lab'
 export type SizeAvailability = 'available' | 'low' | 'sold-out'
+export type ProductReleaseStatus = 'draft' | 'ready' | 'production' | 'upcoming' | 'live' | 'sold-out' | 'archived'
 
 export interface ProductSize {
   size: string
@@ -117,6 +118,15 @@ export interface Product {
   name: string
   universe: ProductUniverse
   status: ProductStatus
+  releaseNumber?: string
+  quantity?: number
+  launchDate?: ISODate
+  releaseStatus?: ProductReleaseStatus
+  qrExperienceUrl?: URL
+  productPassportId?: string
+  archiveTitle?: string
+  storyTitle?: string
+  productionNotes?: string
   price: number
   currency: Currency
   description: string

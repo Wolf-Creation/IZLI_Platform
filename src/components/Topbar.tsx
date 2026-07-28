@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import type { Screen } from '../types'
 
 const BORDER = '#D8D0C4'
@@ -8,7 +9,7 @@ const INDIGO = '#1E2F44'
 const BREADCRUMBS: Partial<Record<Screen, string[]>> = {
   dashboard: ['Overview'],
   products: ['Commerce', 'Products'],
-  'product-editor': ['Commerce', 'Products', 'Tifinagh Frame Tee'],
+  'product-editor': ['Commerce', 'Products', 'Product Editor'],
   collections: ['Commerce', 'Collections'],
   'collection-editor': ['Commerce', 'Collections', 'Echoes of Stone'],
   orders: ['Commerce', 'Orders'],
@@ -70,10 +71,24 @@ const BREADCRUMBS: Partial<Record<Screen, string[]>> = {
 interface Props {
   screen: Screen
   onNavigate: (s: Screen) => void
+  onLogout: () => void | Promise<void>
 }
 
-export default function Topbar({ screen, onNavigate }: Props) {
+export default function Topbar({ screen, onNavigate, onLogout }: Props) {
   const crumbs = BREADCRUMBS[screen] ?? ['Overview']
+  const [profileOpen, setProfileOpen] = useState(false)
+  const profileRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileOpen(false)
+      }
+    }
+
+    window.addEventListener('mousedown', handleClickOutside)
+    return () => window.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
     <header style={{
@@ -113,7 +128,36 @@ export default function Topbar({ screen, onNavigate }: Props) {
         <span style={{ position: 'absolute', top: 6, right: 6, width: 7, height: 7, background: '#8C6B52', borderRadius: 999, border: '1.5px solid #F5F1EA' }} />
       </button>
 
-      <div style={{ width: 34, height: 34, borderRadius: 999, background: INDIGO, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: '#E7DFD2', cursor: 'pointer', flexShrink: 0 }}>AK</div>
+      <div ref={profileRef} style={{ position: 'relative', flexShrink: 0 }}>
+        <button
+          onClick={() => setProfileOpen(value => !value)}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+        >
+          <div style={{ width: 34, height: 34, borderRadius: 999, background: INDIGO, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: '#E7DFD2', flexShrink: 0 }}>AK</div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>Amine Kherrab</span>
+            <span style={{ fontSize: 10, color: TEXT_SEC }}>Super Admin</span>
+          </div>
+        </button>
+
+        {profileOpen && (
+          <div style={{ position: 'absolute', top: 'calc(100% + 10px)', right: 0, minWidth: 180, background: '#F5F1EA', border: `1px solid ${BORDER}`, borderRadius: 12, boxShadow: '0 16px 40px rgba(30,47,68,0.12)', overflow: 'hidden', zIndex: 1000 }}>
+            <div style={{ padding: '12px 14px', borderBottom: `1px solid ${BORDER}` }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>Amine Kherrab</div>
+              <div style={{ fontSize: 11, color: TEXT_SEC, marginTop: 2 }}>amine@izli.co</div>
+            </div>
+            <button
+              onClick={async () => {
+                setProfileOpen(false)
+                await onLogout()
+              }}
+              style={{ width: '100%', padding: '11px 14px', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer', fontSize: 13, color: TEXT, fontFamily: 'Inter, sans-serif' }}
+            >
+              Logout
+            </button>
+          </div>
+        )}
+      </div>
     </header>
   )
 }

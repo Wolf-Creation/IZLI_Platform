@@ -1,3 +1,14 @@
+## Shared Protocols
+
+Before responding to any request, always apply the following shared protocols:
+
+- .github/agents/README.md
+- .github/agents/protocols/IZLI-Legacy-Release-Protocol.md
+
+These documents define the business philosophy of the IZLI Platform.
+
+Their rules take precedence over implementation details whenever a conflict exists.
+
 ---
 description: "Use when designing IZLI AI strategy, AI architecture, AI agents, RAG systems, semantic search, recommendation engines, intelligent automations, and future AI capabilities aligned with the platform architecture."
 name: "IZLI AI Architect"

@@ -73,3 +73,33 @@ No entries yet.
   - Verified the front build still passes after the core/provider engine migration.
   - Clarified that Network tab `Fetch/XHR` output can still show local/static assets and is not itself proof of database access.
 - Notes: Latest changes were recorded after the final verification pass and Git push.
+
+### 2026-07-27 21:01
+
+- Session: Lecture du guide projet
+- Changes: Lu `project_guide`, `project_summary.md`, `IZLI-DOCS/README.md`, `IZLI-DOCS/SUMMARY.md`, `AGENTS.md`, et l’historique de session pour consolider la vision du projet.
+- Notes: Le projet est une plateforme IZLI à deux surfaces principales, Website et Admin, bâties sur un langage de design partagé et la couche métier IZLI OS.
+
+### 2026-07-27 21:11
+
+- Session: URL Website et redirection Admin
+- Changes: Branché le Website sur des URLs réelles par page, synchronisé l’état de navigation avec `window.history`, et ajouté la redirection vers l’Admin après login avec un compte de rôle `admin`.
+- Notes: Validation build réussie après les changements. Le flux demo conserve le site public en SPA, mais chaque page a maintenant son URL.
+
+### 2026-07-27 21:27
+
+- Session: Admin profile dropdown and collapsible sidebar
+- Changes: Added a functional profile/name menu in the Admin topbar with `Logout`, wired logout back to the Website `/login` page, and made the Admin sidebar collapse to icons on logo click with hover-to-expand behavior.
+- Notes: Build validated successfully after the interaction updates.
+
+### 2026-07-27 21:31
+
+- Session: Admin sidebar accordion behavior
+- Changes: Updated the Admin sidebar so all submenu groups are closed by default and only one group can stay open at a time; opening another group now closes the previous one automatically.
+- Notes: Build validated successfully after the sidebar accordion change.
+
+### 2026-07-27 21:56
+
+- Session: Iconify sidebar migration
+- Changes: Installed `@iconify/react` and replaced the Admin sidebar menu glyphs with Iconify icons for main menu items and submenu items.
+- Notes: Build validated successfully after the icon migration.

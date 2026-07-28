@@ -8,6 +8,15 @@ const PRODUCTS: Product[] = [
     name: 'Tifinagh Frame Tee',
     universe: 'Heritage',
     status: 'published',
+    releaseNumber: '01',
+    quantity: 150,
+    launchDate: '2026-03-15T09:00:00Z',
+    releaseStatus: 'live',
+    qrExperienceUrl: '/qr/tifinagh-frame-tee',
+    productPassportId: 'PP-2026-000125',
+    archiveTitle: 'Echoes of Stone',
+    storyTitle: 'The Geometry of Tifinagh',
+    productionNotes: 'Live release. QR, passport, labels, and packaging generated.',
     price: 89,
     currency: 'EUR',
     description: 'A heavyweight organic cotton tee featuring a bold Tifinagh script frame screen-printed across the chest. Each character is drawn from traditional Amazigh inscriptions found across North Africa.',
@@ -37,6 +46,15 @@ const PRODUCTS: Product[] = [
     name: 'Woven Sahara Overshirt',
     universe: 'Heritage',
     status: 'published',
+    releaseNumber: '02',
+    quantity: 250,
+    launchDate: '2026-04-08T09:00:00Z',
+    releaseStatus: 'live',
+    qrExperienceUrl: '/qr/woven-sahara-overshirt',
+    productPassportId: 'PP-2026-000126',
+    archiveTitle: 'Indigo Memory',
+    storyTitle: 'Weaving the Sahara',
+    productionNotes: 'Community-backed release with archival story pairing.',
     price: 195,
     currency: 'EUR',
     description: 'Crafted from hand-loomed Saharan wool by artisan weavers in the Draa Valley, this overshirt blends traditional desert weaving techniques with a modern silhouette.',
@@ -63,6 +81,15 @@ const PRODUCTS: Product[] = [
     name: 'Atlas Symbol Boxy Tee',
     universe: 'Essentials',
     status: 'published',
+    releaseNumber: '01',
+    quantity: 300,
+    launchDate: '2026-04-22T09:00:00Z',
+    releaseStatus: 'upcoming',
+    qrExperienceUrl: '/qr/atlas-symbol-boxy-tee',
+    productPassportId: 'PP-2026-000127',
+    archiveTitle: 'Atlas Marks',
+    storyTitle: 'The Atlas Symbol',
+    productionNotes: 'Ready for production package generation.',
     price: 65,
     currency: 'EUR',
     description: 'An oversized boxy-cut tee in garment-dyed cotton, embroidered with a single Atlas mountain symbol at the left chest. Minimal and wearable every day.',
@@ -90,6 +117,15 @@ const PRODUCTS: Product[] = [
     name: 'Berber Grid Track Jacket',
     universe: 'Studio',
     status: 'published',
+    releaseNumber: '01',
+    quantity: 180,
+    launchDate: '2026-05-12T09:00:00Z',
+    releaseStatus: 'ready',
+    qrExperienceUrl: '/qr/berber-grid-track-jacket',
+    productPassportId: 'PP-2026-000128',
+    archiveTitle: 'Studio Forms',
+    storyTitle: 'Grid in Motion',
+    productionNotes: 'Cutting and labeling package approved.',
     price: 245,
     currency: 'EUR',
     description: 'A structured track jacket with geometric Berber grid embroidery across the back panel, rendered in recycled polyester twill with a matte finish.',
@@ -116,6 +152,15 @@ const PRODUCTS: Product[] = [
     name: 'Medina Weave Trousers',
     universe: 'Heritage',
     status: 'published',
+    releaseNumber: '03',
+    quantity: 220,
+    launchDate: '2026-05-20T09:00:00Z',
+    releaseStatus: 'production',
+    qrExperienceUrl: '/qr/medina-weave-trousers',
+    productPassportId: 'PP-2026-000129',
+    archiveTitle: 'Medina Craft',
+    storyTitle: 'Handloom Routes',
+    productionNotes: 'Production files generated for workshop dispatch.',
     price: 165,
     currency: 'EUR',
     description: 'Wide-leg trousers woven on traditional handlooms in the medinas of Fez. The distinctive diagonal weave reflects centuries-old Moroccan craft traditions.',
@@ -142,6 +187,15 @@ const PRODUCTS: Product[] = [
     name: 'Community Pattern Tee — Vol. 1',
     universe: 'Community Lab',
     status: 'published',
+    releaseNumber: 'COM-01',
+    quantity: 120,
+    launchDate: '2026-06-03T09:00:00Z',
+    releaseStatus: 'live',
+    qrExperienceUrl: '/qr/community-pattern-tee-vol-1',
+    productPassportId: 'PP-2026-000130',
+    archiveTitle: 'Community Lab',
+    storyTitle: 'Co-designed Zellij',
+    productionNotes: 'Community edition published with voting feedback.',
     price: 75,
     currency: 'EUR',
     description: 'The first edition of our Community Lab series, featuring a Zellij-inspired pattern co-designed with community members from our Open Call. A portion of proceeds funds future community projects.',
@@ -183,17 +237,17 @@ export async function getProducts(filters?: { universe?: string; status?: string
     return results
   } catch {
     let results = [...PRODUCTS]
-  if (filters?.universe) {
-    results = results.filter(p => p.universe === filters.universe)
-  }
-  if (filters?.status) {
-    results = results.filter(p => p.status === filters.status)
-  }
-  if (filters?.search) {
-    const q = filters.search.toLowerCase()
-    results = results.filter(p => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q))
-  }
-  return Promise.resolve(results)
+    if (filters?.universe) {
+      results = results.filter(p => p.universe === filters.universe)
+    }
+    if (filters?.status) {
+      results = results.filter(p => p.status === filters.status)
+    }
+    if (filters?.search) {
+      const q = filters.search.toLowerCase()
+      results = results.filter(p => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q))
+    }
+    return Promise.resolve(results)
   }
 }
 
@@ -210,24 +264,33 @@ export async function createProduct(data: Partial<Product>): Promise<Product> {
     return await api.post<Product>('/resources/products', data as Record<string, unknown>)
   } catch {
     const product: Product = {
-    id: `prod-${Date.now()}`,
-    sku: data.sku ?? `IZL-NEW-${Date.now()}`,
-    name: data.name ?? 'New Product',
-    universe: data.universe ?? 'Essentials',
-    status: data.status ?? 'draft',
-    price: data.price ?? 0,
-    currency: data.currency ?? 'EUR',
-    description: data.description ?? '',
-    coverImageUrl: data.coverImageUrl ?? '',
-    images: data.images ?? [],
-    sizes: data.sizes ?? [],
-    materials: data.materials ?? [],
-    careInstructions: data.careInstructions ?? [],
-    collectionIds: data.collectionIds ?? [],
-    tags: data.tags ?? [],
-    createdAt: new Date().toISOString(),
-    ...data,
-  }
+      id: `prod-${Date.now()}`,
+      sku: data.sku ?? `IZL-NEW-${Date.now()}`,
+      name: data.name ?? 'New Product',
+      universe: data.universe ?? 'Essentials',
+      status: data.status ?? 'draft',
+      releaseNumber: data.releaseNumber ?? '01',
+      quantity: data.quantity ?? 150,
+      launchDate: data.launchDate ?? new Date().toISOString(),
+      releaseStatus: data.releaseStatus ?? 'draft',
+      qrExperienceUrl: data.qrExperienceUrl ?? '',
+      productPassportId: data.productPassportId ?? '',
+      archiveTitle: data.archiveTitle ?? '',
+      storyTitle: data.storyTitle ?? '',
+      productionNotes: data.productionNotes ?? '',
+      price: data.price ?? 0,
+      currency: data.currency ?? 'EUR',
+      description: data.description ?? '',
+      coverImageUrl: data.coverImageUrl ?? '',
+      images: data.images ?? [],
+      sizes: data.sizes ?? [],
+      materials: data.materials ?? [],
+      careInstructions: data.careInstructions ?? [],
+      collectionIds: data.collectionIds ?? [],
+      tags: data.tags ?? [],
+      createdAt: new Date().toISOString(),
+      ...data,
+    }
     PRODUCTS.push(product)
     return Promise.resolve(product)
   }

@@ -1,3 +1,14 @@
+## Shared Protocols
+
+Before responding to any request, always apply the following shared protocols:
+
+- .github/agents/README.md
+- .github/agents/protocols/IZLI-Legacy-Release-Protocol.md
+
+These documents define the business philosophy of the IZLI Platform.
+
+Their rules take precedence over implementation details whenever a conflict exists.
+
 ---
 description: "Use when defining, prioritizing, or specifying IZLI features, user stories, acceptance criteria, roadmaps, business rules, or cross-domain product scope across Website, Admin, and IZLI OS."
 name: "IZLI Product Owner"

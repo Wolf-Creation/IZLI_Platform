@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Screen } from './types'
 import WebsiteApp from './website/WebsiteApp'
+import { ADMIN_ROUTES, adminPathForScreen, adminStateFromPath } from './routes/admin'
+import { logout as authLogout } from './shared/services/auth'
 
 const INDIGO = '#1E2F44'
 const CREAM = '#E7DFD2'
@@ -67,15 +69,101 @@ import ProductionAnalytics from './screens/ProductionAnalytics'
 import RecommendationAnalytics from './screens/RecommendationAnalytics'
 
 export default function App() {
-  const [app, setApp] = useState<'admin' | 'website'>('admin')
-  const [screen, setScreen] = useState<Screen>('dashboard')
-  const navigate = (s: Screen) => setScreen(s)
+  const initialAdminState = adminStateFromPath(window.location.pathname)
+  const [app, setApp] = useState<'admin' | 'website'>(() => window.location.pathname.startsWith('/admin') ? 'admin' : 'website')
+  const [screen, setScreen] = useState<Screen>(initialAdminState.screen)
+  const [productEditorId, setProductEditorId] = useState<string | null>(initialAdminState.productEditorId)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarHovered, setSidebarHovered] = useState(false)
+  const navigate = (s: Screen) => {
+    const nextPath = adminPathForScreen(s, productEditorId)
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({}, '', nextPath)
+    }
+
+    setScreen(s)
+    if (s !== 'product-editor') {
+      setProductEditorId(null)
+    }
+  }
+
+  const openProductCreate = () => {
+    setProductEditorId(null)
+    if (window.location.pathname !== ADMIN_ROUTES.PRODUCT_NEW) {
+      window.history.pushState({}, '', ADMIN_ROUTES.PRODUCT_NEW)
+    }
+    setScreen('product-editor')
+  }
+
+  const openProductEdit = (id: string) => {
+    setProductEditorId(id)
+    const nextPath = adminPathForScreen('product-editor', id)
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({}, '', nextPath)
+    }
+    setScreen('product-editor')
+  }
+
+  const closeProductEditor = () => {
+    setProductEditorId(null)
+    if (window.location.pathname !== ADMIN_ROUTES.PRODUCTS) {
+      window.history.pushState({}, '', ADMIN_ROUTES.PRODUCTS)
+    }
+    setScreen('products')
+  }
+
+  useEffect(() => {
+    const syncFromLocation = () => {
+      const pathname = window.location.pathname
+      const nextApp = pathname.startsWith('/admin') ? 'admin' : 'website'
+      setApp(nextApp)
+
+      if (nextApp === 'admin') {
+        const nextState = adminStateFromPath(pathname)
+        setScreen(nextState.screen)
+        setProductEditorId(nextState.productEditorId)
+      }
+    }
+
+    window.addEventListener('popstate', syncFromLocation)
+    syncFromLocation()
+    return () => window.removeEventListener('popstate', syncFromLocation)
+  }, [])
+
+  const openAdmin = () => {
+    if (window.location.pathname !== ADMIN_ROUTES.DASHBOARD) {
+      window.history.pushState({}, '', ADMIN_ROUTES.DASHBOARD)
+    }
+    setApp('admin')
+    const nextState = adminStateFromPath(window.location.pathname)
+    setScreen(nextState.screen)
+    setProductEditorId(nextState.productEditorId)
+  }
+
+  const openWebsite = () => {
+    if (window.location.pathname !== '/') {
+      window.history.pushState({}, '', '/')
+    }
+    setApp('website')
+  }
+
+  const handleAdminLogout = async () => {
+    await authLogout()
+    if (window.location.pathname !== '/login') {
+      window.history.pushState({}, '', '/login')
+    }
+    setScreen('dashboard')
+    setProductEditorId(null)
+    setApp('website')
+  }
+
+  const sidebarWidth = sidebarCollapsed && !sidebarHovered ? 72 : 264
 
   function renderScreen() {
     switch (screen) {
-      case 'dashboard': return <Dashboard onNavigate={navigate} />
-      case 'products': return <ProductsList onNavigate={navigate} />
-      case 'product-editor': return <ProductEditor onNavigate={navigate} />
+      case 'dashboard': return <Dashboard onNavigate={navigate} onCreateProduct={openProductCreate} onEditProduct={openProductEdit} />
+      case 'products': return <ProductsList onNavigate={navigate} onCreateProduct={openProductCreate} onEditProduct={openProductEdit} />
+      case 'product-editor': return <ProductEditor onNavigate={navigate} productId={productEditorId} onDone={closeProductEditor} />
       case 'collections': return <CollectionsList onNavigate={navigate} />
       case 'collection-editor': return <CollectionEditor onNavigate={navigate} />
       case 'orders': return <OrdersList onNavigate={navigate} />
@@ -139,11 +227,11 @@ export default function App() {
   if (app === 'website') {
     return (
       <div style={{ position: 'relative' }}>
-        <WebsiteApp />
+        <WebsiteApp onAdminRequest={openAdmin} />
         {/* App switcher */}
         <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, background: INDIGO, borderRadius: 999, padding: '8px 16px 8px 12px', boxShadow: '0 4px 20px rgba(30,47,68,0.3)' }}>
           <span style={{ fontSize: 11, color: 'rgba(231,223,210,0.55)', fontFamily: 'Inter, sans-serif', letterSpacing: '0.04em' }}>IZLI</span>
-          <button onClick={() => setApp('admin')} style={{ padding: '6px 14px', background: CREAM, color: INDIGO, border: 'none', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', letterSpacing: '0.02em' }}>
+          <button onClick={openAdmin} style={{ padding: '6px 14px', background: CREAM, color: INDIGO, border: 'none', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', letterSpacing: '0.02em' }}>
             Admin →
           </button>
         </div>
@@ -153,9 +241,16 @@ export default function App() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#EDE8DF', fontFamily: 'Inter, sans-serif' }}>
-      <Sidebar active={screen} onNavigate={navigate} />
-      <div style={{ marginLeft: 264, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <Topbar screen={screen} onNavigate={navigate} />
+      <Sidebar
+        active={screen}
+        onNavigate={navigate}
+        collapsed={sidebarCollapsed}
+        hovered={sidebarHovered}
+        onToggleCollapse={() => setSidebarCollapsed(value => !value)}
+        onHoverChange={setSidebarHovered}
+      />
+      <div style={{ marginLeft: sidebarWidth, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'margin-left 0.18s ease' }}>
+        <Topbar screen={screen} onNavigate={navigate} onLogout={handleAdminLogout} />
         <main style={{ flex: 1, overflowY: 'auto' }}>
           {renderScreen()}
         </main>
@@ -163,7 +258,7 @@ export default function App() {
       {/* App switcher */}
       <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, background: INDIGO, borderRadius: 999, padding: '8px 16px 8px 12px', boxShadow: '0 4px 20px rgba(30,47,68,0.3)' }}>
         <span style={{ fontSize: 11, color: 'rgba(231,223,210,0.55)', fontFamily: 'Inter, sans-serif', letterSpacing: '0.04em' }}>IZLI</span>
-        <button onClick={() => setApp('website')} style={{ padding: '6px 14px', background: CREAM, color: INDIGO, border: 'none', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', letterSpacing: '0.02em' }}>
+        <button onClick={openWebsite} style={{ padding: '6px 14px', background: CREAM, color: INDIGO, border: 'none', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', letterSpacing: '0.02em' }}>
           Website →
         </button>
       </div>

@@ -39,13 +39,28 @@ const readStoredUser = (): User | null => {
   return raw ? JSON.parse(raw) as User : null
 }
 
+const inferRoleFromEmail = (email: string): User['role'] => {
+  const normalized = email.toLowerCase()
+  if (normalized.includes('admin')) return 'admin'
+  if (normalized.includes('owner')) return 'owner'
+  if (normalized.includes('moderator')) return 'moderator'
+  if (normalized.includes('viewer')) return 'viewer'
+  return 'editor'
+}
+
 export async function login(email: string, password: string): Promise<User> {
   try {
     const result = await api.post<{ user: User; accessToken: string }>('/auth/login', { email, password })
     persistSession(result.user, result.accessToken)
     return result.user
   } catch {
-    const user: User = { ...MOCK_USER, email, lastActiveAt: new Date().toISOString() }
+    const user: User = {
+      ...MOCK_USER,
+      email,
+      displayName: email.split('@')[0] || MOCK_USER.displayName,
+      role: inferRoleFromEmail(email),
+      lastActiveAt: new Date().toISOString(),
+    }
     persistSession(user)
     return user
   }

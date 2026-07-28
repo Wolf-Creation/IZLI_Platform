@@ -9,6 +9,8 @@ const SAGE = '#7D8470'
 
 interface Props {
   onNavigate: (s: Screen) => void
+  onCreateProduct: () => void
+  onEditProduct: (id: string) => void
 }
 
 function KpiCard({ label, value, delta, context, accent }: { label: string; value: string; delta: string; context: string; accent?: string }) {
@@ -64,7 +66,7 @@ function StatusChip({ status }: { status: string }) {
   )
 }
 
-export default function Dashboard({ onNavigate }: Props) {
+export default function Dashboard({ onNavigate, onCreateProduct, onEditProduct }: Props) {
   return (
     <div style={{ padding: '40px 48px', maxWidth: 1360, margin: '0 auto' }}>
       {/* Page header */}
@@ -76,7 +78,6 @@ export default function Dashboard({ onNavigate }: Props) {
           Here's what's happening across IZLI today — Wednesday, 9 July 2026.
         </div>
       </div>
-
       {/* KPI row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
         <KpiCard label="Revenue MTD" value="€48,320" delta="+12.4%" context="vs last month" />
@@ -144,13 +145,13 @@ export default function Dashboard({ onNavigate }: Props) {
               </thead>
               <tbody>
                 {[
-                  { name: 'Tifinagh Frame Tee', universe: 'Heritage', sold: 84, rev: '€3,780' },
-                  { name: 'Washed Indigo Heritage Tee', universe: 'Heritage', sold: 71, rev: '€3,195' },
-                  { name: 'Atlas Symbol Boxy Tee', universe: 'Essentials', sold: 56, rev: '€2,240' },
-                  { name: 'Community Lab Archive Jersey', universe: 'Community Lab', sold: 38, rev: '€2,850' },
+                  { id: 'prod-001', name: 'Tifinagh Frame Tee', universe: 'Heritage', sold: 84, rev: '€3,780' },
+                  { id: 'prod-002', name: 'Washed Indigo Heritage Tee', universe: 'Heritage', sold: 71, rev: '€3,195' },
+                  { id: 'prod-003', name: 'Atlas Symbol Boxy Tee', universe: 'Essentials', sold: 56, rev: '€2,240' },
+                  { id: 'prod-006', name: 'Community Lab Archive Jersey', universe: 'Community Lab', sold: 38, rev: '€2,850' },
                 ].map((row, i) => (
                   <tr key={i} style={{ borderBottom: `1px solid ${BORDER}`, cursor: 'pointer' }}
-                    onClick={() => onNavigate('product-editor')}
+                    onClick={() => onEditProduct(row.id)}
                     onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = '#EFE8DD'}
                     onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'}
                   >
@@ -208,14 +209,14 @@ export default function Dashboard({ onNavigate }: Props) {
           <div style={{ background: INDIGO, borderRadius: 20, padding: 24 }}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 500, color: '#E7DFD2', marginBottom: 16 }}>Quick Actions</div>
             {[
-              { label: 'Create Product', screen: 'product-editor' as Screen, icon: '◈' },
+              { label: 'Create Product', action: onCreateProduct, icon: '◈' },
               { label: 'Publish Story', screen: 'dashboard' as Screen, icon: '◫' },
               { label: 'Launch Challenge', screen: 'dashboard' as Screen, icon: '◇' },
               { label: 'Open Home Builder', screen: 'dashboard' as Screen, icon: '◻' },
             ].map((a, i) => (
               <button
                 key={i}
-                onClick={() => onNavigate(a.screen)}
+                onClick={() => 'action' in a && a.action ? a.action() : onNavigate(a.screen!)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',

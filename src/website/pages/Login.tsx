@@ -1,11 +1,21 @@
 import { useState } from 'react'
 import { INDIGO, TEXT, TEXT_SEC, BORDER, BG, SURFACE, SURFACE_2, CREAM, FONT_SERIF, FONT_SANS } from '../../tokens'
 import type { WebPage } from '../types'
+import type { User } from '../../entities'
+import { useAuthentication } from '../../shared/hooks/useAuthentication'
 
-interface Props { onNavigate: (p: WebPage) => void }
+interface Props {
+  onNavigate: (p: WebPage) => void
+  onAuthenticated: (user: User) => void
+}
 
-export default function Login({ onNavigate }: Props) {
+export default function Login({ onNavigate, onAuthenticated }: Props) {
   const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [fullName, setFullName] = useState('Youcef Benali')
+  const [email, setEmail] = useState('you@example.com')
+  const [password, setPassword] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const { login, register } = useAuthentication()
 
   const inp: React.CSSProperties = {
     width: '100%', padding: '11px 14px',
@@ -63,20 +73,40 @@ export default function Login({ onNavigate }: Props) {
           </p>
 
           {/* Form */}
-          <form onSubmit={e => { e.preventDefault(); onNavigate('profile') }}>
+          <form onSubmit={async e => {
+            e.preventDefault()
+            setSubmitting(true)
+
+            try {
+              if (mode === 'login') {
+                const user = await login(email, password)
+                if (user.role === 'admin') {
+                  onAuthenticated(user)
+                } else {
+                  onNavigate('profile')
+                }
+                return
+              }
+
+              await register(email, password, fullName)
+              onNavigate('profile')
+            } finally {
+              setSubmitting(false)
+            }
+          }}>
             {mode === 'register' && (
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT_SEC, marginBottom: 6, letterSpacing: '0.02em' }}>Full Name</label>
-                <input style={inp} type="text" placeholder="Youcef Benali" />
+                <input value={fullName} onChange={e => setFullName(e.target.value)} style={inp} type="text" placeholder="Youcef Benali" />
               </div>
             )}
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT_SEC, marginBottom: 6, letterSpacing: '0.02em' }}>Email Address</label>
-              <input style={inp} type="email" placeholder="you@example.com" />
+              <input value={email} onChange={e => setEmail(e.target.value)} style={inp} type="email" placeholder="you@example.com" />
             </div>
             <div style={{ marginBottom: mode === 'login' ? 8 : 16 }}>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT_SEC, marginBottom: 6, letterSpacing: '0.02em' }}>Password</label>
-              <input style={inp} type="password" placeholder="••••••••" />
+              <input value={password} onChange={e => setPassword(e.target.value)} style={inp} type="password" placeholder="••••••••" />
             </div>
             {mode === 'login' && (
               <div style={{ textAlign: 'right', marginBottom: 24 }}>
@@ -93,8 +123,8 @@ export default function Login({ onNavigate }: Props) {
                 </label>
               </div>
             )}
-            <button type="submit" style={{ width: '100%', padding: '13px', background: INDIGO, color: CREAM, border: 'none', borderRadius: 11, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: FONT_SANS, marginBottom: 16 }}>
-              {mode === 'login' ? 'Sign In' : 'Create Account'}
+            <button type="submit" disabled={submitting} style={{ width: '100%', padding: '13px', background: INDIGO, color: CREAM, border: 'none', borderRadius: 11, fontSize: 14, fontWeight: 600, cursor: submitting ? 'wait' : 'pointer', fontFamily: FONT_SANS, marginBottom: 16, opacity: submitting ? 0.8 : 1 }}>
+              {submitting ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}
             </button>
           </form>
 
