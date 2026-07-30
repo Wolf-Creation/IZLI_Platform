@@ -113,3 +113,13 @@ No entries yet.
   - Added a new admin entry point screen `Legacies` with API-backed CRUD, auto-saved drafts, relation cards, content graph, analytics, AI helper, and version history.
   - Updated admin navigation, breadcrumbs, and routing so `Legacies` is the entry point for the Legacy module.
 - Notes: Front build validated successfully after the module wiring, and the new backend model loads without syntax errors.
+
+### 2026-07-28 09:34
+
+- Session: Legacy modal and CRUD expansion
+- Changes:
+  - Rebuilt `src/screens/Legacies.tsx` into a complete CRUD surface aligned with the provided Legacy model.
+  - Expanded the view modal with dashboard stats, relation cards, design language, heritage language, SEO, and quick-access actions.
+  - Added create/edit modal fields for general, visual identity, design language, references, relations, and status.
+  - Added delete and archive actions backed by the generic resources API.
+- Notes: Validation build passed after the screen rewrite, and the live Admin Legacy page now renders the updated modal content.

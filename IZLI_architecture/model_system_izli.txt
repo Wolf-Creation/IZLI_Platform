@@ -1,0 +1,20 @@
+Legacy
+    ↓
+Archive
+    ↓
+Collection
+    ↓
+Product
+    ↓
+Legacy Release
+    ↓
+Purchase
+    ↓
+Keeper
+    ↓
+Keeper Circle
+        ├── Stories
+        ├── Voting
+        ├── Community Lab
+        ├── Events
+        └── Rewards

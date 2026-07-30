@@ -1,0 +1,6 @@
+| Nom actuel         | Nom recommandé         | Rôle                                                                                                         |
+| ------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Style Guide        | **Design Language**    | Définit les règles créatives d'une Legacy, d'une Collection ou d'un Produit.                                 |
+| Recommendation Hub | **Discovery Hub**      | Organise tout ce que le client peut découvrir ensuite : produits, Archives, Stories, événements, communauté. |
+| Product Passport   | **Digital Passport**   | Carte d'identité numérique et authentification de chaque produit.                                            |
+| QR Experience      | **Journey Experience** | Expérience interactive déclenchée après le scan du QR Code.                                                  |

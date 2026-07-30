@@ -5,24 +5,29 @@ type JsonValue = Record<string, unknown> | Array<unknown> | string | number | bo
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
-      'Content-Type': 'application/json',
       ...(init?.headers ?? {}),
     },
     ...init,
   })
 
-  const payload = await response.json().catch(() => null)
+  const contentType = response.headers.get('content-type') ?? ''
+  const payload = contentType.includes('application/json') ? await response.json().catch(() => null) : await response.text().catch(() => null)
 
   if (!response.ok) {
     throw new Error((payload as { message?: string } | null)?.message ?? 'Request failed')
   }
 
-  return (payload as { data?: T }).data as T
+  if (contentType.includes('application/json')) {
+    return (payload as { data?: T }).data as T
+  }
+
+  return payload as T
 }
 
 export const api = {
   get: <T>(path: string) => request<T>(path),
-  post: <T>(path: string, body?: JsonValue) => request<T>(path, { method: 'POST', body: JSON.stringify(body ?? {}) }),
-  patch: <T>(path: string, body?: JsonValue) => request<T>(path, { method: 'PATCH', body: JSON.stringify(body ?? {}) }),
+  post: <T>(path: string, body?: JsonValue) => request<T>(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}) }),
+  patch: <T>(path: string, body?: JsonValue) => request<T>(path, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}) }),
   del: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  upload: <T>(path: string, formData: FormData) => request<T>(path, { method: 'POST', body: formData }),
 }

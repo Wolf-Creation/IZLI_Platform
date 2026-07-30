@@ -1,3 +1,5 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -14,6 +16,8 @@ app.use(helmet());
 app.use(corsMiddleware);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+const assetsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'assets');
+app.use('/uploads', express.static(assetsDir));
 app.use(cookieParser());
 app.use(morgan('dev'));
 
