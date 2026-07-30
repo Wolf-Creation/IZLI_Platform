@@ -123,3 +123,18 @@ No entries yet.
   - Added create/edit modal fields for general, visual identity, design language, references, relations, and status.
   - Added delete and archive actions backed by the generic resources API.
 - Notes: Validation build passed after the screen rewrite, and the live Admin Legacy page now renders the updated modal content.
+
+### 2026-07-30 15:00
+
+- Session: Lecture du guide projet
+- Changes:
+  - Lu `project_guide` pour confirmer l'ordre de lecture recommande, les regles de travail et le suivi obligatoire dans `History_session_001`.
+- Notes: Le guide demande de s'aligner sur `project_summary.md`, `IZLI-DOCS/`, les agents specialises, puis de documenter les actions de session.
+
+### 2026-07-30 15:04
+
+- Session: Legacy card click action
+- Changes:
+  - Added click and keyboard activation on each Legacy Explorer card to open the legacy detail modal.
+  - Stopped propagation from the card action buttons so Edit, Duplicate, Archive and Open keep their intended behavior.
+- Notes: Front build validated successfully after the interaction update.

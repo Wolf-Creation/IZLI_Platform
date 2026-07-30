@@ -763,7 +763,20 @@ export default function Legacies({ onNavigate }: Props) {
 
       <div className="legacy-grid">
         {filteredLegacies.map(legacy => (
-          <div key={legacy.id} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 22, overflow: 'hidden', boxShadow: '0 10px 30px rgba(30,47,68,0.05)' }}>
+          <div
+            key={legacy.id}
+            role="button"
+            tabIndex={0}
+            aria-label={`Open ${legacy.name} legacy details`}
+            onClick={() => openLegacy(legacy)}
+            onKeyDown={event => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                openLegacy(legacy)
+              }
+            }}
+            style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 22, overflow: 'hidden', boxShadow: '0 10px 30px rgba(30,47,68,0.05)', cursor: 'pointer', outline: 'none' }}
+          >
             <div style={{ position: 'relative', height: 220, background: `url(${legacy.coverImageUrl || legacy.heroImageUrl}) center/cover no-repeat` }}>
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(30,47,68,0.08), rgba(30,47,68,0.72))' }} />
               <div style={{ position: 'absolute', top: 12, left: 12, right: 12, display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
@@ -785,7 +798,7 @@ export default function Legacies({ onNavigate }: Props) {
                 <StatTile label="Collections" value={legacy.analytics.collections} />
                 <StatTile label="Products" value={legacy.analytics.products} />
               </div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 16 }}>
+              <div onClick={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 16 }}>
                 <button onClick={() => openLegacy(legacy)} style={{ background: INDIGO, color: CREME, border: 'none', borderRadius: 10, padding: '8px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>Open</button>
                 <button onClick={() => startEdit(legacy)} style={{ background: 'transparent', color: TEXT, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '8px 10px', cursor: 'pointer', fontSize: 12 }}>Edit</button>
                 <button onClick={() => duplicateLegacy(legacy)} style={{ background: 'transparent', color: TEXT, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '8px 10px', cursor: 'pointer', fontSize: 12 }}>Duplicate</button>
