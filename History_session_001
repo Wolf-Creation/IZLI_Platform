@@ -138,3 +138,28 @@ No entries yet.
   - Added click and keyboard activation on each Legacy Explorer card to open the legacy detail modal.
   - Stopped propagation from the card action buttons so Edit, Duplicate, Archive and Open keep their intended behavior.
 - Notes: Front build validated successfully after the interaction update.
+
+### 2026-07-30
+
+- Session: Lecture du guide projet et alignement du contexte
+- Changes:
+  - Lu `project_guide`, puis les sources de contexte prescrites : `project_summary.md`, `IZLI-DOCS/` et `.github/agents/README.md`.
+  - Confirmé les règles d’architecture, de documentation et de routage par domaine.
+- Notes: Les prochaines interventions préserveront la séparation Website/Admin, les entités partagées, le Content Graph, IZLI OS et le Design System.
+
+### 2026-07-30
+
+- Session: Démarrage du projet
+- Changes:
+  - Vérifié que la prévisualisation Vite est déjà active sur le port 8443.
+  - Confirmé une réponse HTTP 200 de l’application locale.
+- Notes: Le projet est accessible dans le panneau de prévisualisation et accepte le rechargement à chaud.
+
+### 2026-07-30
+
+- Session: Correction du lancement de la prévisualisation
+- Changes:
+  - Diagnostiqué l’arrêt du processus Vite démarré en arrière-plan par l’environnement.
+  - Relancé Vite dans la session de développement active sur le port 8443.
+  - Validé la disponibilité de l’application avec une réponse HTTP 200 sur `127.0.0.1:8443`.
+- Notes: Le serveur reste attaché à la session active afin que le panneau de prévisualisation puisse y accéder.

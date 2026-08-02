@@ -1,7 +1,257 @@
+import { useEffect, useMemo, useState } from 'react'
 import { INDIGO, TEXT, TEXT_SEC, BORDER, CLAY, SAGE, SAND, BG, SURFACE, SURFACE_2, CREAM, FONT_SERIF, FONT_SANS } from '../../tokens'
 import type { WebPage } from '../types'
+import bg001 from '../../assets/Website_img/bg_001.png'
+import bg002 from '../../assets/Website_img/bg_002.png'
 
 interface Props { onNavigate: (p: WebPage) => void }
+
+type SliderPhase = 'scene-1' | 'transition-to-2' | 'scene-2' | 'transition-to-1'
+
+const SLIDER_TIMING = {
+  scene: 7200,
+  transition: 1800,
+}
+
+const HERO_SCENES = [
+  {
+    id: 'scene-1',
+    tag: 'High Atlas Ksar',
+    title: 'Front View / Heritage Frame',
+    description: 'Warm atlas light, atmospheric haze and a fixed foreground model facing front to reveal the chest embroidery.',
+    image: bg001,
+    focus: 'center top',
+    modelImage: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1200&h=1600&fit=crop&auto=format',
+    modelAlt: 'Front view model wearing the heritage t-shirt',
+  },
+  {
+    id: 'scene-2',
+    tag: 'Maghrebi Desert',
+    title: 'Back View / Campaign Reveal',
+    description: 'Golden dunes, distant mountains and cinematic sunset light now revealing the back embroidery in full.',
+    image: bg002,
+    focus: 'center bottom',
+    modelImage: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=1200&h=1600&fit=crop&auto=format',
+    modelAlt: 'Back view model wearing the heritage t-shirt',
+  },
+] as const
+
+function easeInOutCubic(progress: number) {
+  return progress < 0.5
+    ? 4 * progress * progress * progress
+    : 1 - Math.pow(-2 * progress + 2, 3) / 2
+}
+
+function CinematicHeroSlider({ onNavigate }: Props) {
+  const [phase, setPhase] = useState<SliderPhase>('scene-1')
+  const [motionProgress, setMotionProgress] = useState(0)
+
+  useEffect(() => {
+    let raf = 0
+    let started = performance.now()
+    let running = true
+
+    const tick = (now: number) => {
+      if (!running) return
+      const elapsed = now - started
+
+      if (phase === 'scene-1' || phase === 'scene-2') {
+        const progress = Math.min(elapsed / SLIDER_TIMING.scene, 1)
+        setMotionProgress(easeInOutCubic(progress))
+
+        if (progress >= 1) {
+          started = now
+          setPhase(current => current === 'scene-1' ? 'transition-to-2' : 'transition-to-1')
+        }
+      } else {
+        const progress = Math.min(elapsed / SLIDER_TIMING.transition, 1)
+        setMotionProgress(progress)
+
+        if (progress >= 1) {
+          started = now
+          setPhase(current => current === 'transition-to-2' ? 'scene-2' : 'scene-1')
+        }
+      }
+
+      raf = window.requestAnimationFrame(tick)
+    }
+
+    raf = window.requestAnimationFrame(tick)
+    return () => {
+      running = false
+      window.cancelAnimationFrame(raf)
+    }
+  }, [phase])
+
+  const currentScene = phase === 'scene-2' || phase === 'transition-to-1' ? HERO_SCENES[1] : HERO_SCENES[0]
+  const nextScene = currentScene.id === 'scene-1' ? HERO_SCENES[1] : HERO_SCENES[0]
+  const transitionDirection = currentScene.id === 'scene-1' ? 1 : -1
+  const isTransition = phase === 'transition-to-2' || phase === 'transition-to-1'
+  const sceneZoom = phase === 'scene-1' || phase === 'scene-2' ? 1 + motionProgress * 0.15 : 1.15
+  const transitionFade = isTransition ? motionProgress : 0
+  const blurAmount = isTransition ? 10 + motionProgress * 18 : 0
+  const shakeX = isTransition ? Math.sin(motionProgress * Math.PI * 7) * 4 : 0
+  const shakeY = isTransition ? Math.cos(motionProgress * Math.PI * 6) * 2 : 0
+  const foregroundRotation = phase === 'scene-1'
+    ? -2
+    : phase === 'scene-2'
+      ? 2
+      : transitionDirection > 0
+        ? -2 + motionProgress * 22
+        : 20 - motionProgress * 22
+  const foregroundScale = 1 + (isTransition ? motionProgress * 0.015 : 0)
+
+  const heroOverlay = useMemo(() => {
+    const sceneAOpacity = currentScene.id === 'scene-1' ? 1 - transitionFade : transitionFade
+    const sceneBOpacity = currentScene.id === 'scene-1' ? transitionFade : 1 - transitionFade
+
+    return { sceneAOpacity, sceneBOpacity }
+  }, [currentScene.id, transitionFade])
+
+  const progressLabel = phase === 'scene-1' || phase === 'transition-to-2'
+    ? 'Scene 01 · Back view'
+    : 'Scene 02 · Front view'
+
+  return (
+    <section style={{ position: 'relative', minHeight: '88vh', overflow: 'hidden', background: '#120D09' }}>
+      <style>{`@keyframes heroFloat { 0%, 100% { transform: translate3d(0, 0, 0); } 50% { transform: translate3d(0, -8px, 0); } }`}</style>
+
+      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: '#120D09' }} />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'transparent',
+            transform: `scale(${sceneZoom}) translate3d(${shakeX}px, ${shakeY}px, 0)`,
+            filter: `${isTransition ? `blur(${blurAmount}px) saturate(1.12)` : 'saturate(1.04)'}`,
+            opacity: heroOverlay.sceneAOpacity,
+            transition: isTransition ? 'none' : 'opacity 900ms ease, filter 900ms ease, transform 900ms ease',
+            willChange: 'transform, opacity, filter',
+          }}
+        />
+        <img
+          src={currentScene.image}
+          alt={currentScene.tag}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: currentScene.focus,
+            transform: `scale(${sceneZoom}) translate3d(${shakeX}px, ${shakeY}px, 0)`,
+            filter: `${isTransition ? `blur(${blurAmount}px) saturate(1.08)` : 'saturate(1.05)'}`,
+            opacity: heroOverlay.sceneAOpacity,
+            transition: isTransition ? 'none' : 'opacity 900ms ease, filter 900ms ease, transform 900ms ease',
+            willChange: 'transform, opacity, filter',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'transparent',
+            transform: `scale(${1.05 + (isTransition ? motionProgress * 0.05 : 0)}) translate3d(${shakeX * -0.7}px, ${shakeY * 0.5}px, 0)`,
+            filter: `${isTransition ? `blur(${Math.max(blurAmount - 6, 0)}px) saturate(1.08)` : 'blur(8px) saturate(1.02)'}`,
+            opacity: heroOverlay.sceneBOpacity,
+            transition: isTransition ? 'none' : 'opacity 900ms ease, filter 900ms ease, transform 900ms ease',
+            willChange: 'transform, opacity, filter',
+          }}
+        />
+        <img
+          src={nextScene.image}
+          alt={nextScene.tag}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: nextScene.focus,
+            transform: `scale(${1.05 + (isTransition ? motionProgress * 0.05 : 0)}) translate3d(${shakeX * -0.7}px, ${shakeY * 0.5}px, 0)`,
+            filter: `${isTransition ? `blur(${Math.max(blurAmount - 6, 0)}px) saturate(1.08)` : 'blur(8px) saturate(1.02)'}`,
+            opacity: heroOverlay.sceneBOpacity,
+            transition: isTransition ? 'none' : 'opacity 900ms ease, filter 900ms ease, transform 900ms ease',
+            willChange: 'transform, opacity, filter',
+          }}
+        />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(8,6,4,0.32) 0%, rgba(8,6,4,0.12) 54%, rgba(8,6,4,0.06) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 55% 44%, rgba(255,208,142,0.12), transparent 30%), linear-gradient(to top, rgba(8,6,4,0.18), transparent 36%)' }} />
+      </div>
+
+      <div style={{ position: 'relative', zIndex: 2, display: 'grid', gridTemplateColumns: 'minmax(360px, 0.92fr) minmax(0, 1.08fr)', minHeight: '88vh' }}>
+        <div style={{ position: 'relative', padding: '56px 52px 56px 64px', display: 'flex', alignItems: 'stretch', justifyContent: 'space-between', gap: 24 }}>
+          <div style={{ width: '42%', minWidth: 280, display: 'flex', flexDirection: 'column', justifyContent: 'center', zIndex: 3 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(231,223,210,0.72)', marginBottom: 18 }}>ROOTED IN HERITAGE. MADE FOR TODAY.</div>
+            <h1 style={{ fontFamily: FONT_SERIF, fontSize: 70, fontWeight: 500, color: CREAM, lineHeight: 0.95, margin: 0, marginBottom: 20, maxWidth: 360 }}>MODERN<br />AMAZIGH<br />WEAR</h1>
+            <p style={{ fontSize: 17, color: 'rgba(231,223,210,0.72)', lineHeight: 1.7, maxWidth: 260, margin: 0, marginBottom: 28 }}>Heritage.<br />Transmission.<br />Freedom. Community.</p>
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+              <button onClick={() => onNavigate('collections')} style={{ padding: '12px 20px', background: '#C9AB7D', color: '#231812', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_SANS, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Explore the Collection</button>
+              <button onClick={() => onNavigate('stories')} style={{ padding: '12px 20px', background: 'rgba(255,255,255,0.02)', color: CREAM, border: '1px solid rgba(231,223,210,0.18)', borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: FONT_SANS, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Discover Our World</button>
+            </div>
+          </div>
+
+          <div style={{ flex: 1, position: 'relative', minHeight: '88vh', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', inset: 0, perspective: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ position: 'absolute', inset: '4% 8% 12%', borderRadius: 28, background: 'linear-gradient(180deg, rgba(255,255,255,0.08), rgba(0,0,0,0.08))', boxShadow: '0 18px 80px rgba(0,0,0,0.22)', opacity: 0.22, transform: `scale(${1 + motionProgress * 0.02}) translate3d(${motionProgress * 10}px, 0, 0)`, filter: isTransition ? 'blur(18px)' : 'blur(12px)' }} />
+            </div>
+
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', transform: `translate3d(${isTransition ? motionProgress * 14 * transitionDirection : 0}px, 0, 0)` }}>
+              <div style={{ width: 'min(46vw, 700px)', height: 'min(76vh, 820px)', position: 'relative', transformStyle: 'preserve-3d', transform: `translate3d(0, ${isTransition ? motionProgress * -10 : 0}px, 0) rotateY(${foregroundRotation}deg) scale(${foregroundScale})`, animation: 'heroFloat 10s ease-in-out infinite', boxShadow: '0 24px 120px rgba(0,0,0,0.24)', borderRadius: 28, overflow: 'hidden', background: 'rgba(255,255,255,0.02)', opacity: 0.98, filter: 'contrast(1.05) saturate(1.02)' }}>
+                <img
+                  src={currentScene.modelImage}
+                  alt={currentScene.modelAlt}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: currentScene.id === 'scene-1' ? 'center top' : 'center center', display: 'block' }}
+                />
+                <div style={{ position: 'absolute', inset: 0, background: currentScene.id === 'scene-1' ? 'linear-gradient(180deg, rgba(60,29,12,0.00) 0%, rgba(60,29,12,0.10) 100%)' : 'linear-gradient(180deg, rgba(60,29,12,0.00) 0%, rgba(60,29,12,0.06) 100%)' }} />
+                <div style={{ position: 'absolute', inset: 0, background: isTransition ? 'linear-gradient(90deg, rgba(255,255,255,0.00), rgba(255,255,255,0.12), rgba(255,255,255,0.00))' : 'transparent', opacity: motionProgress * 0.7, mixBlendMode: 'screen' }} />
+              </div>
+            </div>
+
+            <div style={{ position: 'absolute', left: 22, right: 22, bottom: 22, display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 16, zIndex: 3 }}>
+              <div style={{ maxWidth: 300, color: 'rgba(231,223,210,0.84)', fontSize: 13, lineHeight: 1.7 }}>{progressLabel}</div>
+              <div style={{ fontSize: 11, color: 'rgba(231,223,210,0.64)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>{phase === 'scene-1' || phase === 'transition-to-2' ? 'Scene 01 → Scene 02' : 'Scene 02 → Scene 01'}</div>
+            </div>
+          </div>
+
+          <div style={{ width: 320, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', zIndex: 3 }}>
+            <div style={{ width: '100%', background: 'linear-gradient(180deg, rgba(246,239,230,0.94), rgba(238,229,217,0.90))', color: '#241B16', borderRadius: 6, padding: '18px 18px 16px', boxShadow: '0 18px 60px rgba(0,0,0,0.24)', backdropFilter: 'blur(8px)' }}>
+              <div style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#7B6A5D', marginBottom: 10 }}>Current Release</div>
+              <div style={{ fontFamily: FONT_SERIF, fontSize: 26, lineHeight: 1.03, marginBottom: 10 }}>Release 001</div>
+              <div style={{ fontSize: 11, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#5E5249', lineHeight: 1.7, marginBottom: 14 }}>Rbor Heavy Tee<br />Sand Beige</div>
+              <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>79 TND</div>
+              <div style={{ height: 1, background: 'rgba(36,27,22,0.10)', marginBottom: 12 }} />
+              <div style={{ display: 'grid', gap: 10, marginBottom: 16 }}>
+                {[
+                  '100 Points',
+                  'Release 001 Badge',
+                  'Keeper Circle Event #1',
+                ].map(item => (
+                  <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#4E4137', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                    <span style={{ width: 14, height: 14, borderRadius: 999, border: '1px solid rgba(36,27,22,0.45)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 9 }}>⌁</span>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: '#75685D', marginBottom: 8 }}>
+                <span>Limited Stock</span>
+                <span>120 / 300</span>
+              </div>
+              <div style={{ height: 3, borderRadius: 999, background: 'rgba(36,27,22,0.08)', overflow: 'hidden', marginBottom: 18 }}>
+                <div style={{ width: '40%', height: '100%', background: '#B89C77' }} />
+              </div>
+              <button style={{ width: '100%', padding: '12px 16px', background: '#120D09', color: CREAM, border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <span>Shop Release 001</span>
+                <span>→</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
 
 const UNIVERSES = [
   { name: 'Heritage', desc: 'Rooted in Amazigh craft', img: 'photo-1490481651871-ab68de25d43d', color: INDIGO },
@@ -19,47 +269,7 @@ const STORIES = [
 export default function Home({ onNavigate }: Props) {
   return (
     <div style={{ background: BG }}>
-
-      {/* ── Hero ───────────────────────────────────────────────────────── */}
-      <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: '88vh', overflow: 'hidden' }}>
-        {/* Left — editorial text */}
-        <div style={{ background: INDIGO, padding: '80px 64px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: SAND, marginBottom: 28 }}>
-            New Collection — SS 2026
-          </div>
-          <h1 style={{ fontFamily: FONT_SERIF, fontSize: 72, fontWeight: 500, color: CREAM, lineHeight: 1.05, margin: 0, marginBottom: 28 }}>
-            Echoes<br />of Stone.
-          </h1>
-          <p style={{ fontSize: 16, color: 'rgba(231,223,210,0.65)', lineHeight: 1.7, maxWidth: 360, margin: 0, marginBottom: 40 }}>
-            A collection rooted in the memory of Atlas stone marks — patterns that predate script, carried forward in cloth.
-          </p>
-          <div style={{ display: 'flex', gap: 14 }}>
-            <button
-              onClick={() => onNavigate('collections')}
-              style={{ padding: '13px 28px', background: CREAM, color: INDIGO, border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: FONT_SANS }}
-            >
-              Shop Collection
-            </button>
-            <button
-              onClick={() => onNavigate('stories')}
-              style={{ padding: '13px 24px', background: 'transparent', color: CREAM, border: '1px solid rgba(231,223,210,0.3)', borderRadius: 10, fontSize: 14, cursor: 'pointer', fontFamily: FONT_SANS }}
-            >
-              Discover the Story →
-            </button>
-          </div>
-        </div>
-        {/* Right — editorial image */}
-        <div style={{ overflow: 'hidden', position: 'relative' }}>
-          <img
-            src="https://images.unsplash.com/photo-1617196034183-421b4040ed20?w=900&h=1100&fit=crop&auto=format"
-            alt="Echoes of Stone collection"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          />
-          <div style={{ position: 'absolute', bottom: 24, right: 24, background: 'rgba(245,241,234,0.92)', backdropFilter: 'blur(8px)', borderRadius: 10, padding: '10px 16px', fontSize: 11, color: INDIGO, fontFamily: FONT_SANS, fontWeight: 500 }}>
-            Tifinagh Frame Tee — Heritage · €95
-          </div>
-        </div>
-      </section>
+      <CinematicHeroSlider onNavigate={onNavigate} />
 
       {/* ── Shop by Universe ───────────────────────────────────────────── */}
       <section style={{ padding: '88px 40px', maxWidth: 1280, margin: '0 auto' }}>
