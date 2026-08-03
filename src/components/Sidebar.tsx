@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Screen } from '../types'
+import izliLogo from '../assets/logo/IZLI_logo.svg'
 
 const INDIGO = '#1E2F44'
 const BORDER = '#D8D0C4'
@@ -217,12 +218,9 @@ export default function Sidebar({ active, onNavigate, collapsed, hovered, onTogg
           onClick={onToggleCollapse}
           style={{ display: 'flex', alignItems: 'center', gap: expanded ? 10 : 0, width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
         >
-          <div style={{ width: 32, height: 32, background: INDIGO, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <span style={{ color: '#E7DFD2', fontSize: 14, fontFamily: "'Playfair Display', serif", fontWeight: 600 }}>I</span>
-          </div>
+          <img src={izliLogo} alt="IZLI" style={{ width: expanded ? 72 : 34, height: 'auto', display: 'block', flexShrink: 0 }} />
           {expanded && (
             <div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 600, fontSize: 17, color: INDIGO, letterSpacing: '0.02em' }}>IZLI</div>
               <div style={{ fontSize: 10, color: TEXT_SEC, letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 1 }}>Admin</div>
             </div>
           )}

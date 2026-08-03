@@ -3,6 +3,7 @@ import type { Screen } from './types'
 import WebsiteApp from './website/WebsiteApp'
 import { ADMIN_ROUTES, adminPathForScreen, adminStateFromPath } from './routes/admin'
 import { logout as authLogout } from './shared/services/auth'
+import izliLogo from './assets/logo/IZLI_logo.svg'
 
 const INDIGO = '#1E2F44'
 const CREAM = '#E7DFD2'
@@ -232,7 +233,7 @@ export default function App() {
         <WebsiteApp onAdminRequest={openAdmin} />
         {/* App switcher */}
         <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, background: INDIGO, borderRadius: 999, padding: '8px 16px 8px 12px', boxShadow: '0 4px 20px rgba(30,47,68,0.3)' }}>
-          <span style={{ fontSize: 11, color: 'rgba(231,223,210,0.55)', fontFamily: 'Inter, sans-serif', letterSpacing: '0.04em' }}>IZLI</span>
+          <img src={izliLogo} alt="IZLI" style={{ width: 28, height: 'auto', display: 'block' }} />
           <button onClick={openAdmin} style={{ padding: '6px 14px', background: CREAM, color: INDIGO, border: 'none', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', letterSpacing: '0.02em' }}>
             Admin →
           </button>
@@ -259,7 +260,7 @@ export default function App() {
       </div>
       {/* App switcher */}
       <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, background: INDIGO, borderRadius: 999, padding: '8px 16px 8px 12px', boxShadow: '0 4px 20px rgba(30,47,68,0.3)' }}>
-        <span style={{ fontSize: 11, color: 'rgba(231,223,210,0.55)', fontFamily: 'Inter, sans-serif', letterSpacing: '0.04em' }}>IZLI</span>
+        <img src={izliLogo} alt="IZLI" style={{ width: 28, height: 'auto', display: 'block' }} />
         <button onClick={openWebsite} style={{ padding: '6px 14px', background: CREAM, color: INDIGO, border: 'none', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', letterSpacing: '0.02em' }}>
           Website →
         </button>

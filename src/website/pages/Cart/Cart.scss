@@ -1,0 +1,25 @@
+.cart-page { background: #ede8df; min-height: 100vh; }
+.cart-shell { max-width: 1180px; margin: 0 auto; padding: 56px 40px 88px; }
+.cart-title { font-family: Canela, Georgia, serif; font-size: 44px; font-weight: 500; color: #1e2f44; margin: 0 0 40px; }
+.cart-title__count { font-size: 24px; color: #b7aa91; }
+.cart-empty { text-align: center; padding: 80px 0; }
+.cart-empty__text { font-family: Canela, Georgia, serif; font-size: 24px; color: #506681; margin-bottom: 12px; }
+.cart-layout { display: grid; grid-template-columns: 1fr 360px; gap: 40px; align-items: start; }
+.cart-items, .cart-summary, .cart-promo { background: #f5f1ea; border: 1px solid #d8d0c4; border-radius: 20px; }
+.cart-item { display: flex; gap: 20px; padding: 24px; }
+.cart-item + .cart-item { border-top: 1px solid #d8d0c4; }
+.cart-item__img { width: 100px; height: 120px; border-radius: 12px; overflow: hidden; flex-shrink: 0; }
+.cart-item__img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cart-item__top { display: flex; justify-content: space-between; align-items: flex-start; }
+.cart-item__name, .cart-summary__title { font-family: Canela, Georgia, serif; color: #1e2f44; }
+.cart-item__name { font-size: 18px; font-weight: 500; margin-bottom: 4px; }
+.cart-item__actions { display: flex; align-items: center; justify-content: space-between; }
+.cart-summary { padding: 28px; margin-bottom: 16px; position: sticky; top: 88px; }
+.cart-summary__title { font-size: 20px; margin-bottom: 24px; }
+.cart-summary__line { display: flex; justify-content: space-between; margin-bottom: 12px; }
+.cart-btn, .cart-btn--secondary, .cart-promo button { border: none; cursor: pointer; font-family: 'Inter', sans-serif; }
+.cart-btn { width: 100%; padding: 14px; background: #1e2f44; color: #e7dfd2; border-radius: 12px; font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.cart-btn--secondary { width: 100%; padding: 12px; background: transparent; color: #506681; border: 1px solid #d8d0c4; border-radius: 12px; font-size: 13px; }
+.cart-promo { padding: 20px; }
+.cart-promo__row { display: flex; }
+@media (max-width: 960px) { .cart-layout { grid-template-columns: 1fr; } .cart-summary { position: static; } }

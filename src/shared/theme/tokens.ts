@@ -24,7 +24,7 @@ export const INFO_BG = '#E8EDF3'
 
 // ─── Typography ───────────────────────────────────────────────────────────────
 
-export const FONT_SERIF = "'Playfair Display', Georgia, serif"
+export const FONT_SERIF = "Canela, Georgia, serif"
 export const FONT_SANS = "'Inter', system-ui, sans-serif"
 export const FONT_MONO = "'JetBrains Mono', monospace"
 

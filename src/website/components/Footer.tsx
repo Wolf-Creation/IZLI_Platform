@@ -1,5 +1,6 @@
 import { INDIGO, CREAM, SAND, FONT_SERIF, FONT_SANS, FONT_MONO } from '../../tokens'
 import type { WebPage } from '../types'
+import izliLogo from '../../assets/logo/IZLI_logo.svg'
 
 interface Props { onNavigate: (p: WebPage) => void }
 
@@ -52,10 +53,7 @@ export default function Footer({ onNavigate }: Props) {
           {/* Brand column */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 18 }}>
-              <div style={{ width: 30, height: 30, background: 'rgba(231,223,210,0.15)', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ color: CREAM, fontSize: 13, fontFamily: FONT_SERIF, fontWeight: 600 }}>I</span>
-              </div>
-              <span style={{ fontFamily: FONT_SERIF, fontWeight: 600, fontSize: 17, color: CREAM, letterSpacing: '0.02em' }}>IZLI</span>
+              <img src={izliLogo} alt="IZLI" style={{ width: 60, height: 'auto', display: 'block' }} />
             </div>
             <p style={{ fontSize: 13, color: 'rgba(231,223,210,0.6)', lineHeight: 1.7, marginBottom: 20, maxWidth: 260 }}>
               Contemporary menswear rooted in Amazigh heritage. Designed with intention, made to last.

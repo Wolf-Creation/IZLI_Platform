@@ -1,0 +1,22 @@
+.collections-page { background: #ede8df; min-height: 100vh; }
+.collections-header { background: #f5f1ea; border-bottom: 1px solid #d8d0c4; padding: 56px 40px 40px; }
+.collections-shell { max-width: 1280px; margin: 0 auto; }
+.collections-kicker { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #506681; margin-bottom: 12px; }
+.collections-title { font-family: Canela, Georgia, serif; font-size: 52px; font-weight: 500; color: #1e2f44; margin: 0 0 16px; }
+.collections-sub { font-size: 15px; color: #506681; line-height: 1.7; max-width: 480px; margin: 0; }
+.collections-filters { border-bottom: 1px solid #d8d0c4; background: #f5f1ea; }
+.collections-filters__row { display: flex; gap: 0; overflow-x: auto; }
+.collections-filter { padding: 14px 20px; font-size: 13px; border: none; background: transparent; cursor: pointer; font-family: 'Inter', sans-serif; border-bottom: 2px solid transparent; color: #506681; }
+.collections-filter.is-active { color: #1e2f44; border-bottom-color: #1e2f44; font-weight: 500; }
+.collections-grid { max-width: 1280px; margin: 0 auto; padding: 56px 40px; }
+.collections-grid__inner { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+.collection-card { background: none; border: none; padding: 0; cursor: pointer; text-align: left; }
+.collection-card__image { border-radius: 16px; overflow: hidden; margin-bottom: 20px; position: relative; aspect-ratio: 4 / 5; background: #f5f1ea; }
+.collection-card__image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.collection-card__overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(30,47,68,0.55) 0%, transparent 55%); }
+.collection-card__badge { position: absolute; top: 16px; left: 16px; display: flex; gap: 8px; }
+.collection-card__name { position: absolute; bottom: 20px; left: 20px; right: 20px; font-family: Canela, Georgia, serif; font-size: 24px; font-weight: 500; color: #e7dfd2; line-height: 1.2; }
+.collection-card__meta { font-size: 12px; color: rgba(231,223,210,0.7); margin-top: 4px; }
+.collection-card__pill { font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+@media (max-width: 1100px) { .collections-grid__inner { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 720px) { .collections-header, .collections-grid { padding-left: 20px; padding-right: 20px; } .collections-grid__inner { grid-template-columns: 1fr; } .collections-title { font-size: 36px; } }
