@@ -6,7 +6,7 @@ export const revealVariant = {
     transition: {
       duration: 0.7,
       delay,
-      ease: [0.22, 1, 0.36, 1],
+      ease: [0.22, 1, 0.36, 1] as const,
     },
   }),
 }
@@ -20,7 +20,7 @@ export const releaseCardVariant = {
     filter: 'blur(0px)',
     transition: {
       duration: 0.8,
-      ease: [0.22, 1, 0.36, 1],
+      ease: [0.22, 1, 0.36, 1] as const,
       delay: 0.42,
     },
   },

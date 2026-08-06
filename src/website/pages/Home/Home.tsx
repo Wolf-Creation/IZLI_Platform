@@ -1,4 +1,4 @@
-import { INDIGO, TEXT, TEXT_SEC, BORDER, CLAY, SAGE, BG, SURFACE, SURFACE_2, CREAM, FONT_SERIF, FONT_SANS } from '../../../tokens'
+import { BG, FONT_SERIF } from '../../../tokens'
 import { motion } from 'framer-motion'
 import type { WebPage } from '../../types'
 import Hero from './Hero/Hero'
@@ -6,16 +6,28 @@ import tShirtsImage from '../../../assets/Website_img/Shop/categories/T-shirts.p
 import shirtsImage from '../../../assets/Website_img/Shop/categories/Shirts.png'
 import bandanaImage from '../../../assets/Website_img/Shop/categories/bandana.png'
 import pantsImage from '../../../assets/Website_img/Shop/categories/pants.png'
+import bannerImage from '../../../assets/Website_img/banner/banner_001.png'
+import arrowTopRightIcon from '../../../assets/icons/arrow_top_right.svg'
+import motifIcon from '../../../assets/icons/motif_001.svg'
 import './Home.scss'
 
 interface Props { onNavigate: (p: WebPage) => void }
 
-const SHOP_CATEGORIES = [
-  { name: 'T-Shirts', desc: 'Core graphics, archival cuts, everyday ritual.', img: tShirtsImage, icon: '✳' },
-  { name: 'Shirts', desc: 'Structured layers with a tailored, quiet silhouette.', img: shirtsImage, icon: '✦' },
-  { name: 'Bandanas', desc: 'Small-format pieces with symbolic embroidery.', img: bandanaImage, icon: '◈' },
-  { name: 'Pants', desc: 'Easy structure, clean line, and a grounded silhouette.', img: pantsImage, icon: '△' },
-]
+const SHOP_CARDS = [
+  { type: 'category', area: 'tshirts', name: 'T-Shirts', img: tShirtsImage, icon: '✳' },
+  {
+    type: 'banner',
+    area: 'banner',
+    eyebrow: 'New Collection',
+    title: 'Desert Maghrebin',
+    desc: 'Rooted in heritage. Designed for now.',
+    img: bannerImage,
+    cta: 'Discover the collection',
+  },
+  { type: 'category', area: 'bandanas', name: 'Bandanas', img: bandanaImage, icon: '◈' },
+  { type: 'category', area: 'shirts', name: 'Shirts', img: shirtsImage, icon: '✦' },
+  { type: 'category', area: 'pants', name: 'Pants', img: pantsImage, icon: '△' },
+] as const
 
 const SERVICE_FEATURES = [
   {
@@ -97,9 +109,67 @@ const categoryCardVariants = {
     transition: {
       duration: 0.8,
       delay,
-      ease: [0.22, 1, 0.36, 1],
+      ease: [0.22, 1, 0.36, 1] as const,
     },
   }),
+}
+
+const BANNER_MOTIF_REPEAT_COUNT = 10
+
+const bannerCardVariants = {
+  hidden: { opacity: 0, y: 28 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.75,
+      ease: [0.22, 1, 0.36, 1] as const,
+    },
+  },
+}
+
+const bannerRailVariants = {
+  hidden: (direction: 'left' | 'right') => ({
+    opacity: 0,
+    x: direction === 'left' ? 14 : -14,
+  }),
+  visible: (direction: 'left' | 'right') => ({
+    opacity: 1,
+    x: 0,
+    transition: {
+      duration: 0.45,
+      ease: [0.22, 1, 0.36, 1] as const,
+      delay: direction === 'left' ? 0.34 : 0.42,
+    },
+  }),
+}
+
+const bannerContentVariants = {
+  hidden: { opacity: 0, y: 18, scale: 0.94 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.55,
+      ease: [0.22, 1, 0.36, 1] as const,
+      delay: 0.5,
+    },
+  },
+}
+
+const bannerCtaVariants = {
+  hidden: { opacity: 0, y: 24, scale: 0.88 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.5,
+      ease: [0.22, 1, 0.36, 1] as const,
+      delay: 0.72,
+    },
+  },
 }
 
 export default function Home({ onNavigate }: Props) {
@@ -112,7 +182,7 @@ export default function Home({ onNavigate }: Props) {
           {SERVICE_FEATURES.map(feature => (
             <div key={feature.title} className="home-services-bar__item">
               <div className="home-services-bar__icon">{feature.icon}</div>
-              <div>
+              <div className="home-services-description">
                 <div className="home-services-bar__title">{feature.title}</div>
                 <div className="home-services-bar__desc">{feature.desc}</div>
               </div>
@@ -132,31 +202,81 @@ export default function Home({ onNavigate }: Props) {
             <button onClick={() => onNavigate('shop')} className="home-inline-link">View all →</button>
           </div>
 
-          <div className="home-category-grid">
-            {SHOP_CATEGORIES.map(category => (
-              <motion.button
-                key={category.name}
-                onClick={() => onNavigate('shop')}
-                className="home-category-card"
-                variants={categoryCardVariants}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, amount: 0.25 }}
-                custom={SHOP_CATEGORIES.indexOf(category) * 0.08}
-              >
-                <img src={category.img} alt={category.name} className="home-category-card__image" />
-                <div className="home-category-card__overlay" />
-                <div className="home-category-card__badge">{category.icon}</div>
-                <div className="home-category-card__content">
-                  <div className="home-category-card__name">{category.name}</div>
-                  <div className="home-category-card__desc">{category.desc}</div>
-                  <div className="home-category-card__link">
-                    <span>Explore</span>
-                    <span className="home-category-card__link-icon">→</span>
+          <div className="home-shop-showcase">
+            {SHOP_CARDS.map((card, index) => {
+              if (card.type === 'banner') {
+                return (
+                  <motion.button
+                    key={card.title}
+                    onClick={() => onNavigate('collections')}
+                    className="home-shop-card home-shop-card--banner"
+                    style={{ gridArea: card.area }}
+                    variants={bannerCardVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, amount: 0.25 }}
+                  >
+                    <img src={card.img} alt={card.title} className="home-shop-card__image" />
+                    <div className="home-shop-card__overlay home-shop-card__overlay--banner" />
+                    <motion.div className="home-shop-card__banner-rail home-shop-card__banner-rail--left" custom="left" variants={bannerRailVariants} aria-hidden="true">
+                      <span className="home-shop-card__banner-rail-motif">
+                        {Array.from({ length: BANNER_MOTIF_REPEAT_COUNT }).map((_, motifIndex) => (
+                          <img key={`left-motif-${motifIndex}`} src={motifIcon} alt="" className="home-shop-card__banner-rail-motif-icon" />
+                        ))}
+                      </span>
+                      <span className="home-shop-card__banner-rail-line" />
+                    </motion.div>
+                    <motion.div className="home-shop-card__banner-rail home-shop-card__banner-rail--right" custom="right" variants={bannerRailVariants} aria-hidden="true">
+                      <span className="home-shop-card__banner-rail-line" />
+                      <span className="home-shop-card__banner-rail-motif">
+                        {Array.from({ length: BANNER_MOTIF_REPEAT_COUNT }).map((_, motifIndex) => (
+                          <img key={`right-motif-${motifIndex}`} src={motifIcon} alt="" className="home-shop-card__banner-rail-motif-icon" />
+                        ))}
+                      </span>
+                    </motion.div>
+                    <motion.div className="home-shop-card__banner-content" variants={bannerContentVariants}>
+                      <div className="home-shop-card__banner-top">
+                        <div className="home-shop-card__banner-eyebrow">{card.eyebrow}</div>
+                        <div className="home-shop-card__banner-mark">✶</div>
+                        <h3 className="home-shop-card__banner-title">
+                          <span>Desert</span>
+                          <span>Maghrebin</span>
+                        </h3>
+                        <p className="home-shop-card__banner-desc">{card.desc}</p>
+                      </div>
+                      <motion.div className="home-shop-card__banner-cta hero-action-button hero-action-button--primary" variants={bannerCtaVariants}>
+                        <span>{card.cta}</span>
+                        <span className="hero-action-button__arrow">→</span>
+                      </motion.div>
+                    </motion.div>
+                  </motion.button>
+                )
+              }
+
+              return (
+                <motion.button
+                  key={card.name}
+                  onClick={() => onNavigate('shop')}
+                  className={`home-shop-card home-shop-card--${card.name.toLowerCase().replace(/[^a-z]+/g, '-')}`}
+                  style={{ gridArea: card.area }}
+                  variants={categoryCardVariants}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, amount: 0.25 }}
+                  custom={index * 0.08}
+                >
+                  <img src={card.img} alt={card.name} className="home-shop-card__image" />
+                  <div className="home-shop-card__overlay" />
+                  {/* <div className="home-shop-card__badge">{card.icon}</div> */}
+                  <div className="home-shop-card__corner-icon" aria-hidden="true">
+                    <img src={arrowTopRightIcon} alt="" />
                   </div>
-                </div>
-              </motion.button>
-            ))}
+                  <div className="home-shop-card__content">
+                    <div className="home-shop-card__name">{card.name}</div>
+                  </div>
+                </motion.button>
+              )
+            })}
           </div>
         </div>
       </section>

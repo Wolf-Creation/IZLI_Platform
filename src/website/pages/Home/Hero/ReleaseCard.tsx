@@ -1,6 +1,6 @@
 import { useMotionValue, useSpring } from 'framer-motion'
 import { motion } from 'framer-motion'
-import { CREAM, FONT_SERIF } from '../../../../tokens'
+import { FONT_SERIF } from '../../../../tokens'
 import { releaseCardVariant } from './HeroAnimations'
 import type { ParallaxPoint } from './HeroParallax'
 
@@ -28,7 +28,6 @@ export default function ReleaseCard({ parallax }: Props) {
   const handlePointerLeave = () => {
     rotateX.set(0)
     rotateY.set(0)
-    setPointer({ x: 50, y: 50 })
   }
 
   return (

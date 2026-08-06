@@ -1,6 +1,8 @@
-import { INDIGO, TEXT_SEC, BORDER, SURFACE, CREAM, CLAY, FONT_SERIF, FONT_SANS } from '../../tokens'
+import { useEffect, useState } from 'react'
+import { INDIGO, TEXT_SEC, BORDER, SURFACE, CREAM, CLAY, FONT_SANS } from '../../tokens'
 import type { WebPage } from '../types'
 import izliLogo from '../../assets/logo/IZLI_logo.svg'
+import './Navbar.scss'
 
 interface Props {
   current: WebPage
@@ -35,30 +37,121 @@ function IconUser() {
   return <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3.2" /><path d="M5.5 19c1.6-3.7 11.4-3.7 13 0" /></svg>
 }
 
+function IconHeart() {
+  return <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M20.4 6.6a5.2 5.2 0 0 0-7.4 0L12 7.6l-1-1a5.2 5.2 0 0 0-7.4 7.4l1 1 7.4 7.4 7.4-7.4 1-1a5.2 5.2 0 0 0 0-7.4Z" /></svg>
+}
+
 function IconCart() {
   return <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 5h2l2.2 9.2a1.4 1.4 0 0 0 1.4 1.1h7.9a1.4 1.4 0 0 0 1.4-1.1L21 8H6.1" /><circle cx="10" cy="19" r="1.4" /><circle cx="17" cy="19" r="1.4" /></svg>
 }
 
+function IconMenu() {
+  return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16" /><path d="M4 12h16" /><path d="M4 18h16" /></svg>
+}
+
+function IconClose() {
+  return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12" /><path d="M18 6 6 18" /></svg>
+}
+
 export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
+  const [menuOpen, setMenuOpen] = useState(false)
   const isHome = current === 'home'
   const links = isHome ? HOME_NAV_LINKS : NAV_LINKS
 
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return undefined
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = menuOpen ? 'hidden' : previousOverflow
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [menuOpen])
+
+  const navigateAndClose = (page: WebPage) => {
+    setMenuOpen(false)
+    onNavigate(page)
+  }
+
+  const renderMobileHeader = () => (
+    <div className={`navbar__mobile-bar ${isHome ? 'navbar__mobile-bar--home' : 'navbar__mobile-bar--default'}`}>
+      <div className="navbar__mobile-left">
+        <button type="button" onClick={() => setMenuOpen(true)} className="navbar__mobile-toggle" aria-label="Open menu">
+          <IconMenu />
+        </button>
+        <button onClick={() => onNavigate('home')} className="navbar__mobile-logo" aria-label="Go home">
+          <img src={izliLogo} alt="IZLI" />
+        </button>
+      </div>
+
+      <div className="navbar__mobile-actions">
+        <button title="Search" className="navbar__mobile-action" aria-label="Search">
+          <IconSearch />
+        </button>
+        <button title="Favorites" className="navbar__mobile-action" aria-label="Favorites">
+          <IconHeart />
+        </button>
+        <button onClick={() => onNavigate('cart')} title="Cart" className="navbar__mobile-action navbar__mobile-action--cart" aria-label="Cart">
+          <IconCart />
+          {cartCount > 0 && <span className="navbar__mobile-cart-badge">{cartCount}</span>}
+        </button>
+      </div>
+    </div>
+  )
+
+  const renderMobileMenu = () => (
+    <div className={`navbar-mobile-menu${menuOpen ? ' is-open' : ''}`} aria-hidden={!menuOpen}>
+      <div className="navbar-mobile-menu__panel">
+        <div className="navbar-mobile-menu__top">
+          <button onClick={() => navigateAndClose('home')} className="navbar-mobile-menu__logo" aria-label="Go home">
+            <img src={izliLogo} alt="IZLI" className="navbar-mobile-menu__logo-image" />
+          </button>
+          <button type="button" onClick={() => setMenuOpen(false)} className="navbar-mobile-menu__close" aria-label="Close menu">
+            <IconClose />
+          </button>
+        </div>
+
+        <nav className="navbar-mobile-menu__nav">
+          {links.map(({ label, page }) => (
+            <button
+              key={`${label}-${page}`}
+              onClick={() => navigateAndClose(page)}
+              className={`navbar-mobile-menu__link${current === page ? ' is-active' : ''}`}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="navbar-mobile-menu__footer">
+          <button onClick={() => navigateAndClose('login')} className="navbar-mobile-menu__login">Connexion</button>
+          <button onClick={() => navigateAndClose('cart')} className="navbar-mobile-menu__cart">Cart {cartCount > 0 ? `(${cartCount})` : ''}</button>
+        </div>
+      </div>
+    </div>
+  )
+
   if (isHome) {
     return (
-      <header style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 220, color: CREAM, background: 'rgba(10,7,5,0.34)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', boxShadow: '0 6px 24px rgba(0,0,0,0.18)' }}>
-        <div style={{ height: 35, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.88)', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(245,238,228,0.72)', fontFamily: FONT_SANS }}>
+      <header className="navbar navbar--home" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 220, color: CREAM, background: 'rgba(10,7,5,0.34)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', boxShadow: '0 6px 24px rgba(0,0,0,0.18)' }}>
+        <div className="navbar__announcement" style={{ height: 35, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.88)', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(245,238,228,0.72)', fontFamily: FONT_SANS }}>
           Free shipping over 150 TND · Become a Keeper & unlock exclusive rewards
         </div>
-        <div style={{ height: 72, background: 'rgba(10,7,5,0.24)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-          <div style={{ width: '100vw', height: '100%', display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 20, padding: '0 52px 0 64px' }}>
+        {renderMobileHeader()}
+        <div className="navbar__desktop-bar" style={{ height: 72, background: 'rgba(10,7,5,0.24)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          <div className="navbar__desktop-inner" style={{ width: '100vw', height: '100%', display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 20, padding: '0 64px' }}>
             <button
               onClick={() => onNavigate('home')}
+              className="navbar__logo"
               style={{ display: 'flex', alignItems: 'center', gap: 10, justifySelf: 'start', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: CREAM }}
             >
               <img src={izliLogo} alt="IZLI" style={{ width: 76, height: 'auto', display: 'block' }} />
             </button>
 
-            <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 30, whiteSpace: 'nowrap' }}>
+            <nav className="navbar__desktop-nav" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 30, whiteSpace: 'nowrap' }}>
               {links.map(({ label, page }) => (
                 <button
                   key={`${label}-${page}`}
@@ -82,8 +175,9 @@ export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
               ))}
             </nav>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 14 }}>
+            <div className="navbar__desktop-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 14 }}>
               <button title="Search" style={{ width: 32, height: 32, display: 'grid', placeItems: 'center', border: 'none', background: 'transparent', color: 'rgba(245,238,228,0.82)', borderRadius: 999, cursor: 'pointer' }}><IconSearch /></button>
+              <button title="Favorites" style={{ width: 32, height: 32, display: 'grid', placeItems: 'center', border: 'none', background: 'transparent', color: 'rgba(245,238,228,0.82)', borderRadius: 999, cursor: 'pointer' }}><IconHeart /></button>
               <button onClick={() => onNavigate('login')} title="Account" style={{ width: 32, height: 32, display: 'grid', placeItems: 'center', border: 'none', background: 'transparent', color: 'rgba(245,238,228,0.82)', borderRadius: 999, cursor: 'pointer' }}><IconUser /></button>
               <button onClick={() => onNavigate('cart')} title="Cart" style={{ position: 'relative', width: 32, height: 32, display: 'grid', placeItems: 'center', border: 'none', background: 'transparent', color: 'rgba(245,238,228,0.82)', borderRadius: 999, cursor: 'pointer' }}>
                 <IconCart />
@@ -96,12 +190,13 @@ export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
             </div>
           </div>
         </div>
+        {renderMobileMenu()}
       </header>
     )
   }
 
   return (
-    <header style={{
+    <header className="navbar navbar--default" style={{
       height: 64,
       background: SURFACE,
       borderBottom: `1px solid ${BORDER}`,
@@ -110,7 +205,8 @@ export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
       zIndex: 200,
       width: '100%',
     }}>
-      <div style={{
+      {renderMobileHeader()}
+      <div className="navbar__desktop-inner" style={{
         maxWidth: 1280,
         margin: '0 auto',
         padding: '0 40px',
@@ -122,13 +218,14 @@ export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
         {/* Logo */}
         <button
           onClick={() => onNavigate('home')}
+          className="navbar__logo"
           style={{ display: 'flex', alignItems: 'center', gap: 9, marginRight: 52, background: 'none', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }}
         >
           <img src={izliLogo} alt="IZLI" style={{ width: 56, height: 'auto', display: 'block' }} />
         </button>
 
         {/* Nav links */}
-        <nav style={{ display: 'flex', gap: 36, flex: 1 }}>
+        <nav className="navbar__desktop-nav" style={{ display: 'flex', gap: 36, flex: 1 }}>
           {links.map(({ label, page }) => (
             <button
               key={`${label}-${page}`}
@@ -151,9 +248,12 @@ export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
         </nav>
 
         {/* Right actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+        <div className="navbar__desktop-actions" style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           {/* Search */}
           <button style={{ fontSize: 16, color: TEXT_SEC, background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>⌕</button>
+
+          {/* Favorites */}
+          <button style={{ fontSize: 16, color: TEXT_SEC, background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>♡</button>
 
           {/* About / Events */}
           <button
@@ -192,6 +292,7 @@ export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
           </button>
         </div>
       </div>
+      {renderMobileMenu()}
     </header>
   )
 }
