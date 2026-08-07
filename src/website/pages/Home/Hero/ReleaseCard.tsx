@@ -1,5 +1,5 @@
-import { useMotionValue, useSpring } from 'framer-motion'
-import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
+import { motion, useMotionValue, useSpring } from 'framer-motion'
 import { FONT_SERIF } from '../../../../tokens'
 import { releaseCardVariant } from './HeroAnimations'
 import type { ParallaxPoint } from './HeroParallax'
@@ -9,10 +9,33 @@ interface Props {
 }
 
 export default function ReleaseCard({ parallax }: Props) {
+  const [enableEntranceAnimation, setEnableEntranceAnimation] = useState(() => {
+    if (typeof window === 'undefined') {
+      return true
+    }
+
+    return window.innerWidth >= 768
+  })
+
   const rotateX = useMotionValue(0)
   const rotateY = useMotionValue(0)
   const smoothRotateX = useSpring(rotateX, { stiffness: 180, damping: 22 })
   const smoothRotateY = useSpring(rotateY, { stiffness: 180, damping: 22 })
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)')
+
+    const updateAnimationState = () => {
+      setEnableEntranceAnimation(!mediaQuery.matches)
+    }
+
+    updateAnimationState()
+    mediaQuery.addEventListener('change', updateAnimationState)
+
+    return () => {
+      mediaQuery.removeEventListener('change', updateAnimationState)
+    }
+  }, [])
 
   const handlePointerMove = (event: React.PointerEvent<HTMLElement>) => {
     const rect = event.currentTarget.getBoundingClientRect()
@@ -33,10 +56,10 @@ export default function ReleaseCard({ parallax }: Props) {
   return (
     <motion.aside
       className="hero-release-card"
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.35 }}
-      variants={releaseCardVariant}
+      initial={enableEntranceAnimation ? 'hidden' : false}
+      whileInView={enableEntranceAnimation ? 'visible' : undefined}
+      viewport={enableEntranceAnimation ? { once: true, amount: 0.35 } : undefined}
+      variants={enableEntranceAnimation ? releaseCardVariant : undefined}
     >
       <div className="hero-release-card__parallax" style={{ transform: `translate3d(${parallax.x * 0.35}px, ${parallax.y * 0.35}px, 0)` }}>
         <motion.div
@@ -74,10 +97,10 @@ export default function ReleaseCard({ parallax }: Props) {
             <div className="hero-release-card__progress">
               <motion.div
                 className="hero-release-card__progress-bar"
-                initial={{ width: '0%' }}
-                whileInView={{ width: '40%' }}
-                viewport={{ once: true, amount: 0.5 }}
-                transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+                initial={enableEntranceAnimation ? { width: '0%' } : false}
+                whileInView={enableEntranceAnimation ? { width: '40%' } : undefined}
+                viewport={enableEntranceAnimation ? { once: true, amount: 0.5 } : undefined}
+                transition={enableEntranceAnimation ? { duration: 1.1, ease: [0.22, 1, 0.36, 1] } : undefined}
               />
             </div>
             <button type="button" className="hero-release-card__button">

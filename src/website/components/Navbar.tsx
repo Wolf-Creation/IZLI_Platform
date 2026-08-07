@@ -101,7 +101,7 @@ export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
         </button>
       </div>
 
-      <div className="navbar__mobile-actions">
+      <div className="navbar__mobile-actions flex">
         <button title="Search" className="navbar__mobile-action" aria-label="Search">
           <IconSearch />
         </button>

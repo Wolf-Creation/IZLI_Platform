@@ -20,7 +20,7 @@ export const HERO_SCENES: HeroScene[] = [
   {
     id: 0,
     tag: 'Ksar de l\'Atlas',
-    title: 'Wear YOUR MEMORY',
+    title: 'Face avant / Héritage vivant',
     description: 'Inspired by Amazigh heritage, crafted for today. Every piece carries the spirit of the Atlas.',
     image: bg001,
     focus: 'center top',

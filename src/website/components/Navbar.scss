@@ -15,7 +15,10 @@
 }
 
 .navbar__mobile-bar {
-  display: block;
+  display: none;
+  width: 100%;
+  justify-content: space-between;
+  padding-inline: 64px;
 }
 
 .navbar__mobile-left,
