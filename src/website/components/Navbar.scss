@@ -1,32 +1,62 @@
 .navbar {
   position: relative;
+  --navbar-logo-color: #e7dfd2;
+  --navbar-icon-color: rgba(245, 238, 228, 0.82);
+}
+
+.navbar--default {
+  --navbar-logo-color: #1c1916;
+  --navbar-icon-color: #1c1916;
+}
+
+.navbar-mobile-menu {
+  --navbar-logo-color: #1c1916;
+  --navbar-icon-color: #1c1916;
 }
 
 .navbar__mobile-bar {
-  display: none;
+  display: block;
 }
 
 .navbar__mobile-left,
-.navbar__mobile-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.navbar__logo-mark * {
+  fill: currentColor !important;
+  stroke: currentColor !important;
 }
 
-.navbar__mobile-logo {
-  display: inline-flex;
+.navbar__logo-mark--desktop {
+  width: 76px;
   align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  padding: 0;
+  gap: 10px;
   cursor: pointer;
 }
 
-.navbar__mobile-logo img {
-  width: 72px;
-  height: auto;
+.navbar__logo-mark {
+  display: inline-flex;
+  color: var(--navbar-logo-color);
+}
+
+.navbar__logo-mark svg {
   display: block;
+  width: 100%;
+  height: auto;
+}
+
+.navbar__logo-mark svg * {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+.navbar__logo-mark--desktop {
+  width: 76px;
+}
+
+.navbar__logo-mark--mobile {
+  width: 72px;
+}
+
+.navbar__logo-mark--menu {
+  width: 74px;
 }
 
 .navbar__mobile-action {
@@ -39,6 +69,11 @@
   color: inherit;
   cursor: pointer;
   border-radius: 999px;
+}
+
+.navbar__mobile-action svg,
+.navbar__mobile-toggle svg {
+  color: var(--navbar-icon-color);
 }
 
 .navbar__mobile-action--cart {
@@ -130,12 +165,6 @@
   cursor: pointer;
 }
 
-.navbar-mobile-menu__logo-image {
-  width: 74px;
-  height: auto;
-  display: block;
-}
-
 .navbar-mobile-menu__close {
   justify-self: end;
   width: 40px;
@@ -223,6 +252,8 @@
     padding: 0 16px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(10, 7, 5, 0.24);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
   }
 
   .navbar--home .navbar__desktop-inner,
@@ -246,7 +277,7 @@
     display: inline-flex !important;
   }
 
-  .navbar__mobile-logo img {
+  .navbar__logo-mark--mobile {
     width: 68px !important;
   }
 }

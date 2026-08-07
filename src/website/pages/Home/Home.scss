@@ -1564,6 +1564,8 @@
       'tshirts banner'
       'shirts banner'
       'bandanas pants';
+    grid-template-rows: repeat(3, 350px);
+    grid-auto-rows: 350px;
   }
 
   .home-shop-card--banner {

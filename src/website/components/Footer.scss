@@ -1,5 +1,21 @@
 .site-footer {
   background: #1e2f44;
+  --site-footer-logo-color: #e7dfd2;
+}
+
+.site-footer__logo-mark {
+  display: block;
+  color: var(--site-footer-logo-color);
+}
+
+.site-footer__logo-mark {
+  width: 60px;
+  height: auto;
+}
+
+.site-footer__logo-mark * {
+  fill: currentColor !important;
+  stroke: currentColor !important;
 }
 
 @media (max-width: 1023px) {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { INDIGO, TEXT_SEC, BORDER, SURFACE, CREAM, CLAY, FONT_SANS } from '../../tokens'
 import type { WebPage } from '../types'
-import izliLogo from '../../assets/logo/IZLI_logo.svg'
+import izliLogoSvg from '../../assets/logo/IZLI_logo.svg?raw'
 import './Navbar.scss'
 
 interface Props {
@@ -53,6 +53,20 @@ function IconClose() {
   return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12" /><path d="M18 6 6 18" /></svg>
 }
 
+function LogoMark({ className }: { className?: string }) {
+  const innerSvg = izliLogoSvg.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '')
+
+  return (
+    <svg
+      className={className}
+      aria-hidden="true"
+      viewBox="0 0 180.96 53.94"
+      preserveAspectRatio="xMidYMid meet"
+      dangerouslySetInnerHTML={{ __html: innerSvg }}
+    />
+  )
+}
+
 export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
   const isHome = current === 'home'
@@ -83,7 +97,7 @@ export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
           <IconMenu />
         </button>
         <button onClick={() => onNavigate('home')} className="navbar__mobile-logo" aria-label="Go home">
-          <img src={izliLogo} alt="IZLI" />
+          <LogoMark className="navbar__logo-mark navbar__logo-mark--mobile" />
         </button>
       </div>
 
@@ -107,7 +121,7 @@ export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
       <div className="navbar-mobile-menu__panel">
         <div className="navbar-mobile-menu__top">
           <button onClick={() => navigateAndClose('home')} className="navbar-mobile-menu__logo" aria-label="Go home">
-            <img src={izliLogo} alt="IZLI" className="navbar-mobile-menu__logo-image" />
+            <LogoMark className="navbar__logo-mark navbar__logo-mark--menu" />
           </button>
           <button type="button" onClick={() => setMenuOpen(false)} className="navbar-mobile-menu__close" aria-label="Close menu">
             <IconClose />
@@ -148,7 +162,7 @@ export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
               className="navbar__logo"
               style={{ display: 'flex', alignItems: 'center', gap: 10, justifySelf: 'start', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: CREAM }}
             >
-              <img src={izliLogo} alt="IZLI" style={{ width: 76, height: 'auto', display: 'block' }} />
+              <LogoMark className="navbar__logo-mark navbar__logo-mark--desktop" />
             </button>
 
             <nav className="navbar__desktop-nav" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 30, whiteSpace: 'nowrap' }}>
@@ -176,10 +190,10 @@ export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
             </nav>
 
             <div className="navbar__desktop-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 14 }}>
-              <button title="Search" style={{ width: 32, height: 32, display: 'grid', placeItems: 'center', border: 'none', background: 'transparent', color: 'rgba(245,238,228,0.82)', borderRadius: 999, cursor: 'pointer' }}><IconSearch /></button>
-              <button title="Favorites" style={{ width: 32, height: 32, display: 'grid', placeItems: 'center', border: 'none', background: 'transparent', color: 'rgba(245,238,228,0.82)', borderRadius: 999, cursor: 'pointer' }}><IconHeart /></button>
-              <button onClick={() => onNavigate('login')} title="Account" style={{ width: 32, height: 32, display: 'grid', placeItems: 'center', border: 'none', background: 'transparent', color: 'rgba(245,238,228,0.82)', borderRadius: 999, cursor: 'pointer' }}><IconUser /></button>
-              <button onClick={() => onNavigate('cart')} title="Cart" style={{ position: 'relative', width: 32, height: 32, display: 'grid', placeItems: 'center', border: 'none', background: 'transparent', color: 'rgba(245,238,228,0.82)', borderRadius: 999, cursor: 'pointer' }}>
+              <button title="Search" style={{ width: 32, height: 32, display: 'grid', placeItems: 'center', border: 'none', background: 'transparent', color: 'var(--navbar-icon-color)', borderRadius: 999, cursor: 'pointer' }}><IconSearch /></button>
+              <button title="Favorites" style={{ width: 32, height: 32, display: 'grid', placeItems: 'center', border: 'none', background: 'transparent', color: 'var(--navbar-icon-color)', borderRadius: 999, cursor: 'pointer' }}><IconHeart /></button>
+              <button onClick={() => onNavigate('login')} title="Account" style={{ width: 32, height: 32, display: 'grid', placeItems: 'center', border: 'none', background: 'transparent', color: 'var(--navbar-icon-color)', borderRadius: 999, cursor: 'pointer' }}><IconUser /></button>
+              <button onClick={() => onNavigate('cart')} title="Cart" style={{ position: 'relative', width: 32, height: 32, display: 'grid', placeItems: 'center', border: 'none', background: 'transparent', color: 'var(--navbar-icon-color)', borderRadius: 999, cursor: 'pointer' }}>
                 <IconCart />
                 {cartCount > 0 && (
                   <span style={{ position: 'absolute', top: -2, right: -1, minWidth: 14, height: 14, padding: '0 3px', borderRadius: 999, background: '#C9AB7D', color: '#231812', fontSize: 9, fontWeight: 700, display: 'grid', placeItems: 'center', lineHeight: 1 }}>
@@ -221,7 +235,7 @@ export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
           className="navbar__logo"
           style={{ display: 'flex', alignItems: 'center', gap: 9, marginRight: 52, background: 'none', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0 }}
         >
-          <img src={izliLogo} alt="IZLI" style={{ width: 56, height: 'auto', display: 'block' }} />
+          <LogoMark className="navbar__logo-mark navbar__logo-mark--desktop" />
         </button>
 
         {/* Nav links */}
@@ -250,10 +264,10 @@ export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
         {/* Right actions */}
         <div className="navbar__desktop-actions" style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           {/* Search */}
-          <button style={{ fontSize: 16, color: TEXT_SEC, background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>⌕</button>
+          <button style={{ fontSize: 16, color: 'var(--navbar-icon-color)', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>⌕</button>
 
           {/* Favorites */}
-          <button style={{ fontSize: 16, color: TEXT_SEC, background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>♡</button>
+          <button style={{ fontSize: 16, color: 'var(--navbar-icon-color)', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>♡</button>
 
           {/* About / Events */}
           <button

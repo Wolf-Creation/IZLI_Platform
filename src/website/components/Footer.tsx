@@ -1,6 +1,6 @@
 import { INDIGO, CREAM, SAND, FONT_SERIF, FONT_SANS, FONT_MONO } from '../../tokens'
 import type { WebPage } from '../types'
-import izliLogo from '../../assets/logo/IZLI_logo.svg'
+import izliLogoSvg from '../../assets/logo/IZLI_logo.svg?raw'
 import './Footer.scss'
 
 interface Props { onNavigate: (p: WebPage) => void }
@@ -46,6 +46,8 @@ const LINKS: { group: string; items: { label: string; page?: WebPage }[] }[] = [
 ]
 
 export default function Footer({ onNavigate }: Props) {
+  const innerSvg = izliLogoSvg.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '')
+
   return (
     <footer className="site-footer" style={{ background: INDIGO, paddingTop: 64, paddingBottom: 40 }}>
       <div className="site-footer__inner" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px' }}>
@@ -54,7 +56,7 @@ export default function Footer({ onNavigate }: Props) {
           {/* Brand column */}
           <div className="site-footer__brand">
             <div className="site-footer__brand-logo" style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 18 }}>
-              <img src={izliLogo} alt="IZLI" style={{ width: 60, height: 'auto', display: 'block' }} />
+              <svg className="site-footer__logo-mark" aria-hidden="true" viewBox="0 0 180.96 53.94" preserveAspectRatio="xMidYMid meet" dangerouslySetInnerHTML={{ __html: innerSvg }} />
             </div>
             <p className="site-footer__brand-copy" style={{ fontSize: 13, color: 'rgba(231,223,210,0.6)', lineHeight: 1.7, marginBottom: 20, maxWidth: 260 }}>
               Contemporary menswear rooted in Amazigh heritage. Designed with intention, made to last.
