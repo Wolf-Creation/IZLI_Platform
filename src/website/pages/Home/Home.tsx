@@ -78,7 +78,12 @@ const SERVICE_FEATURES = [
   },
 ]
 
-const FEATURED_BADGES = ['The only collection', 'Heritage-driven', 'Archive first']
+const COLLECTION_FEATURES = [
+  { title: 'Legacy', desc: 'Architecture', icon: '✳' },
+  { title: 'Universe', desc: 'Heritage', icon: '◌' },
+  { title: 'Product', desc: 'Heavy Oversized Tee', icon: '👕' },
+  { title: 'Release', desc: '001', icon: '✦' },
+] as const
 
 const RELEASE_POINTS = ['Release 001 badge', '100 Keeper points', 'Exclusive archive access']
 
@@ -195,9 +200,9 @@ export default function Home({ onNavigate }: Props) {
         <div className="home-shell">
           <div className="home-section__header">
             <div>
-              <div className="home-eyebrow">Shop</div>
-              <h2 className="home-section__title">T-Shirts, Shirts, Bandanas, Pants...</h2>
-              <p className="home-section__copy home-section__copy--shop">The core wardrobe of IZLI. Timeless pieces designed with meaning, crafted to live with you, wherever you go.</p>
+              {/* <div className="home-eyebrow">Shop</div> */}
+              <h2 className="home-section__title">Built Around Heritage.</h2>
+              <p className="home-section__copy home-section__copy--shop">Timeless essentials shaped by heritage and crafted for today.</p>
             </div>
             <button onClick={() => onNavigate('shop')} className="home-inline-link">View all →</button>
           </div>
@@ -282,41 +287,54 @@ export default function Home({ onNavigate }: Props) {
       </section>
 
       <section className="home-section home-section--featured">
-        <div className="home-shell home-split home-split--featured">
-          <div className="home-split__copy">
-            <div className="home-eyebrow home-eyebrow--warm">Featured Collection</div>
-            <h2 className="home-collection-title">RBOR</h2>
-            <p className="home-section__copy home-section__copy--dark">The only collection. A focused archive of garments, shaped with one visual language and one release rhythm.</p>
-            <div className="home-chip-row">
-              {FEATURED_BADGES.map(badge => (
-                <span key={badge} className="home-chip">{badge}</span>
+        <div className="home-shell home-featured-layout">
+          <div className="home-featured-layout__copy">
+            <div className="home-featured-layout__eyebrow">Featured Collection</div>
+            <div className="home-featured-layout__rule">
+              <span />
+              <span className="home-featured-layout__rule-mark">✶</span>
+              <span />
+            </div>
+            <div className="home-featured-layout__overline">The first collection</div>
+            <h2 className="home-featured-layout__title">RBOR</h2>
+            <p className="home-featured-layout__copy-text">The beginning of the IZLI journey. One collection. One product. One vision.</p>
+            <div className="home-featured-layout__divider" />
+            <div className="home-featured-layout__feature-grid">
+              {COLLECTION_FEATURES.map(feature => (
+                <div key={feature.title} className="home-featured-layout__feature">
+                  <div className="home-featured-layout__feature-icon">{feature.icon}</div>
+                  <div className="home-featured-layout__feature-title">{feature.title}</div>
+                  <div className="home-featured-layout__feature-desc">{feature.desc}</div>
+                </div>
               ))}
             </div>
-            <div className="home-actions-row">
-              <button onClick={() => onNavigate('collections')} className="hero-action-button hero-action-button--primary">
-                <span>View RBOR</span>
-                <span className="hero-action-button__arrow">→</span>
-              </button>
-              <button onClick={() => onNavigate('heritage')} className="hero-action-button hero-action-button--secondary">
-                <span>Read the legacy</span>
-                <span className="hero-action-button__arrow">↗</span>
-              </button>
-            </div>
+            <button onClick={() => onNavigate('collections')} className="hero-action-button hero-action-button--primary home-featured-layout__cta">
+              <span>Explore RBOR</span>
+              <span className="hero-action-button__arrow">→</span>
+            </button>
           </div>
 
-          <div className="home-featured-card">
+          <div className="home-featured-layout__media">
             <img
-              src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1200&h=1400&fit=crop&auto=format"
+              src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1400&h=1400&fit=crop&auto=format"
               alt="RBOR collection"
-              className="home-featured-card__image"
+              className="home-featured-layout__image"
             />
-            <div className="home-featured-card__veil" />
-            <div className="home-featured-card__meta">
-              <div className="home-featured-card__label">The only collection</div>
-              <div className="home-featured-card__title">RBOR / 2026</div>
-              <div className="home-featured-card__text">A single collection holding the full narrative system of IZLI.</div>
+          </div>
+        </div>
+
+        <div className="home-shell home-featured-strip">
+          <div className="home-featured-strip__left">
+            <div className="home-featured-strip__icon">✶</div>
+            <div>
+              <div className="home-featured-strip__title">A collection rooted in heritage.</div>
+              <div className="home-featured-strip__text">RBOR is inspired by Amazigh architecture and symbols, reimagined for today.</div>
             </div>
           </div>
+          <button onClick={() => onNavigate('collections')} className="home-featured-strip__link">
+            <span>Discover the story</span>
+            <span>→</span>
+          </button>
         </div>
       </section>
 
