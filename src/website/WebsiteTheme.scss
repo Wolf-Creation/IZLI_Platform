@@ -1,0 +1,271 @@
+.website-app {
+  --website-bg: #000000;
+  --website-surface: #0d0d0d;
+  --website-surface-raised: #151515;
+  --website-text: #f5f1ea;
+  --website-text-muted: #c7c0b7;
+  --website-border: rgba(245, 241, 234, 0.2);
+  background: var(--website-bg);
+  color: var(--website-text);
+}
+
+.website-app main {
+  background: var(--website-bg);
+  color: var(--website-text);
+}
+
+.website-app main > * {
+  background-color: var(--website-bg) !important;
+  color: var(--website-text);
+}
+
+.website-app main > * > section,
+.website-app main > * > div {
+  background-color: var(--website-bg) !important;
+}
+
+.website-app main h1,
+.website-app main h2,
+.website-app main h3,
+.website-app main h4,
+.website-app main p,
+.website-app main label,
+.website-app main [class*='title'],
+.website-app main [class*='heading'],
+.website-app main [class*='description'],
+.website-app main [class*='copy'],
+.website-app main [class*='subtitle'],
+.website-app main [class*='sub'],
+.website-app main [style*='color']:not(button) {
+  color: var(--website-text);
+}
+
+.website-app main [class*='meta'],
+.website-app main [class*='kicker'],
+.website-app main [class*='eyebrow'],
+.website-app main [class*='label'] {
+  color: var(--website-text-muted) !important;
+}
+
+.website-app main .hero-slider__title-text {
+  color: #000 !important;
+}
+
+.website-app main .keeper-benefit-panel__title-segment--accent {
+  color: #c9924e !important;
+}
+
+.website-app main .keeper-benefit-panel__title-segment--primary {
+  color: #c9924e !important;
+}
+
+.website-app main .keeper-benefit-panel__title-segment--muted {
+  color: rgba(245, 241, 234, 0.56) !important;
+}
+
+.website-app main .keeper-benefit-panel--intro .keeper-benefit-panel__title-segment--accent,
+.website-app main .keeper-benefit-panel--intro .keeper-benefit-panel__title-character {
+  color: #c9924e !important;
+}
+
+.website-app main .keeper-benefit-panel--intro.keeper-benefit-panel--intro-revealed .keeper-benefit-panel__title-segment--accent,
+.website-app main .keeper-benefit-panel--intro.keeper-benefit-panel--intro-revealed .keeper-benefit-panel__title-character {
+  color: #c9924e !important;
+}
+
+.website-app main button {
+  color: var(--website-text) !important;
+}
+
+.website-app main button.hero-slider__cta,
+.website-app main button.hero-slider__cta span {
+  color: #000000 !important;
+}
+
+.website-app main button.hero-slider__cta {
+  border-bottom-color: #000000 !important;
+}
+
+.website-app main button.hero-slider__cta:hover,
+.website-app main button.hero-slider__cta:hover span {
+  color: #c9924e !important;
+}
+
+.website-app main button.hero-slider__cta:hover {
+  border-bottom-color: #c9924e !important;
+}
+
+.website-app main button[style*='background'] {
+  background: var(--website-surface-raised) !important;
+  border-color: var(--website-border) !important;
+}
+
+.website-app main [style*='border'],
+.website-app main [class*='border'] {
+  border-color: var(--website-border) !important;
+}
+
+.website-app .hero-header,
+.website-app .navbar--default {
+  background: #000000 !important;
+  color: var(--website-text) !important;
+  border-color: var(--website-border) !important;
+}
+
+.website-app .hero-header button,
+.website-app .navbar--default button {
+  color: var(--website-text) !important;
+}
+
+.website-app .hero-header .hero-header__menu-item:hover,
+.website-app .hero-header .hero-header__icon:hover {
+  color: #c9924e !important;
+}
+
+.website-app .site-footer {
+  background: #000000 !important;
+  border-color: var(--website-border) !important;
+}
+
+.website-app .home-section--shop,
+.website-app .home-section--shop-light,
+.website-app .home-section--keeper-circle,
+.website-app .home-section--recommended,
+.website-app .home-section--featured,
+.website-app .home-section--release,
+.website-app .home-section--legacy,
+.website-app .home-section--cta,
+.website-app .shop-page,
+.website-app .cart-page,
+.website-app .collections-page,
+.website-app .community-page,
+.website-app .communitylab-page,
+.website-app .events-page,
+.website-app .heritage-page,
+.website-app .about-page,
+.website-app .archives-page {
+  background: #000000 !important;
+  color: var(--website-text) !important;
+}
+
+.website-app .home-shop-tabs,
+.website-app .shop-tabs {
+  width: min(400px, 100%);
+  margin: 0 auto 40px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #0b0b0b;
+}
+
+.website-app .home-shop-tab,
+.website-app .shop-tab {
+  min-height: 36px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 0;
+  background: transparent !important;
+  color: #ffffff !important;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.website-app .home-shop-tab:hover,
+.website-app .shop-tab:hover,
+.website-app .home-shop-tab--active,
+.website-app .shop-tab--active {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+.website-app .home-shop-tab--active::after,
+.website-app .shop-tab--active::after {
+  display: none;
+}
+
+.website-app .home-shop-tab--active {
+  background: #c9924e !important;
+  color: #ffffff !important;
+}
+
+.website-app .home-page .home-services-bar,
+.website-app .home-page .home-section,
+.website-app .home-page .home-section--shop,
+.website-app .home-page .home-section--shop-light,
+.website-app .home-page .home-section--keeper-circle,
+.website-app .home-page .home-section--recommended,
+.website-app .home-page .home-section--featured,
+.website-app .home-page .home-section--release,
+.website-app .home-page .home-section--legacy,
+.website-app .home-page .home-section--cta {
+  background: #000000 !important;
+  background-image: none !important;
+  color: var(--website-text) !important;
+}
+
+.website-app .home-page .home-services-bar__title,
+.website-app .home-page .home-services-bar__desc,
+.website-app .home-page .home-section__title,
+.website-app .home-page .home-section__copy,
+.website-app .home-page .home-legacy-card__title,
+.website-app .home-page .home-legacy-card__copy,
+.website-app .home-page .home-benefit-card__title,
+.website-app .home-page .home-benefit-card__copy {
+  color: var(--website-text) !important;
+}
+
+.website-app .home-page .home-legacy-card,
+.website-app .home-page .home-benefit-card,
+.website-app .home-page .home-product-card {
+  background: var(--website-surface) !important;
+  border-color: var(--website-border) !important;
+}
+
+.website-app .home-section--shop .product-card,
+.website-app .shop-page .product-card,
+.website-app .cart-items,
+.website-app .cart-summary,
+.website-app .cart-promo {
+  background: var(--website-surface) !important;
+  border-color: var(--website-border) !important;
+}
+
+.website-app .product-card__image-wrapper,
+.website-app .product-card__image {
+  background: #111111 !important;
+}
+
+.website-app .home-product-card,
+.website-app [class*='card'] {
+  border-color: var(--website-border) !important;
+}
+
+.website-app .home-product-card__body,
+.website-app .product-card__info {
+  color: var(--website-text) !important;
+}
+
+.website-app .home-product-card__meta,
+.website-app .product-card__price,
+.website-app .product-card__name {
+  color: var(--website-text-muted) !important;
+}
+
+.website-app input,
+.website-app textarea,
+.website-app select {
+  background: var(--website-surface) !important;
+  color: var(--website-text) !important;
+  border-color: var(--website-border) !important;
+}
+
+@media (max-width: 768px) {
+  .website-app main > * > section,
+  .website-app main > * > div {
+    background-color: var(--website-bg) !important;
+  }
+}

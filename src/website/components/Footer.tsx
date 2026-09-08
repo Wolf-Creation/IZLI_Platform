@@ -1,134 +1,123 @@
-import { INDIGO, CREAM, SAND, FONT_SERIF, FONT_SANS, FONT_MONO } from '../../tokens'
+import { useEffect, useState } from 'react'
+import legacyProductsImage from '../../assets/Website_img/Legacy_section/legacy_nature_products.jpg'
+import legacyVerticalImage from '../../assets/Website_img/Legacy_section/legacy_nature_vert.png'
+import legacyMarronImage from '../../assets/Website_img/Legacy_section/legacy_nature_marron.png'
+import legacyBeigeLinenImage from '../../assets/Website_img/Legacy_section/legacy_nature_beige linen.png'
+import legacyNoirImage from '../../assets/Website_img/Legacy_section/legacy_nature_noir.png'
 import type { WebPage } from '../types'
-import izliLogoSvg from '../../assets/logo/IZLI_logo.svg?raw'
 import './Footer.scss'
 
-interface Props { onNavigate: (p: WebPage) => void }
+interface Props { onNavigate: (p: WebPage) => void; showHomeAbout?: boolean }
 
-const LINKS: { group: string; items: { label: string; page?: WebPage }[] }[] = [
-  {
-    group: 'Shop',
-    items: [
-      { label: 'Heritage', page: 'shop' },
-      { label: 'Essentials', page: 'shop' },
-      { label: 'Studio', page: 'shop' },
-      { label: 'Community Lab', page: 'shop' },
-      { label: 'Collections', page: 'collections' },
-    ],
-  },
-  {
-    group: 'Brand',
-    items: [
-      { label: 'Heritage', page: 'heritage' },
-      { label: 'Stories', page: 'stories' },
-      { label: 'Events', page: 'events' },
-      { label: 'About', page: 'about' },
-    ],
-  },
-  {
-    group: 'Community',
-    items: [
-      { label: 'Members', page: 'community' },
-      { label: 'Contributions', page: 'community' },
-      { label: 'Challenges', page: 'community' },
-      { label: 'Community Lab', page: 'community-lab' },
-    ],
-  },
-  {
-    group: 'Account',
-    items: [
-      { label: 'Sign In', page: 'login' },
-      { label: 'My Profile', page: 'profile' },
-      { label: 'Orders', page: 'profile' },
-      { label: 'Cart', page: 'cart' },
-    ],
-  },
+const LEGACY_NATURE_IMAGES = [
+  { src: legacyVerticalImage, alt: 'IZLI legacy collection in green' },
+  { src: legacyMarronImage, alt: 'IZLI legacy collection in brown' },
+  { src: legacyBeigeLinenImage, alt: 'IZLI legacy collection in beige linen' },
+  { src: legacyNoirImage, alt: 'IZLI legacy collection in black' },
+] as const
+
+const PAGE_LINKS: { label: string; page: WebPage }[] = [
+  { label: 'Home', page: 'home' },
+  { label: 'Shop', page: 'shop' },
+  { label: 'Collections', page: 'collections' },
+  { label: 'Stories', page: 'stories' },
+  { label: 'Contact', page: 'about' },
 ]
 
-export default function Footer({ onNavigate }: Props) {
-  const innerSvg = izliLogoSvg.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '')
+const DISCOVER_LINKS: { label: string; page: WebPage }[] = [
+  { label: 'New arrivals', page: 'shop' },
+  { label: 'Keeper Circle', page: 'keeper-circle' },
+  { label: 'Heritage', page: 'heritage' },
+  { label: 'Community Lab', page: 'community-lab' },
+]
+
+const COLLECTION_LINKS: { label: string; page: WebPage }[] = [
+  { label: 'Tops', page: 'shop' },
+  { label: 'Bottoms', page: 'shop' },
+  { label: 'Essentials', page: 'shop' },
+]
+
+const SOCIALS = [
+  { label: 'Instagram', icon: <><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" /></> },
+  { label: 'Twitch', icon: <><path d="M4 3h16v12l-4 4h-4l-3 3v-3H4z" /><path d="M9 8v4M15 8v4" /></> },
+  { label: 'YouTube', icon: <><rect x="3" y="6" width="18" height="12" rx="3" /><path d="m10 9 5 3-5 3z" /></> },
+  { label: 'Facebook', icon: <path d="M14 21v-8h3l.5-3H14V8.2c0-.9.3-1.5 1.6-1.5H18V4.1c-.4-.1-1.4-.2-2.5-.2-2.5 0-4.2 1.5-4.2 4.3V10H8.5v3h2.8v8z" /> },
+]
+
+export default function Footer({ onNavigate, showHomeAbout = false }: Props) {
+  const [legacyNatureIndex, setLegacyNatureIndex] = useState(0)
+
+  useEffect(() => {
+    if (!showHomeAbout) return
+
+    const interval = window.setInterval(() => {
+      setLegacyNatureIndex(index => (index + 1) % LEGACY_NATURE_IMAGES.length)
+    }, 3000)
+
+    return () => window.clearInterval(interval)
+  }, [showHomeAbout])
 
   return (
-    <footer className="site-footer" style={{ background: INDIGO, paddingTop: 64, paddingBottom: 40 }}>
-      <div className="site-footer__inner" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px' }}>
-        {/* Top row */}
-        <div className="site-footer__top" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 48, marginBottom: 56 }}>
-          {/* Brand column */}
-          <div className="site-footer__brand">
-            <div className="site-footer__brand-logo" style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 18 }}>
-              <svg className="site-footer__logo-mark" aria-hidden="true" viewBox="0 0 180.96 53.94" preserveAspectRatio="xMidYMid meet" dangerouslySetInnerHTML={{ __html: innerSvg }} />
-            </div>
-            <p className="site-footer__brand-copy" style={{ fontSize: 13, color: 'rgba(231,223,210,0.6)', lineHeight: 1.7, marginBottom: 20, maxWidth: 260 }}>
-              Contemporary menswear rooted in Amazigh heritage. Designed with intention, made to last.
-            </p>
-            {/* Newsletter */}
-            <div className="site-footer__newsletter" style={{ display: 'flex', gap: 0 }}>
-              <input
-                type="email"
-                placeholder="Your email"
-                className="site-footer__newsletter-input"
-                style={{
-                  flex: 1, padding: '9px 14px',
-                  background: 'rgba(231,223,210,0.08)',
-                  border: '1px solid rgba(231,223,210,0.2)',
-                  borderRight: 'none',
-                  borderRadius: '9px 0 0 9px',
-                  color: CREAM, fontSize: 13,
-                  fontFamily: FONT_SANS, outline: 'none',
-                }}
-              />
-              <button className="site-footer__newsletter-button" style={{ padding: '9px 16px', background: CREAM, border: 'none', borderRadius: '0 9px 9px 0', fontSize: 12, fontWeight: 600, color: INDIGO, cursor: 'pointer', fontFamily: FONT_SANS, whiteSpace: 'nowrap' }}>
-                Subscribe
-              </button>
-            </div>
-          </div>
-
-          {/* Link columns */}
-          {LINKS.map(group => (
-            <div key={group.group} className="site-footer__group">
-              <div className="site-footer__group-title" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: SAND, marginBottom: 16 }}>{group.group}</div>
-              <div className="site-footer__group-links" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {group.items.map(item => (
-                  <button
-                    key={item.label}
-                    onClick={() => item.page && onNavigate(item.page)}
-                    className="site-footer__group-link"
-                    style={{ fontSize: 13, color: 'rgba(231,223,210,0.65)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0, fontFamily: FONT_SANS, transition: 'color 0.12s' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = CREAM)}
-                    onMouseLeave={e => (e.currentTarget.style.color = 'rgba(231,223,210,0.65)')}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+    <footer className={`site-footer ${showHomeAbout ? 'site-footer--home' : ''}`}>
+      {showHomeAbout && (
+        <section className="site-footer__about home-section--about">
+          <div className="home-legacy-editorial">
+            <aside className="home-legacy-editorial__copy">
+              <div className="home-about-copy">
+                <div className="home-legacy-editorial__logo">IZLI.TN</div>
+                <p className="home-legacy-editorial__intro">IZLI is more than a clothing brand — it is a contemporary universe inspired by Amazigh heritage, carrying stories, identity, and culture from one generation to the next.</p>
               </div>
+              <div className="home-about-socials" aria-label="IZLI social media links">
+                <a href="#instagram" aria-label="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" /></svg></a>
+                <a href="#twitch" aria-label="Twitch"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16v12l-4 4h-4l-3 3v-3H4z" /><path d="M9 8v4M15 8v4" /></svg></a>
+                <a href="#youtube" aria-label="YouTube"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="3" /><path d="m10 9 5 3-5 3z" /></svg></a>
+                <a href="#facebook" aria-label="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 21v-8h3l.5-3H14V8.2c0-.9.3-1.5 1.6-1.5H18V4.1c-.4-.1-1.4-.2-2.5-.2-2.5 0-4.2 1.5-4.2 4.3V10H8.5v3h2.8v8z" /></svg></a>
+              </div>
+            </aside>
+            <div className="home-legacy-editorial__collage" aria-label="IZLI textile archive">
+              <img src={legacyProductsImage} alt="IZLI legacy products" />
             </div>
-          ))}
-        </div>
-
-        {/* Divider */}
-        <div className="site-footer__divider" style={{ height: 1, background: 'rgba(231,223,210,0.12)', marginBottom: 28 }} />
-
-        {/* Bottom row */}
-        <div className="site-footer__bottom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 11, color: 'rgba(231,223,210,0.35)', fontFamily: FONT_MONO, letterSpacing: '0.04em' }}>
-            © 2026 IZLI. All rights reserved.
-          </span>
-          <div className="site-footer__legal" style={{ display: 'flex', gap: 24 }}>
-            {['Privacy', 'Terms', 'Cookies', 'Sustainability'].map(l => (
-              <button key={l} style={{ fontSize: 11, color: 'rgba(231,223,210,0.4)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT_SANS }}>
-                {l}
-              </button>
-            ))}
+            <button className="home-legacy-editorial__model" onClick={() => onNavigate('archives')} aria-label="Explore the IZLI legacy archive">
+              <img
+                key={LEGACY_NATURE_IMAGES[legacyNatureIndex].src}
+                src={LEGACY_NATURE_IMAGES[legacyNatureIndex].src}
+                alt={LEGACY_NATURE_IMAGES[legacyNatureIndex].alt}
+              />
+              <span>Explore the legacy <b aria-hidden="true">↗</b></span>
+            </button>
           </div>
-          <div className="site-footer__social" style={{ display: 'flex', gap: 16 }}>
-            {['IG', 'TW', 'PT'].map(s => (
-              <button key={s} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(231,223,210,0.15)', background: 'none', color: 'rgba(231,223,210,0.5)', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_MONO }}>
-                {s}
-              </button>
-            ))}
+        </section>
+      )}
+      <div className="site-footer__grid">
+        <div className="site-footer__column site-footer__column--pages">
+          <FooterGroup title="Pages" links={PAGE_LINKS} onNavigate={onNavigate} />
+          <FooterGroup title="Legal" links={[{ label: 'Privacy policy', page: 'about' }, { label: 'Cookie policy', page: 'about' }]} onNavigate={onNavigate} />
+        </div>
+        <div className="site-footer__column site-footer__column--discover">
+          <FooterGroup title="Discover" links={DISCOVER_LINKS} onNavigate={onNavigate} />
+          <FooterGroup title="Collections" links={COLLECTION_LINKS.slice(2)} onNavigate={onNavigate} />
+          <FooterGroup title="Categories" links={COLLECTION_LINKS.slice(0, 2)} onNavigate={onNavigate} />
+        </div>
+        <div className="site-footer__column site-footer__column--newsletter">
+          <h2>Join IZLI. Get 15% off your first order.</h2>
+          <p>Subscribe and get 15% discount on your next purchase.</p>
+          <label htmlFor="footer-email">Email</label>
+          <div className="site-footer__newsletter">
+            <input id="footer-email" type="email" placeholder="you@example.com" />
+            <button type="button">Submit</button>
           </div>
         </div>
       </div>
+      
     </footer>
+  )
+}
+
+function FooterGroup({ title, links, onNavigate }: { title: string; links: { label: string; page: WebPage }[]; onNavigate: (p: WebPage) => void }) {
+  return (
+    <div className="site-footer__group">
+      <h3>{title}</h3>
+      <div>{links.map(link => <button type="button" key={link.label} onClick={() => onNavigate(link.page)}>{link.label}</button>)}</div>
+    </div>
   )
 }

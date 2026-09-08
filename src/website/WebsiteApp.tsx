@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { WebPage } from './types'
-import Navbar from './components/Navbar'
+import { HeroHeader } from './components/HeroHeader/HeroHeader'
 import Footer from './components/Footer'
 import Home from './pages/Home/Home'
 import Collections from './pages/Collections/Collections'
@@ -20,6 +20,7 @@ import Archives from './pages/Archives/Archives'
 import KeeperCircle from './pages/KeeperCircle/KeeperCircle'
 import { websitePageFromPath, websitePathForPage } from '../routes/website'
 import type { User } from '../entities'
+import './WebsiteTheme.scss'
 
 const PAGES_WITHOUT_FOOTER: WebPage[] = ['login']
 
@@ -30,6 +31,7 @@ interface Props {
 export default function WebsiteApp({ onAdminRequest }: Props) {
   const [page, setPage] = useState<WebPage>(() => websitePageFromPath(window.location.pathname))
   const [cartCount] = useState(2)
+  const [scrollY, setScrollY] = useState(0)
 
   useEffect(() => {
     const syncPage = () => {
@@ -38,6 +40,15 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
 
     window.addEventListener('popstate', syncPage)
     return () => window.removeEventListener('popstate', syncPage)
+  }, [])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   const navigate = (p: WebPage) => {
@@ -83,14 +94,20 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
   }
 
   const showFooter = !PAGES_WITHOUT_FOOTER.includes(page)
+  const showHeader = page !== 'home'
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Navbar current={page} onNavigate={navigate} cartCount={cartCount} />
+    <div className="website-app" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {showHeader && <HeroHeader onNavigate={navigate} scrollY={scrollY} isHomePage={false} />}
       <main style={{ flex: 1 }}>
         {renderPage()}
       </main>
-      {showFooter && <Footer onNavigate={navigate} />}
+      {showFooter && (
+        <>
+          <div className="website-footer-spacer" aria-hidden="true" />
+          <Footer onNavigate={navigate} showHomeAbout={page === 'home'} />
+        </>
+      )}
     </div>
   )
 }

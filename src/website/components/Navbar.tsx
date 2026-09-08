@@ -69,8 +69,17 @@ function LogoMark({ className }: { className?: string }) {
 
 export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
   const isHome = current === 'home'
   const links = isHome ? HOME_NAV_LINKS : NAV_LINKS
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 0)
+
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   useEffect(() => {
     if (typeof document === 'undefined') {
@@ -150,7 +159,7 @@ export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
 
   if (isHome) {
     return (
-      <header className="navbar navbar--home" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 220, color: CREAM, background: 'rgba(10,7,5,0.34)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', boxShadow: '0 6px 24px rgba(0,0,0,0.18)' }}>
+      <header className={`navbar navbar--home ${isScrolled ? 'navbar--scrolled' : ''}`} style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 220, color: CREAM, background: 'rgba(10,7,5,0.34)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', boxShadow: '0 6px 24px rgba(0,0,0,0.18)' }}>
         <div className="navbar__announcement" style={{ height: 35, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.88)', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(245,238,228,0.72)', fontFamily: FONT_SANS }}>
           Free shipping over 150 TND · Become a Keeper & unlock exclusive rewards
         </div>

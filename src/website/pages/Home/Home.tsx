@@ -1,12 +1,27 @@
 import { BG, FONT_SERIF } from '../../../tokens'
 import { motion } from 'framer-motion'
+import { useState, useEffect, useRef } from 'react'
 import type { WebPage } from '../../types'
-import Hero from './Hero/Hero'
+import { HeroSlider } from './Hero/HeroSlider'
+import { HeroHeader } from '../../components/HeroHeader'
+import { ScrollToTop } from '../../components/ScrollToTop'
+import { SplashScreen } from '../../components/SplashScreen/SplashScreen'
+import { ProductCarousel } from '../../components/ProductCarousel/ProductCarousel'
+import { KeeperCircleCta } from '../../components/KeeperCircleCta/KeeperCircleCta'
 import tShirtsImage from '../../../assets/Website_img/Shop/categories/T-shirts.png'
+import tafuktImage from '../../../assets/Website_img/Shop/tops/banner/TAFUKT_001.png'
+import tafuktBottomsImage from '../../../assets/Website_img/Shop/tops/banner/TAFUKT_002.png'
 import shirtsImage from '../../../assets/Website_img/Shop/categories/Shirts.png'
 import bandanaImage from '../../../assets/Website_img/Shop/categories/bandana.png'
 import pantsImage from '../../../assets/Website_img/Shop/categories/pants.png'
 import bannerImage from '../../../assets/Website_img/banner/banner_001.png'
+import topsAtlasPrincipal from '../../../assets/Website_img/Shop/new releases/Atlas_symbol_heavy_oversized/001-Principal.png'
+import topsAtlasDetail from '../../../assets/Website_img/Shop/new releases/Atlas_symbol_heavy_oversized/001-A.png'
+import topsAtlasBack from '../../../assets/Website_img/Shop/new releases/Atlas_symbol_heavy_oversized/001-B.png'
+import topsPortePrincipal from '../../../assets/Website_img/Shop/new releases/Porte_ksour_heavy_oversized/002-Principal.png'
+import topsPorteDetail from '../../../assets/Website_img/Shop/new releases/Porte_ksour_heavy_oversized/002-A.png'
+import topsPorteBack from '../../../assets/Website_img/Shop/new releases/Porte_ksour_heavy_oversized/002-B.png'
+import keeperCircleImage from '../../../assets/Website_img/Keeper_circle/banner/banner_001.png'
 import arrowTopRightIcon from '../../../assets/icons/arrow_top_right.svg'
 import motifIcon from '../../../assets/icons/motif_001.svg'
 import './Home.scss'
@@ -85,25 +100,144 @@ const COLLECTION_FEATURES = [
   { title: 'Release', desc: '001', icon: '✦' },
 ] as const
 
-const RELEASE_POINTS = ['Release 001 badge', '100 Keeper points', 'Exclusive archive access']
-
-const LEGACY_PILLARS = [
-  { title: 'Amazigh references', desc: 'Motifs, symbols, and proportions translated into modern product.' },
-  { title: 'Material memory', desc: 'Textures and finishing that carry the trace of the hand.' },
-  { title: 'Living archive', desc: 'Every release remains part of the brand memory.' },
+const PRODUCTS_NEW_BASE = [
+  { id: 'PRD-0008', name: 'Atlas Symbol Heavy Oversized', price: 65, release: 'Release 01', images: [] },
+  { id: 'PRD-0054', name: 'Porte Ksour Heavy Oversized', price: 85, release: 'Release 01', images: [] },
 ]
 
+const PRODUCTS_NEW = [...PRODUCTS_NEW_BASE, ...PRODUCTS_NEW_BASE, ...PRODUCTS_NEW_BASE]
+
+const PRODUCTS_LAST = [
+  { id: 'PRD-0016', name: 'Mountain Mark Crewneck', price: 125, release: 'Release 03', images: ['photo-1469334031218-e382a71b716b', 'photo-1523381210434-271e8be1f52b', 'photo-1617196034183-421b4040ed20'] },
+  { id: 'PRD-0022', name: 'Loom Stripe Shirt', price: 145, release: 'Release 02', images: ['photo-1516762689617-e1cffcef479d', 'photo-1618354691373-d851c5c3a990', 'photo-1490481651871-ab68de25d43d'] },
+  { id: 'PRD-0044', name: 'Essentials Straight Trouser', price: 115, release: 'Release 01', images: ['photo-1611312449408-fcece27cdbb7', 'photo-1521572163474-6864f9cf17ab', 'photo-1469334031218-e382a71b716b'] },
+  { id: 'PRD-0051', name: 'Sahara Work Jacket', price: 285, release: 'Release 03', images: ['photo-1620799140408-edc6dcb6d633', 'photo-1617196034183-421b4040ed20', 'photo-1516762689617-e1cffcef479d'] },
+  { id: 'PRD-0014', name: 'Tifinagh Frame Tee', price: 89, release: 'Release 01', images: ['photo-1523381210434-271e8be1f52b', 'photo-1490481651871-ab68de25d43d', 'photo-1618354691373-d851c5c3a990'] },
+  { id: 'PRD-0031', name: 'Woven Sahara Overshirt', price: 175, release: 'Release 01', images: ['photo-1617196034183-421b4040ed20', 'photo-1469334031218-e382a71b716b', 'photo-1516762689617-e1cffcef479d'] },
+  { id: 'PRD-0039', name: 'Community Lab Archive Jersey', price: 105, release: 'Release 02', images: ['photo-1521572163474-6864f9cf17ab', 'photo-1523381210434-271e8be1f52b', 'photo-1617196034183-421b4040ed20'] },
+  { id: 'PRD-0048', name: 'Desert Denim Jacket', price: 195, release: 'Release 02', images: ['photo-1551028719-00167b16ebc5', 'photo-1551028727-430b22ef4ba2', 'photo-1551028719-00167b16ebc5'] },
+  { id: 'PRD-0049', name: 'Archive Print Tee', price: 75, release: 'Release 03', images: ['photo-1553062407-98eeb64c6a62', 'photo-1523381210434-271e8be1f52b', 'photo-1618354691373-d851c5c3a990'] },
+  { id: 'PRD-0050', name: 'Studio Knit Sweater', price: 135, release: 'Release 02', images: ['photo-1521572163474-6864f9cf17ab', 'photo-1550258987-920a2eae2e8d', 'photo-1516824750904-b878cd98c67c'] },
+  { id: 'PRD-0052', name: 'Heritage Leather Belt', price: 85, release: 'Release 01', images: ['photo-1548036328-c9fa89d128fa', 'photo-1553062407-98eeb64c6a62', 'photo-1520256262607-b135b80006a1'] },
+  { id: 'PRD-0053', name: 'Community Backpack', price: 165, release: 'Release 03', images: ['photo-1553338896-f4b87faa54d8', 'photo-1553062407-98eeb64c6a62', 'photo-1548036328-c9fa89d128fa'] },
+]
+
+const RELEASE_POINTS = ['Release 001 badge', '100 Keeper points', 'Exclusive archive access']
+
+const TOP_PRODUCTS = [
+  { name: 'Atlas Symbol Tee', color: 'Black', price: '65 TND', image: topsAtlasPrincipal },
+  { name: 'Atlas Symbol Tee', color: 'Sand', price: '65 TND', image: topsAtlasDetail },
+  { name: 'Atlas Symbol Tee', color: 'Charcoal', price: '65 TND', image: topsAtlasBack },
+  { name: 'Porte Ksour Tee', color: 'Ecru', price: '85 TND', image: topsPortePrincipal },
+  { name: 'Porte Ksour Tee', color: 'Marron', price: '85 TND', image: topsPorteDetail },
+  { name: 'Porte Ksour Tee', color: 'Noir', price: '85 TND', image: topsPorteBack },
+] as const
+
+type KeeperTitleTone = 'primary' | 'accent' | 'muted'
+type KeeperTitleSegment = { text: string; tone: KeeperTitleTone }
+type KeeperTitleLine = KeeperTitleSegment[]
+
 const KEEPER_BENEFITS = [
-  { title: 'Private drops', desc: 'Early access to limited releases and reserved sizes.' },
-  { title: 'Exclusive experiences', desc: 'Invitations to events, previews, and archive moments.' },
-  { title: 'Community status', desc: 'Progress inside the ecosystem, not just a purchase.' },
+  {
+    number: '01',
+    title: [
+      [{ text: 'BEFORE THE RELEASE.', tone: 'muted' }],
+      [{ text: 'BEFORE EVERYONE ELSE.', tone: 'primary' }],
+    ],
+    eyebrow: 'FIRST ACCESS',
+    copy: 'As a Keeper, you enter the release before the public. \n\nDiscover new pieces earlier, access limited drops, and secure your size before the collection reaches everyone else.',
+    indicators: [['Discover', 'First'], ['Secure', 'Your Size'], ['Priority', 'Access']],
+    closing: [''],
+  },
+  {
+    number: '02',
+    title: [
+      [{ text: 'AS YOU RISE', tone: 'muted' }],
+      [{ text: 'NEW DOORS OPEN.', tone: 'primary' }],
+    ],
+    eyebrow: 'EXCLUSIVE EXPERIENCES',
+    copy: 'The circle opens onto the moments behind the collection. Meet the people, places, and stories that give each release its meaning.',
+    indicators: [['Private', 'Events'], ['Members-Only', 'Experiences'], ['Status-Based', 'Access']],
+    closing: [''],
+  },
+  {
+    number: '03',
+    title: [
+      [{ text: 'GROW WITHIN.', tone: 'muted' }],
+      [{ text: 'GO FURTHER.', tone: 'primary' }],
+    ],
+    eyebrow: 'IZLI COMMUNITY',
+    copy: 'Every piece you choose, every story you share, and every moment you take part in helps shape your journey within the IZLI community. As you grow, your Keeper Status evolves — opening the way to deeper access and new experiences.',
+    indicators: [['Grow', 'Your Status'], ['Share', ' the Story'], ['Carry', 'the Pieces']],
+    closing: [''],
+  },
+] as const
+
+const KEEPER_PANELS = [
+  {
+    number: '01',
+    id: 'keeper-circle-introduction',
+    title: [
+      [
+        { text: 'Get ', tone: 'muted' },
+        { text: 'First Access ', tone: 'accent' },
+        { text: 'to what comes next,', tone: 'muted' },
+      ],
+      [
+        { text: 'Unlock ', tone: 'muted' },
+        { text: 'Exclusive Experiences', tone: 'accent' },
+        { text: ',', tone: 'muted' },
+      ],
+      [
+        { text: 'and Become part of the ', tone: 'muted' },
+        { text: 'IZLI Community', tone: 'accent' },
+        { text: '.', tone: 'muted' },
+      ],
+    ] satisfies KeeperTitleLine[],
+    eyebrow: '',
+    copy: 'IZLI is more than what you wear. It gives its Keepers a closer connection to what comes next, experiences beyond the garment, and a place within a community carrying a shared heritage forward.',
+    indicators: [],
+    closing: ['', ''],
+  },
+  ...KEEPER_BENEFITS.map((benefit, index) => ({
+    ...benefit,
+    number: `0${index + 1}`,
+    id: benefit.title.flat().map(segment => segment.text).join('-').toLowerCase(),
+  })),
+] as const
+
+const COLLECTIONS_STORIES = [
+  {
+    number: '01',
+    label: 'HERITAGE',
+    title: 'Transmetre l\'essentiel.',
+    img: bannerImage,
+  },
+  {
+    number: '02',
+    label: 'LEGACY',
+    title: 'Plus qu\'une marque.',
+    img: bannerImage,
+  },
+  {
+    number: '03',
+    label: 'SYMBOLS',
+    title: 'Culture en fibre.',
+    img: bannerImage,
+  },
+  {
+    number: '04',
+    label: 'COMMUNITY',
+    title: 'Ensemble, nous créons.',
+    img: bannerImage,
+  },
 ]
 
 const RECOMMENDED_PRODUCTS = [
-  { name: 'Atlas Frame Tee', price: '79 TND', img: 'photo-1523381210434-271e8be1f52b', label: 'T-Shirt' },
-  { name: 'Archive Shirt', price: '109 TND', img: 'photo-1483985988355-763728e1935b', label: 'Shirt' },
-  { name: 'Symbol Bandana', price: '45 TND', img: 'photo-1503342217505-b0a15ec3261c', label: 'Bandana' },
-  { name: 'Keeper Cap', price: '39 TND', img: 'photo-1529139574466-a303027c1d8b', label: 'Accessory' },
+  { name: 'Atlas Frame Tee', price: '79 TND', img: 'photo-1523381210434-271e8be1f52b', label: 'T-Shirt', colors: ['#2b2521', '#8a6f57', '#d9cfbb', '#8f9179'] },
+  { name: 'Archive Shirt', price: '109 TND', img: 'photo-1483985988355-763728e1935b', label: 'Shirt', colors: ['#c9a87e', '#8a6f57', '#2b2521', '#d9cfbb'] },
+  { name: 'Symbol Bandana', price: '45 TND', img: 'photo-1503342217505-b0a15ec3261c', label: 'Bandana', colors: ['#2b2521', '#d9cfbb', '#c9a87e', '#8f9179'] },
+  { name: 'Keeper Cap', price: '39 TND', img: 'photo-1529139574466-a303027c1d8b', label: 'Accessory', colors: ['#5a3d2b', '#8a6f57', '#d9cfbb', '#8f9179'] },
 ]
 
 const categoryCardVariants = {
@@ -178,321 +312,451 @@ const bannerCtaVariants = {
 }
 
 export default function Home({ onNavigate }: Props) {
+  const [scrollY, setScrollY] = useState(0)
+  const [showSplash, setShowSplash] = useState(true)
+  const [activeTab, setActiveTab] = useState('new')
+  const [activeKeeperBenefit, setActiveKeeperBenefit] = useState(0)
+  const [introTitleRevealed, setIntroTitleRevealed] = useState(false)
+  const keeperSectionRef = useRef<HTMLElement>(null)
+  const introTitleRevealedRef = useRef(false)
+  const introRevealCompleteRef = useRef(false)
+  const keeperStepTransitionRef = useRef(false)
+  const keeperReturnPendingRef = useRef(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    handleScroll()
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  useEffect(() => {
+    const section = keeperSectionRef.current
+    if (!section) return
+
+    const panels = Array.from(section.querySelectorAll<HTMLElement>('[data-keeper-panel]'))
+    const observer = new IntersectionObserver(
+      entries => {
+        const visiblePanel = entries
+          .filter(entry => entry.isIntersecting)
+          .sort((a, b) => {
+            const viewportCenter = window.innerHeight / 2
+            const aCenter = a.boundingClientRect.top + a.boundingClientRect.height / 2
+            const bCenter = b.boundingClientRect.top + b.boundingClientRect.height / 2
+            return Math.abs(aCenter - viewportCenter) - Math.abs(bCenter - viewportCenter)
+          })[0]
+        const nextIndex = visiblePanel ? panels.indexOf(visiblePanel.target as HTMLElement) : -1
+          if (nextIndex >= 0 && !keeperStepTransitionRef.current) {
+            setActiveKeeperBenefit(currentIndex => currentIndex === nextIndex ? currentIndex : nextIndex)
+          }
+      },
+      { threshold: [0.15, 0.35, 0.55, 0.75], rootMargin: '-32% 0px -32% 0px' },
+    )
+
+    panels.forEach(panel => observer.observe(panel))
+    let wasKeeperSectionActive = false
+    let wasKeeperSectionBelow = false
+
+    const resetIntroReveal = () => {
+      introTitleRevealedRef.current = false
+      introRevealCompleteRef.current = false
+      keeperStepTransitionRef.current = false
+      setIntroTitleRevealed(false)
+    }
+
+    const resetKeeperCircle = () => {
+      setActiveKeeperBenefit(0)
+    }
+
+    const handleKeeperSectionScroll = () => {
+      const sectionRect = section.getBoundingClientRect()
+      const headerHeight = document.querySelector<HTMLElement>('.hero-header')?.getBoundingClientRect().height ?? 83
+      const isKeeperSectionActive = sectionRect.top <= headerHeight && sectionRect.bottom > headerHeight
+      const keeperResetLine = window.innerHeight * 0.3
+      const isKeeperSectionBelow = sectionRect.bottom <= keeperResetLine
+
+      if (isKeeperSectionBelow) {
+        keeperReturnPendingRef.current = true
+        wasKeeperSectionBelow = true
+        resetKeeperCircle()
+      }
+
+      if (wasKeeperSectionBelow && isKeeperSectionActive) {
+        wasKeeperSectionBelow = false
+        resetKeeperCircle()
+        keeperStepTransitionRef.current = false
+        keeperReturnPendingRef.current = false
+      }
+
+      if (wasKeeperSectionActive && !isKeeperSectionActive) {
+        resetKeeperCircle()
+
+        if (sectionRect.top > headerHeight) {
+          resetIntroReveal()
+        }
+      }
+
+      wasKeeperSectionActive = isKeeperSectionActive
+    }
+
+    const handleKeeperWheel = (event: WheelEvent) => {
+      if (window.innerWidth <= 900 || Math.abs(event.deltaY) <= 8) return
+
+      const sectionRect = section.getBoundingClientRect()
+      const headerHeight = 83
+      const keeperResetLine = window.innerHeight * 0.3
+      const sectionIsEntering = event.deltaY > 0 && sectionRect.top > headerHeight && sectionRect.top < window.innerHeight
+      if (sectionIsEntering) {
+        event.preventDefault()
+        if (keeperStepTransitionRef.current) return
+
+        resetIntroReveal()
+        setActiveKeeperBenefit(0)
+        keeperStepTransitionRef.current = true
+        window.scrollTo({
+          top: window.scrollY + sectionRect.top - headerHeight,
+          behavior: 'smooth',
+        })
+        window.setTimeout(() => {
+          keeperStepTransitionRef.current = false
+          keeperReturnPendingRef.current = false
+        }, 850)
+        return
+      }
+
+      if (event.deltaY < 0 && sectionRect.bottom <= keeperResetLine) {
+        event.preventDefault()
+        if (keeperStepTransitionRef.current) return
+
+        resetIntroReveal()
+        setActiveKeeperBenefit(0)
+        keeperStepTransitionRef.current = true
+        window.scrollTo({
+          top: sectionRect.top + window.scrollY - headerHeight,
+          behavior: 'auto',
+        })
+        window.setTimeout(() => {
+          keeperStepTransitionRef.current = false
+          keeperReturnPendingRef.current = false
+        }, 850)
+        return
+      }
+
+      const sectionIsActive = sectionRect.top <= headerHeight && sectionRect.bottom > headerHeight
+      if (!sectionIsActive) return
+
+      if (keeperStepTransitionRef.current) {
+        event.preventDefault()
+        return
+      }
+
+      const isScrollingDown = event.deltaY > 0
+      if (isScrollingDown && !introRevealCompleteRef.current) {
+        event.preventDefault()
+
+        if (!introTitleRevealedRef.current) {
+          introTitleRevealedRef.current = true
+          setIntroTitleRevealed(true)
+          keeperStepTransitionRef.current = true
+          window.setTimeout(() => {
+            introRevealCompleteRef.current = true
+            keeperStepTransitionRef.current = false
+          }, 620)
+        }
+
+        return
+      }
+
+      const viewportCenter = window.innerHeight / 2
+      const currentIndex = panels.reduce((closestIndex, panel, index) => {
+        const panelCenter = panel.getBoundingClientRect().top + panel.getBoundingClientRect().height / 2
+        const closestPanel = panels[closestIndex]
+        const closestCenter = closestPanel.getBoundingClientRect().top + closestPanel.getBoundingClientRect().height / 2
+        return Math.abs(panelCenter - viewportCenter) < Math.abs(closestCenter - viewportCenter) ? index : closestIndex
+      }, 0)
+      const nextIndex = currentIndex + (isScrollingDown ? 1 : -1)
+      const nextPanel = panels[nextIndex]
+
+      if (!nextPanel) return
+
+      event.preventDefault()
+      keeperStepTransitionRef.current = true
+      setActiveKeeperBenefit(nextIndex)
+      window.scrollTo({
+        top: window.scrollY + nextPanel.getBoundingClientRect().top - headerHeight,
+        behavior: 'smooth',
+      })
+      window.setTimeout(() => {
+        keeperStepTransitionRef.current = false
+      }, 800)
+    }
+
+    window.addEventListener('scroll', handleKeeperSectionScroll)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('wheel', handleKeeperWheel)
+      window.removeEventListener('scroll', handleKeeperSectionScroll)
+    }
+  }, [])
+
+  const keeperHeaderHeight = 83
+  const keeperSection = keeperSectionRef.current
+  const keeperViewportHeight = Math.max(window.innerHeight - keeperHeaderHeight, 1)
+  const keeperSectionTravel = Math.max((keeperSection?.offsetHeight ?? keeperViewportHeight) - keeperViewportHeight, 1)
+  const keeperSectionProgress = Math.min(
+    Math.max((scrollY - (keeperSection?.offsetTop ?? 0) + keeperHeaderHeight) / keeperSectionTravel, 0),
+    1,
+  )
+  const keeperImageScale = 1 + keeperSectionProgress * 0.3
+
   return (
     <div className="home-page" style={{ background: BG }}>
-      <Hero onNavigate={onNavigate} />
+      {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
+      <HeroHeader onNavigate={onNavigate} scrollY={scrollY} />
+      <HeroSlider scrollY={scrollY} onNavigate={onNavigate} />
 
-      <section className="home-services-bar">
-        <div className="home-shell home-services-bar__inner">
-          {SERVICE_FEATURES.map(feature => (
-            <div key={feature.title} className="home-services-bar__item">
-              <div className="home-services-bar__icon">{feature.icon}</div>
-              <div className="home-services-description">
-                <div className="home-services-bar__title">{feature.title}</div>
-                <div className="home-services-bar__desc">{feature.desc}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="home-section home-section--shop home-section--shop-light">
+      <section className="home-section home-section--shop">
         <div className="home-shell">
-          <div className="home-section__header">
-            <div>
-              {/* <div className="home-eyebrow">Shop</div> */}
-              <h2 className="home-section__title">Built Around Heritage.</h2>
-              <p className="home-section__copy home-section__copy--shop">Timeless essentials shaped by heritage and crafted for today.</p>
-            </div>
-            <button onClick={() => onNavigate('shop')} className="home-inline-link">View all →</button>
-          </div>
-
-          <div className="home-shop-showcase">
-            {SHOP_CARDS.map((card, index) => {
-              if (card.type === 'banner') {
-                return (
-                  <motion.button
-                    key={card.title}
-                    onClick={() => onNavigate('collections')}
-                    className="home-shop-card home-shop-card--banner"
-                    style={{ gridArea: card.area }}
-                    variants={bannerCardVariants}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, amount: 0.25 }}
-                  >
-                    <img src={card.img} alt={card.title} className="home-shop-card__image" />
-                    <div className="home-shop-card__overlay home-shop-card__overlay--banner" />
-                    <motion.div className="home-shop-card__banner-rail home-shop-card__banner-rail--left" custom="left" variants={bannerRailVariants} aria-hidden="true">
-                      <span className="home-shop-card__banner-rail-motif">
-                        {Array.from({ length: BANNER_MOTIF_REPEAT_COUNT }).map((_, motifIndex) => (
-                          <img key={`left-motif-${motifIndex}`} src={motifIcon} alt="" className="home-shop-card__banner-rail-motif-icon" />
-                        ))}
-                      </span>
-                      <span className="home-shop-card__banner-rail-line" />
-                    </motion.div>
-                    <motion.div className="home-shop-card__banner-rail home-shop-card__banner-rail--right" custom="right" variants={bannerRailVariants} aria-hidden="true">
-                      <span className="home-shop-card__banner-rail-line" />
-                      <span className="home-shop-card__banner-rail-motif">
-                        {Array.from({ length: BANNER_MOTIF_REPEAT_COUNT }).map((_, motifIndex) => (
-                          <img key={`right-motif-${motifIndex}`} src={motifIcon} alt="" className="home-shop-card__banner-rail-motif-icon" />
-                        ))}
-                      </span>
-                    </motion.div>
-                    <motion.div className="home-shop-card__banner-content" variants={bannerContentVariants}>
-                      <div className="home-shop-card__banner-top">
-                        <div className="home-shop-card__banner-eyebrow">{card.eyebrow}</div>
-                        <div className="home-shop-card__banner-mark">✶</div>
-                        <h3 className="home-shop-card__banner-title">
-                          <span>Desert</span>
-                          <span>Maghrebin</span>
-                        </h3>
-                        <p className="home-shop-card__banner-desc">{card.desc}</p>
-                      </div>
-                      <motion.div className="home-shop-card__banner-cta hero-action-button hero-action-button--primary" variants={bannerCtaVariants}>
-                        <span>{card.cta}</span>
-                        <span className="hero-action-button__arrow">→</span>
-                      </motion.div>
-                    </motion.div>
-                  </motion.button>
-                )
-              }
-
-              return (
-                <motion.button
-                  key={card.name}
-                  onClick={() => onNavigate('shop')}
-                  className={`home-shop-card home-shop-card--${card.name.toLowerCase().replace(/[^a-z]+/g, '-')}`}
-                  style={{ gridArea: card.area }}
-                  variants={categoryCardVariants}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, amount: 0.25 }}
-                  custom={index * 0.08}
-                >
-                  <img src={card.img} alt={card.name} className="home-shop-card__image" />
-                  <div className="home-shop-card__overlay" />
-                  {/* <div className="home-shop-card__badge">{card.icon}</div> */}
-                  <div className="home-shop-card__corner-icon" aria-hidden="true">
-                    <img src={arrowTopRightIcon} alt="" />
-                  </div>
-                  <div className="home-shop-card__content">
-                    <div className="home-shop-card__name">{card.name}</div>
-                  </div>
-                </motion.button>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="home-section home-section--featured">
-        <div className="home-shell home-featured-layout">
-          <div className="home-featured-layout__copy">
-            <div className="home-featured-layout__eyebrow">Featured Collection</div>
-            <div className="home-featured-layout__rule">
-              <span />
-              <span className="home-featured-layout__rule-mark">✶</span>
-              <span />
-            </div>
-            <div className="home-featured-layout__overline">The first collection</div>
-            <h2 className="home-featured-layout__title">RBOR</h2>
-            <p className="home-featured-layout__copy-text">The beginning of the IZLI journey. One collection. One product. One vision.</p>
-            <div className="home-featured-layout__divider" />
-            <div className="home-featured-layout__feature-grid">
-              {COLLECTION_FEATURES.map(feature => (
-                <div key={feature.title} className="home-featured-layout__feature">
-                  <div className="home-featured-layout__feature-icon">{feature.icon}</div>
-                  <div className="home-featured-layout__feature-title">{feature.title}</div>
-                  <div className="home-featured-layout__feature-desc">{feature.desc}</div>
-                </div>
-              ))}
-            </div>
-            <button onClick={() => onNavigate('collections')} className="hero-action-button hero-action-button--primary home-featured-layout__cta">
-              <span>Explore RBOR</span>
-              <span className="hero-action-button__arrow">→</span>
+          <div className="home-shop-tabs">
+            <button className={`home-shop-tab ${activeTab === 'new' ? 'home-shop-tab--active' : ''}`} onClick={() => setActiveTab('new')}>
+              New releases
+            </button>
+            <button className={`home-shop-tab ${activeTab === 'last' ? 'home-shop-tab--active' : ''}`} onClick={() => setActiveTab('last')}>
+              Last releases
             </button>
           </div>
 
-          <div className="home-featured-layout__media">
-            <img
-              src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1400&h=1400&fit=crop&auto=format"
-              alt="RBOR collection"
-              className="home-featured-layout__image"
-            />
-          </div>
-        </div>
-
-        <div className="home-shell home-featured-strip">
-          <div className="home-featured-strip__left">
-            <div className="home-featured-strip__icon">✶</div>
-            <div>
-              <div className="home-featured-strip__title">A collection rooted in heritage.</div>
-              <div className="home-featured-strip__text">RBOR is inspired by Amazigh architecture and symbols, reimagined for today.</div>
-            </div>
-          </div>
-          <button onClick={() => onNavigate('collections')} className="home-featured-strip__link">
-            <span>Discover the story</span>
-            <span>→</span>
-          </button>
+          <ProductCarousel products={activeTab === 'new' ? PRODUCTS_NEW : PRODUCTS_LAST} />
         </div>
       </section>
 
-      <section className="home-section home-section--release">
-        <div className="home-shell home-split home-split--release">
-          <div className="home-split__copy">
-            <div className="home-eyebrow">Current Release</div>
-            <h2 className="home-section__title home-section__title--light">Release 001</h2>
-            <p className="home-section__copy home-section__copy--light">A limited release with a precise drop rhythm, designed to feel like a chapter rather than a season.</p>
-            <div className="home-chip-row">
-              {RELEASE_POINTS.map(point => (
-                <span key={point} className="home-chip home-chip--dark">{point}</span>
+      <section className="home-section home-section--tops">
+        <header className="home-tops-editorial__header">
+          <div>
+            <h2>Tops</h2>
+          </div>
+          <KeeperCircleCta onClick={() => onNavigate('shop')}>Shop tops</KeeperCircleCta>
+        </header>
+        <div className="home-tops-editorial">
+          <div className="home-tops-editorial__visual">
+            <img src={tafuktImage} alt="IZLI tops collection" />
+            <div className="home-tops-editorial__visual-overlay" />
+            <div className="home-tops-editorial__visual-caption">
+              <span>Essential forms</span>
+              <strong>Built for every day</strong>
+            </div>
+          </div>
+
+          <div className="home-tops-editorial__products">
+            <div className="home-tops-editorial__grid">
+              {TOP_PRODUCTS.map(product => (
+                <button key={`${product.name}-${product.color}`} type="button" className="home-tops-product-card" onClick={() => onNavigate('product-detail')}>
+                  <span className="home-tops-product-card__image"><img src={product.image} alt={`${product.name} ${product.color}`} /></span>
+                  <span className="home-tops-product-card__info">
+                    <span>{product.name}</span>
+                    <small>{product.color}</small>
+                    <strong>{product.price}</strong>
+                  </span>
+                </button>
               ))}
             </div>
-            <div className="home-actions-row">
-              <button onClick={() => onNavigate('product-detail')} className="hero-action-button hero-action-button--primary">
-                <span>Shop Release 001</span>
-                <span className="hero-action-button__arrow">→</span>
-              </button>
-              <button onClick={() => onNavigate('shop')} className="hero-action-button hero-action-button--secondary">
-                <span>Explore the shop</span>
-                <span className="hero-action-button__arrow">↗</span>
-              </button>
-            </div>
           </div>
-
-          <aside className="home-release-card">
-            <div className="home-release-card__shell">
-              <div className="home-release-card__label">Current Release</div>
-              <div className="home-release-card__title" style={{ fontFamily: FONT_SERIF }}>Release 001</div>
-              <div className="home-release-card__subtitle">Rbor Heavy Tee<br />Sand Beige</div>
-              <div className="home-release-card__price">79 TND</div>
-              <div className="home-release-card__rule" />
-              <div className="home-release-card__list">
-                {RELEASE_POINTS.map(point => (
-                  <div key={point} className="home-release-card__list-item">
-                    <span className="home-release-card__bullet">⌁</span>
-                    <span>{point}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="home-release-card__stock-row">
-                <span>Limited Stock</span>
-                <span>120 / 300</span>
-              </div>
-              <div className="home-release-card__progress">
-                <div className="home-release-card__progress-bar" />
-              </div>
-              <button type="button" onClick={() => onNavigate('product-detail')} className="home-release-card__button">
-                <span>Shop Release 001</span>
-                <span>→</span>
-              </button>
-            </div>
-          </aside>
         </div>
       </section>
 
-      <section className="home-section home-section--legacy">
-        <div className="home-shell">
-          <div className="home-section__header home-section__header--dark">
-            <div>
-              <div className="home-eyebrow home-eyebrow--warm">Legacy</div>
-              <h2 className="home-section__title home-section__title--dark">Carried forward, not archived away.</h2>
-              <p className="home-section__copy home-section__copy--dark">Legacy is the thread that keeps the collection grounded: meaning, material, and memory stay visible in every cut.</p>
+      <section className="home-section home-section--bottoms">
+        <header className="home-tops-editorial__header">
+          <div>
+            <h2>Bottoms</h2>
+          </div>
+          <KeeperCircleCta onClick={() => onNavigate('shop')}>Shop bottoms</KeeperCircleCta>
+        </header>
+        <div className="home-tops-editorial home-bottoms-editorial">
+          <div className="home-tops-editorial__visual">
+            <img src={tafuktBottomsImage} alt="IZLI bottoms collection" />
+            <div className="home-tops-editorial__visual-overlay" />
+            <div className="home-tops-editorial__visual-caption">
+              <span>Grounded silhouettes</span>
+              <strong>Made to move with you</strong>
             </div>
-            <button onClick={() => onNavigate('archives')} className="home-inline-link home-inline-link--dark">Open the archives →</button>
           </div>
 
-          <div className="home-legacy-grid">
-            {LEGACY_PILLARS.map(pillar => (
-              <article key={pillar.title} className="home-legacy-card">
-                <div className="home-legacy-card__index">0{LEGACY_PILLARS.indexOf(pillar) + 1}</div>
-                <h3 className="home-legacy-card__title">{pillar.title}</h3>
-                <p className="home-legacy-card__copy">{pillar.desc}</p>
+          <div className="home-tops-editorial__products">
+            <div className="home-tops-editorial__grid">
+              {TOP_PRODUCTS.map(product => (
+                <button key={`${product.name}-${product.color}`} type="button" className="home-tops-product-card" onClick={() => onNavigate('product-detail')}>
+                  <span className="home-tops-product-card__image"><img src={product.image} alt={`${product.name} ${product.color}`} /></span>
+                  <span className="home-tops-product-card__info">
+                    <span>{product.name}</span>
+                    <small>{product.color}</small>
+                    <strong>{product.price}</strong>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* <section className="home-section home-section--release">
+        <div className="home-shell home-split home-split--release">
+          <div className="home-release-photo-grid">
+            {[
+              { src: 'photo-1521572163474-6864f9cf17ab', label: 'Front' },
+              { src: 'photo-1583743814966-8936f5b7be1a', label: 'Detail' },
+              { src: 'photo-1503341504253-dff4815485f1', label: 'Fabric' },
+              { src: 'photo-1523381210434-271e8be1f52b', label: 'Fit' },
+            ].map(({ src, label }) => (
+              <div key={label} className="home-release-photo-grid__cell">
+                <img
+                  src={`https://images.unsplash.com/${src}?w=600&h=720&fit=crop&auto=format`}
+                  alt={label}
+                  className="home-release-photo-grid__img"
+                />
+                <span className="home-release-photo-grid__label">{label}</span>
+              </div>
+            ))}
+          </div>
+
+          <aside className="home-release-content">
+            <div className="home-release-content__label">Current Release</div>
+            <div className="home-release-content__title" style={{ fontFamily: FONT_SERIF }}>Release 001</div>
+            <div className="home-release-content__subtitle">Rbor Heavy Tee<br />Sand Beige</div>
+            <div className="home-release-content__price">79 TND</div>
+            <div className="home-release-content__rule" />
+            <div className="home-release-content__list">
+              {RELEASE_POINTS.map(point => (
+                <div key={point} className="home-release-content__list-item">
+                  <span className="home-release-content__bullet">⌁</span>
+                  <span>{point}</span>
+                </div>
+              ))}
+            </div>
+            <div className="home-release-content__stock-row">
+              <span>Limited Stock</span>
+              <span>120 / 300</span>
+            </div>
+            <div className="home-release-content__progress">
+              <div className="home-release-content__progress-bar" />
+            </div>
+            <button type="button" onClick={() => onNavigate('product-detail')} className="hero-action-button hero-action-button--primary home-release-content__cta">
+              <span>Shop Release 001</span>
+              <span className="hero-action-button__arrow">→</span>
+            </button>
+          </aside>
+        </div>
+      </section> */}
+
+      <section ref={keeperSectionRef} className="home-section home-section--keeper-circle">
+        <div className="keeper-circle-layout">
+          <div className="keeper-sticky-visual">
+            <img src={keeperCircleImage} alt="Keeper Circle community" style={{ transform: `scale(${keeperImageScale})` }} />
+            <div className="keeper-sticky-visual__overlay" aria-hidden="true" />
+            <div className="keeper-sticky-visual__title">KEEPER CIRCLE</div>
+            {/* <div className="keeper-sticky-visual__caption">The circle around the archive.</div> */}
+          </div>
+
+          <div className="keeper-scroll-content">
+            {KEEPER_PANELS.map((benefit, benefitIndex) => (
+              <article
+                id={benefit.id}
+                key={benefit.number}
+                data-keeper-panel=""
+                className={`keeper-benefit-panel ${benefitIndex === 0 ? `keeper-benefit-panel--intro ${introTitleRevealed ? 'keeper-benefit-panel--intro-revealed' : ''}` : ''} ${benefitIndex > 0 ? 'keeper-benefit-panel--exclusive' : ''} ${benefitIndex === KEEPER_PANELS.length - 1 ? 'keeper-benefit-panel--community' : ''} ${activeKeeperBenefit === benefitIndex ? 'is-active' : ''}`}
+              >
+                
+                {benefitIndex > 0 && (
+                  <div className="keeper-benefit-panel__eyebrow keeper-benefit-panel__eyebrow--badge">
+                    <span aria-hidden="true">✳</span>
+                    {benefit.eyebrow}
+                  </div>
+                )}
+                <h2 className="keeper-benefit-panel__title">
+                  {benefit.title.map((line, lineIndex) => (
+                    <span className="keeper-benefit-panel__title-line" key={lineIndex}>
+                      {line.map((segment, segmentIndex) => (
+                        <span className={`keeper-benefit-panel__title-segment keeper-benefit-panel__title-segment--${segment.tone}`} key={segmentIndex}>
+                          {benefitIndex === 0 && segment.tone === 'accent'
+                            ? [...segment.text].map((character, characterIndex) => (
+                              <span
+                                className="keeper-benefit-panel__title-character"
+                                key={`${character}-${characterIndex}`}
+                                style={{ transitionDelay: `${lineIndex * 100 + characterIndex * 12}ms` }}
+                              >
+                                {character === ' ' ? '\u00a0' : character}
+                              </span>
+                            ))
+                            : segment.text}
+                        </span>
+                      ))}
+                    </span>
+                  ))}
+                </h2>
+                {/* {benefitIndex !== 1 && <p className="keeper-benefit-panel__eyebrow">{benefit.eyebrow}</p>} */}
+                <div className="keeper-benefit-panel__copy">
+                  {benefit.copy.split('\n\n').map(paragraph => <p key={paragraph}>{paragraph}</p>)}
+                </div>
+                {benefit.indicators.length > 0 && (
+                  <div className="keeper-benefit-panel__indicators">
+                    {benefit.indicators.map(indicator => (
+                      <div className="keeper-benefit-indicator" key={indicator.join('-')}>
+                        <span className="keeper-benefit-indicator__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><path d="M12 3.5v17M3.5 12h17" /></svg></span>
+                        <span>{indicator.map(line => <strong key={line}>{line}</strong>)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {benefit.closing[0] && (
+                  <>
+                    <div className="keeper-benefit-panel__rule" />
+                    <p className="keeper-benefit-panel__closing">{benefit.closing[0]}<strong>{benefit.closing[1]}</strong></p>
+                  </>
+                )}
+                {benefitIndex === KEEPER_PANELS.length - 1 && (
+                  <div className="keeper-benefit-panel__actions">
+                    <KeeperCircleCta onClick={() => onNavigate('keeper-circle')}>
+                      Discover the Circle
+                    </KeeperCircleCta>
+                    <KeeperCircleCta variant="secondary" onClick={() => onNavigate('login')}>
+                      Become a Keeper
+                    </KeeperCircleCta>
+                  </div>
+                )}
               </article>
             ))}
           </div>
-        </div>
-      </section>
 
-      <section className="home-section home-section--keeper-circle">
-        <div className="home-shell home-split home-split--circle">
-          <div className="home-split__copy">
-            <div className="home-eyebrow">Keeper Circle</div>
-            <h2 className="home-section__title home-section__title--light">The circle around the archive.</h2>
-            <p className="home-section__copy home-section__copy--light">The Keeper Circle is where private access, community status, and archive moments meet in one membership layer.</p>
-            <div className="home-actions-row">
-              <button onClick={() => onNavigate('keeper-circle')} className="hero-action-button hero-action-button--primary">
-                <span>Explore the Circle</span>
-                <span className="hero-action-button__arrow">→</span>
-              </button>
-              <button onClick={() => onNavigate('community')} className="hero-action-button hero-action-button--secondary">
-                <span>Meet the community</span>
-                <span className="hero-action-button__arrow">↗</span>
-              </button>
-            </div>
-          </div>
+          <nav className="keeper-scroll-indicator" aria-label="Keeper Circle benefits">
+            <span className="keeper-scroll-indicator__line" aria-hidden="true" />
+            {KEEPER_PANELS.map((benefit, index) => (
+              <a
+                className={activeKeeperBenefit === index ? 'is-active' : ''}
+                href={`#${benefit.id}`}
+                key={benefit.id}
+                aria-label={index === 0 ? 'Introduction' : `Point ${benefit.number}`}
+                onClick={event => {
+                  event.preventDefault()
+                  setActiveKeeperBenefit(index)
+                  const targetPanel = document.getElementById(benefit.id)
+                  const mainHeader = document.querySelector<HTMLElement>('.hero-header')
+                  if (!targetPanel) return
 
-          <div className="home-benefit-grid">
-            {KEEPER_BENEFITS.map(benefit => (
-              <div key={benefit.title} className="home-benefit-card">
-                <div className="home-benefit-card__title">{benefit.title}</div>
-                <div className="home-benefit-card__copy">{benefit.desc}</div>
-              </div>
+                  const headerHeight = mainHeader?.getBoundingClientRect().height ?? 83
+                  const targetTop = targetPanel.getBoundingClientRect().top + window.scrollY - headerHeight
+                  window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' })
+                }}
+              >
+                {index === 0 ? <span className="keeper-scroll-indicator__dot" aria-hidden="true" /> : benefit.number}
+              </a>
             ))}
-          </div>
+          </nav>
         </div>
       </section>
 
-      <section className="home-section home-section--cta">
-        <div className="home-shell home-cta">
-          <div className="home-eyebrow">Become a Keeper</div>
-          <h2 className="home-cta__title">Own a limited release, unlock exclusive experiences, and become part of the IZLI legacy.</h2>
-          <p className="home-cta__copy">Join the layer that gives access to the archive, the circle, and the next release before anyone else.</p>
-          <div className="home-actions-row home-actions-row--center">
-            <button onClick={() => onNavigate('login')} className="hero-action-button hero-action-button--primary">
-              <span>Become a Keeper</span>
-              <span className="hero-action-button__arrow">→</span>
-            </button>
-            <button onClick={() => onNavigate('keeper-circle')} className="hero-action-button hero-action-button--secondary">
-              <span>View membership</span>
-              <span className="hero-action-button__arrow">↗</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className="home-section home-section--recommended">
-        <div className="home-shell">
-          <div className="home-section__header">
-            <div>
-              <div className="home-eyebrow">Recommended Products</div>
-              <h2 className="home-section__title home-section__title--light">Objects aligned with the release.</h2>
-              <p className="home-section__copy home-section__copy--light">A tighter selection chosen to echo the same material language as the current hero and release.</p>
-            </div>
-            <button onClick={() => onNavigate('shop')} className="home-inline-link">Browse the shop →</button>
-          </div>
-
-          <div className="home-product-grid">
-            {RECOMMENDED_PRODUCTS.map(product => (
-              <button key={product.name} onClick={() => onNavigate('product-detail')} className="home-product-card">
-                <div className="home-product-card__media">
-                  <img src={`https://images.unsplash.com/${product.img}?w=900&h=1080&fit=crop&auto=format`} alt={product.name} className="home-product-card__image" />
-                  <div className="home-product-card__veil" />
-                  <span className="home-product-card__label">{product.label}</span>
-                </div>
-                <div className="home-product-card__body">
-                  <div>
-                    <div className="home-product-card__name">{product.name}</div>
-                    <div className="home-product-card__meta">Limited availability · Crafted for the archive</div>
-                  </div>
-                  <div className="home-product-card__price">{product.price}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ScrollToTop />
     </div>
   )
 }

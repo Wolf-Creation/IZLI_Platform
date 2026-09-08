@@ -37,6 +37,18 @@
 .navbar__logo-mark {
   display: inline-flex;
   color: var(--navbar-logo-color);
+  transition: color 220ms ease;
+}
+
+.navbar--home.navbar--scrolled .navbar__logo-mark {
+  color: #c9924e;
+}
+
+.navbar--home .navbar__desktop-nav button:hover,
+.navbar--home .navbar__desktop-actions > button:hover,
+.navbar--home .navbar__mobile-action:hover,
+.navbar--home .navbar__mobile-toggle:hover {
+  color: #c9924e !important;
 }
 
 .navbar__logo-mark svg {

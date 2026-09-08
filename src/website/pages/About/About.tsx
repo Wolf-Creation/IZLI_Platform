@@ -46,7 +46,7 @@ export default function About({ onNavigate: _onNavigate }: Props) {
             </p>
           </div>
           <div className="about-media">
-            <img src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=700&h=875&fit=crop&auto=format" alt="IZLI origin" />
+            <img src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=700&h=875&fit=crop&auto=format" alt="IZLI" />
           </div>
         </div>
       </section>

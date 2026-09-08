@@ -1,0 +1,477 @@
+// Collections Section — Premium Editorial Layout with Cinematic Animation
+// IZLI Fashion Brand
+
+// ── Color System ──
+$color-bg: #E7DFD2;
+$color-text: #111111;
+$color-secondary: #2E2E2E;
+$color-accent: #8C6B52;
+$color-accent-secondary: #7D8470;
+
+// ── Typography ──
+$font-serif: 'Playfair Display', serif;
+$font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+
+// ── Easing ──
+$easing-editorial: cubic-bezier(0.76, 0, 0.24, 1);
+
+// ── Animation Durations ──
+$duration-transition: 1400ms;
+$duration-pause: 5600ms;
+$duration-cycle: calc($duration-transition + $duration-pause);
+$duration-hover: 500ms;
+
+// ── Layout ──
+$columns: 4;
+
+.collections-section {
+  width: 100%;
+  background-color: $color-bg;
+  padding: 96px 64px;
+}
+
+.collections-header {
+  max-width: 1920px;
+  margin: 0 auto 72px;
+  text-align: center;
+}
+
+.collections-title {
+  font-family: $font-serif;
+  font-size: 56px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: $color-text;
+  margin: 0 0 16px;
+}
+
+.collections-subtitle {
+  font-family: $font-sans;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba($color-text, 0.6);
+  margin: 0;
+}
+
+// ── Grid Layout ──
+.collections-grid {
+  display: grid;
+  grid-template-columns: repeat($columns, 1fr);
+  gap: 0;
+  max-width: 1920px;
+  margin: 0 auto;
+  height: 600px;
+  overflow: hidden;
+  border: 1px solid rgba($color-accent, 0.1);
+  border-radius: 2px;
+}
+
+.collections-column {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  transition: none;
+
+  &.is-animating {
+    .collections-image-panel {
+      animation: panel-exit-image $duration-transition $easing-editorial;
+    }
+
+    .collections-text-panel {
+      animation: panel-exit-text $duration-transition $easing-editorial;
+    }
+  }
+}
+
+// ── Image Panel ──
+.collections-image-panel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.collections-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform $duration-hover ease-out;
+  will-change: transform;
+}
+
+.collections-image-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba($color-text, 0);
+  transition: background-color $duration-hover ease-out;
+  pointer-events: none;
+}
+
+.collections-column:hover .collections-image-overlay {
+  background-color: rgba($color-text, 0.08);
+}
+
+.collections-column:hover .collections-image {
+  transform: scale(1.03);
+}
+
+// ── Text Panel ──
+.collections-text-panel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 48px 40px;
+  background-color: $color-bg;
+  overflow: hidden;
+}
+
+.collections-text-panel__inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+.collections-label {
+  font-family: $font-sans;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba($color-text, 0.5);
+  margin-bottom: 12px;
+}
+
+.collections-symbol {
+  font-size: 20px;
+  color: $color-accent;
+  margin-bottom: 12px;
+  line-height: 1;
+}
+
+.collections-name {
+  font-family: $font-sans;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: $color-accent;
+  margin: 0 0 20px;
+}
+
+.collections-headline {
+  font-family: $font-serif;
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: $color-text;
+  margin: 0 0 16px;
+}
+
+.collections-description {
+  font-family: $font-sans;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.7;
+  color: rgba($color-text, 0.7);
+  margin: 0 0 24px;
+}
+
+.collections-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: $font-sans;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $color-text;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all $duration-hover ease-out;
+
+  &__arrow {
+    display: inline-block;
+    transform: translateX(0);
+    transition: transform $duration-hover ease-out;
+  }
+
+  &:hover {
+    .collections-cta__arrow {
+      transform: translateX(6px);
+    }
+  }
+}
+
+// ── Topographic Background ──
+.collections-topo-bg {
+  position: absolute;
+  top: 0;
+  right: -10%;
+  width: 120%;
+  height: 100%;
+  background-image: url('/src/website/assets/atlas-topography.svg');
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: right 50% center;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 1;
+
+  .collections-grid.is-animating & {
+    animation: topo-drift $duration-transition $easing-editorial;
+  }
+}
+
+// ── Animations ──
+
+@keyframes panel-exit-image {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+  }
+  45% {
+    opacity: 0.8;
+    transform: scale(1.01) translateX(0);
+  }
+  55% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1) translateX(0);
+  }
+}
+
+@keyframes panel-exit-text {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 0.8;
+    transform: translateY(-8px);
+  }
+  60% {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes topo-drift {
+  0% {
+    transform: translateX(0) translateY(0);
+    opacity: 0.08;
+  }
+  50% {
+    transform: translateX(12px) translateY(-8px);
+    opacity: 0.11;
+  }
+  100% {
+    transform: translateX(0) translateY(0);
+    opacity: 0.08;
+  }
+}
+
+// ── Responsive: Tablet (768px – 1024px) ──
+@media (max-width: 1024px) {
+  .collections-section {
+    padding: 64px 48px;
+  }
+
+  .collections-grid {
+    grid-template-columns: repeat(2, 1fr);
+    height: 800px;
+
+    &.collections-grid--state-A {
+      // Row 1: Image, Text | Row 2: Image, Text
+      .collections-column--1 { grid-column: 1; grid-row: 1; }
+      .collections-column--2 { grid-column: 2; grid-row: 1; }
+      .collections-column--3 { grid-column: 1; grid-row: 2; }
+      .collections-column--4 { grid-column: 2; grid-row: 2; }
+    }
+
+    &.collections-grid--state-B {
+      // Row 1: Text, Image | Row 2: Text, Image
+      .collections-column--1 { grid-column: 1; grid-row: 1; }
+      .collections-column--2 { grid-column: 2; grid-row: 1; }
+      .collections-column--3 { grid-column: 1; grid-row: 2; }
+      .collections-column--4 { grid-column: 2; grid-row: 2; }
+    }
+  }
+
+  .collections-title {
+    font-size: 42px;
+  }
+
+  .collections-text-panel {
+    padding: 40px 32px;
+  }
+
+  .collections-headline {
+    font-size: 22px;
+  }
+}
+
+// ── Responsive: Mobile (< 768px) ──
+@media (max-width: 768px) {
+  .collections-section {
+    padding: 48px 24px;
+  }
+
+  .collections-header {
+    margin-bottom: 48px;
+  }
+
+  .collections-title {
+    font-size: 32px;
+  }
+
+  .collections-subtitle {
+    font-size: 12px;
+  }
+
+  .collections-grid {
+    grid-template-columns: 1fr;
+    height: auto;
+    gap: 0;
+
+    &.collections-grid--state-A,
+    &.collections-grid--state-B {
+      .collections-column--1 { grid-row: 1; }
+      .collections-column--2 { grid-row: 2; }
+      .collections-column--3 { grid-row: 3; }
+      .collections-column--4 { grid-row: 4; }
+    }
+  }
+
+  .collections-column {
+    min-height: 500px;
+
+    &.collections-column--image {
+      min-height: 600px;
+    }
+
+    &.collections-column--text {
+      min-height: 480px;
+    }
+  }
+
+  .collections-image-panel {
+    min-height: 600px;
+  }
+
+  .collections-text-panel {
+    padding: 40px 24px;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .collections-text-panel__inner {
+    padding-top: 24px;
+  }
+
+  .collections-headline {
+    font-size: 20px;
+  }
+
+  .collections-description {
+    font-size: 13px;
+  }
+
+  // Mobile animation: vertical instead of horizontal
+  .collections-column.is-animating {
+    .collections-image-panel {
+      animation: panel-exit-image-mobile $duration-transition $easing-editorial;
+    }
+
+    .collections-text-panel {
+      animation: panel-exit-text-mobile $duration-transition $easing-editorial;
+    }
+  }
+}
+
+@keyframes panel-exit-image-mobile {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-40px) scale(0.98);
+  }
+}
+
+@keyframes panel-exit-text-mobile {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+}
+
+// ── Accessibility: Reduced Motion ──
+@media (prefers-reduced-motion: reduce) {
+  .collections-column.is-animating {
+    .collections-image-panel,
+    .collections-text-panel {
+      animation: none;
+      opacity: 0;
+    }
+  }
+
+  .collections-column {
+    &.collections-column--image .collections-image {
+      transition: none;
+    }
+
+    &:hover {
+      .collections-image-overlay {
+        transition: none;
+      }
+
+      .collections-image {
+        transition: none;
+      }
+    }
+  }
+
+  .collections-cta {
+    transition: none;
+
+    &:hover .collections-cta__arrow {
+      transition: none;
+    }
+  }
+
+  .collections-topo-bg {
+    animation: none;
+  }
+}

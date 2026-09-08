@@ -77,6 +77,19 @@ export default function App() {
   const [productEditorId, setProductEditorId] = useState<string | null>(initialAdminState.productEditorId)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [sidebarHovered, setSidebarHovered] = useState(false)
+
+  useEffect(() => {
+    const navigationEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined
+    if (navigationEntry?.type === 'reload') {
+      window.history.scrollRestoration = 'manual'
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    }
+
+    return () => {
+      window.history.scrollRestoration = 'auto'
+    }
+  }, [])
+
   const navigate = (s: Screen) => {
     const nextPath = adminPathForScreen(s, productEditorId)
     if (window.location.pathname !== nextPath) {
@@ -232,7 +245,7 @@ export default function App() {
       <div style={{ position: 'relative' }}>
         <WebsiteApp onAdminRequest={openAdmin} />
         {/* App switcher */}
-        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, background: INDIGO, borderRadius: 999, padding: '8px 16px 8px 12px', boxShadow: '0 4px 20px rgba(30,47,68,0.3)' }}>
+        <div style={{ position: 'fixed', bottom: 24, left: 24, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, background: INDIGO, borderRadius: 999, padding: '8px 16px 8px 12px', boxShadow: '0 4px 20px rgba(30,47,68,0.3)' }}>
           <img src={izliLogo} alt="IZLI" style={{ width: 28, height: 'auto', display: 'block' }} />
           <button onClick={openAdmin} style={{ padding: '6px 14px', background: CREAM, color: INDIGO, border: 'none', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', letterSpacing: '0.02em' }}>
             Admin →
@@ -259,7 +272,7 @@ export default function App() {
         </main>
       </div>
       {/* App switcher */}
-      <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, background: INDIGO, borderRadius: 999, padding: '8px 16px 8px 12px', boxShadow: '0 4px 20px rgba(30,47,68,0.3)' }}>
+      <div style={{ position: 'fixed', bottom: 24, left: 24, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, background: INDIGO, borderRadius: 999, padding: '8px 16px 8px 12px', boxShadow: '0 4px 20px rgba(30,47,68,0.3)' }}>
         <img src={izliLogo} alt="IZLI" style={{ width: 28, height: 'auto', display: 'block' }} />
         <button onClick={openWebsite} style={{ padding: '6px 14px', background: CREAM, color: INDIGO, border: 'none', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', letterSpacing: '0.02em' }}>
           Website →
