@@ -22,6 +22,7 @@ const TRANSITION_DISTANCE = 350 // Same as animation distance in NewHero
 
 export function HeroHeader({ onNavigate, scrollY, isHomePage = true }: Props) {
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   // On non-home pages, always show scrolled state
   const effectiveScrollY = isHomePage ? scrollY : 350
@@ -39,6 +40,18 @@ export function HeroHeader({ onNavigate, scrollY, isHomePage = true }: Props) {
     setIsScrolled(isHomePage ? scrollY > 100 : true)
   }, [scrollY, isHomePage])
 
+  useEffect(() => {
+    document.body.style.overflow = isMobileMenuOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isMobileMenuOpen])
+
+  const navigateFromMobileMenu = (page: WebPage) => {
+    setIsMobileMenuOpen(false)
+    onNavigate(page)
+  }
+
   return (
     <header
       className={`hero-header ${isScrolled ? 'hero-header--scrolled' : ''}`}
@@ -53,6 +66,34 @@ export function HeroHeader({ onNavigate, scrollY, isHomePage = true }: Props) {
       } as any}
     >
       <div className="hero-header__container">
+        <div className="hero-header__mobile-bar">
+          <button
+            type="button"
+            className="hero-header__mobile-menu-button"
+            onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="Open menu"
+            aria-expanded={isMobileMenuOpen}
+          >
+            <span />
+            <span />
+          </button>
+
+          <button className="hero-header__mobile-brand" onClick={() => onNavigate('home')} aria-label="Back to home">
+            <svg className="hero-header__logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 313.12 313.12">
+              <g><rect className="hero-header__logo-line" x="-2.32" y="78.42" width="165.9" height="4.4" transform="translate(-33.39 80.62) rotate(-45)"/><rect className="hero-header__logo-line" x="230.31" y="-2.33" width="4.4" height="165.9" transform="translate(11.1 188.02) rotate(-45)"/><rect className="hero-header__logo-line" x="149.54" y="230.31" width="165.9" height="4.4" transform="translate(-96.31 232.5) rotate(-45)"/><rect className="hero-header__logo-line" x="78.41" y="149.55" width="4.4" height="165.93" transform="translate(-140.8 125.1) rotate(-45)"/><rect className="hero-header__logo-accent" x="147.36" y="3.81" width="18.4" height="18.4" transform="translate(36.66 114.51) rotate(-45)"/><rect className="hero-header__logo-accent" x="3.81" y="147.36" width="18.4" height="18.4" transform="translate(-106.9 55.05) rotate(-45)"/><rect className="hero-header__logo-accent" x="147.36" y="290.91" width="18.4" height="18.4" transform="translate(-166.37 198.63) rotate(-45)"/><rect className="hero-header__logo-accent" x="290.91" y="147.36" width="18.4" height="18.4" transform="translate(-22.8 258.07) rotate(-45)"/><polygon className="hero-header__logo-accent" points="189.56 187.75 189.61 129.87 218.82 158.45 189.56 187.75"/><polygon className="hero-header__logo-line" points="163.53 249.61 163.53 75.95 178.94 75.95 178.94 212.41 232.9 158.45 216.41 141.97 227.31 131.07 254.69 158.45 163.53 249.61"/><polygon className="hero-header__logo-accent" points="123.56 125.37 123.51 183.25 94.3 154.67 123.56 125.37"/><polygon className="hero-header__logo-line" points="149.59 237.17 134.18 237.17 134.18 100.72 80.23 154.67 96.71 171.15 85.81 182.05 58.43 154.67 149.59 63.51 149.59 237.17"/></g>
+            </svg>
+          </button>
+
+          <div className="hero-header__mobile-actions">
+            <button className="hero-header__mobile-action" onClick={() => onNavigate('login')} aria-label="Account">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="12" cy="7" r="3.5"/><path d="M5 20c1.2-4 12.8-4 14 0"/></svg>
+            </button>
+            <button className="hero-header__mobile-action" onClick={() => onNavigate('cart')} aria-label="Cart">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 5h2l2.2 9.2a1.4 1.4 0 0 0 1.4 1.1h7.9a1.4 1.4 0 0 0 1.4-1.1L21 8H6.1"/><circle cx="10" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></svg>
+            </button>
+          </div>
+        </div>
+
         {/* Left Menu */}
         <nav className="hero-header__menu">
           {MENU_ITEMS.map(item => (
@@ -113,6 +154,22 @@ export function HeroHeader({ onNavigate, scrollY, isHomePage = true }: Props) {
             </svg>
           </button>
         </div>
+      </div>
+
+      <div className={`hero-header__mobile-panel ${isMobileMenuOpen ? 'is-open' : ''}`} aria-hidden={!isMobileMenuOpen}>
+        <div className="hero-header__mobile-panel-top">
+          <span>IZLI / MENU</span>
+          <button type="button" onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu">Close</button>
+        </div>
+        <nav className="hero-header__mobile-nav" aria-label="Mobile navigation">
+          {MENU_ITEMS.map(item => (
+            <button key={item.label} type="button" onClick={() => navigateFromMobileMenu(item.page)}>
+              <span>{item.label}</span>
+              <b aria-hidden="true">↗</b>
+            </button>
+          ))}
+        </nav>
+        <div className="hero-header__mobile-panel-footer">A contemporary universe inspired by Amazigh heritage.</div>
       </div>
     </header>
   )

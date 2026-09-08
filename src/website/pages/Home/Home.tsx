@@ -670,7 +670,7 @@ export default function Home({ onNavigate }: Props) {
                 
                 {benefitIndex > 0 && (
                   <div className="keeper-benefit-panel__eyebrow keeper-benefit-panel__eyebrow--badge">
-                    <span aria-hidden="true">✳</span>
+                    {/* <span aria-hidden="true">✳</span> */}
                     {benefit.eyebrow}
                   </div>
                 )}

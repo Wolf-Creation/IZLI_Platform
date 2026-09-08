@@ -27,8 +27,8 @@ export default function Login({ onNavigate, onAuthenticated }: Props) {
   }
 
   return (
-    <div style={{ background: BG, minHeight: '100vh', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-      <div style={{ overflow: 'hidden', position: 'relative' }}>
+    <div className="login-page" style={{ background: BG, minHeight: '100vh', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+      <div className="login-page__image-panel" style={{ overflow: 'hidden', position: 'relative' }}>
         <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=900&h=1100&fit=crop&auto=format" alt="IZLI" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, transparent 40%, rgba(237,232,223,0.15))' }} />
         <div style={{ position: 'absolute', bottom: 40, left: 40 }}>
@@ -37,14 +37,14 @@ export default function Login({ onNavigate, onAuthenticated }: Props) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+      <div className="login-page__form-panel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
         <div style={{ width: '100%', maxWidth: 400 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 40 }}>
+          <div className="login-page__logo" style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 40 }}>
             <img src={izliLogo} alt="IZLI" style={{ width: 72, height: 'auto', display: 'block' }} />
           </div>
-          <div style={{ display: 'flex', gap: 0, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 4, marginBottom: 32 }}>
+          <div className="login-page__mode-tabs" style={{ display: 'flex', gap: 0, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 4, marginBottom: 32 }}>
             {(['login', 'register'] as const).map(m => (
-              <button key={m} onClick={() => setMode(m)} style={{ flex: 1, padding: '9px', borderRadius: 9, border: 'none', background: mode === m ? INDIGO : 'transparent', color: mode === m ? CREAM : TEXT_SEC, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: FONT_SANS }}>
+              <button className={`login-page__mode-button${mode === m ? ' is-active' : ''}`} key={m} onClick={() => setMode(m)} style={{ flex: 1, padding: '9px', borderRadius: 9, border: 'none', background: mode === m ? INDIGO : 'transparent', color: mode === m ? CREAM : TEXT_SEC, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: FONT_SANS }}>
                 {m === 'login' ? 'Sign In' : 'Join'}
               </button>
             ))}
@@ -95,11 +95,11 @@ export default function Login({ onNavigate, onAuthenticated }: Props) {
                 <label htmlFor="terms" style={{ fontSize: 12, color: TEXT_SEC, lineHeight: 1.5, cursor: 'pointer' }}>I agree to the Terms of Service and understand that my contributions may be used in IZLI research and products.</label>
               </div>
             )}
-            <button type="submit" disabled={submitting} style={{ width: '100%', padding: '13px', background: INDIGO, color: CREAM, border: 'none', borderRadius: 11, fontSize: 14, fontWeight: 600, cursor: submitting ? 'wait' : 'pointer', fontFamily: FONT_SANS, marginBottom: 16, opacity: submitting ? 0.8 : 1 }}>{submitting ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}</button>
+            <button className="login-page__submit" type="submit" disabled={submitting} style={{ width: '100%', padding: '13px', background: INDIGO, color: CREAM, border: 'none', borderRadius: 11, fontSize: 14, fontWeight: 600, cursor: submitting ? 'wait' : 'pointer', fontFamily: FONT_SANS, marginBottom: 16, opacity: submitting ? 0.8 : 1 }}>{submitting ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}</button>
           </form>
           <div style={{ textAlign: 'center', fontSize: 13, color: TEXT_SEC }}>
             {mode === 'login' ? 'New to IZLI? ' : 'Already a member? '}
-            <button onClick={() => setMode(mode === 'login' ? 'register' : 'login')} style={{ color: INDIGO, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, textDecoration: 'underline', fontFamily: FONT_SANS }}>{mode === 'login' ? 'Join the community →' : 'Sign in →'}</button>
+            <button className="login-page__switch-button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')} style={{ color: INDIGO, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, textDecoration: 'underline', fontFamily: FONT_SANS }}>{mode === 'login' ? 'Join the community →' : 'Sign in →'}</button>
           </div>
           {mode === 'register' && (
             <div style={{ marginTop: 32, padding: '20px', background: SURFACE_2, borderRadius: 14, border: `1px solid ${BORDER}` }}>

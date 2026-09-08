@@ -202,6 +202,37 @@
 }
 
 @media (max-width: 600px) {
+  .site-footer--home {
+    height: auto;
+    min-height: 0;
+  }
+
+  .site-footer--home .site-footer__about {
+    flex: none;
+  }
+
+  .site-footer--home .home-legacy-editorial {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .site-footer--home .home-legacy-editorial__copy {
+    min-height: 360px;
+    padding: 40px 24px 0;
+    border-right: 0;
+  }
+
+  .site-footer--home .home-about-copy {
+    padding-bottom: 40px;
+  }
+
+  .site-footer--home .home-legacy-editorial__collage,
+  .site-footer--home .home-legacy-editorial__model {
+    min-height: 300px;
+    height: 58vw;
+    max-height: 420px;
+  }
+
   .site-footer__grid {
     grid-template-columns: 1fr;
   }

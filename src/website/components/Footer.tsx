@@ -98,7 +98,7 @@ export default function Footer({ onNavigate, showHomeAbout = false }: Props) {
           <FooterGroup title="Collections" links={COLLECTION_LINKS.slice(2)} onNavigate={onNavigate} />
           <FooterGroup title="Categories" links={COLLECTION_LINKS.slice(0, 2)} onNavigate={onNavigate} />
         </div>
-        <div className="site-footer__column site-footer__column--newsletter">
+        {/* <div className="site-footer__column site-footer__column--newsletter">
           <h2>Join IZLI. Get 15% off your first order.</h2>
           <p>Subscribe and get 15% discount on your next purchase.</p>
           <label htmlFor="footer-email">Email</label>
@@ -106,7 +106,7 @@ export default function Footer({ onNavigate, showHomeAbout = false }: Props) {
             <input id="footer-email" type="email" placeholder="you@example.com" />
             <button type="button">Submit</button>
           </div>
-        </div>
+        </div> */}
       </div>
       
     </footer>

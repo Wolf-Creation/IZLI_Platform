@@ -60,7 +60,7 @@
 }
 
 .website-app main .keeper-benefit-panel__title-segment--muted {
-  color: rgba(245, 241, 234, 0.56) !important;
+  color: rgb(255, 255, 255) !important;
 }
 
 .website-app main .keeper-benefit-panel--intro .keeper-benefit-panel__title-segment--accent,
@@ -125,6 +125,7 @@
 .website-app .site-footer {
   background: #000000 !important;
   border-color: var(--website-border) !important;
+  padding: 72px 0 !important;
 }
 
 .website-app .home-section--shop,

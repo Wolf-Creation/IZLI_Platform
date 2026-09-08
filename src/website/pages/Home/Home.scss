@@ -2020,7 +2020,7 @@
 
 .home-tops-editorial__header h2 {
   font-family: 'Playfair Display', serif;
-  font-size: clamp(20px, 2vw, 30px);
+  font-size: clamp(24px, 2vw, 30px);
   font-weight: 700;
   line-height: 0.95;
 }
@@ -2029,7 +2029,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  flex-shrink: 0;
+  // flex-shrink: 0;
   padding: 6px 0;
   border: 0;
   border-bottom: 1px solid #c9924e;
@@ -2298,7 +2298,7 @@
   line-height: 1.3 !important;
 }
 
-.keeper-benefit-panel__title > .keeper-benefit-panel__title-line {
+.keeper-benefit-panel__title>.keeper-benefit-panel__title-line {
   display: block;
   white-space: nowrap;
 }
@@ -2322,7 +2322,7 @@
 }
 
 .keeper-benefit-panel__title-segment--muted {
-  color: rgba(245, 241, 234, 0.56) !important;
+  color: rgb(248, 248, 248) !important;
   font-size: 0.7em;
 }
 
@@ -2384,7 +2384,7 @@
 }
 
 .keeper-benefit-panel__copy p {
-  color: rgba(255, 255, 255, 0.568) !important;
+  color: rgba(255, 255, 255, 0.658) !important;
   margin: 0 0 16px;
 }
 
@@ -2400,7 +2400,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  color: #f5f1ea;
+  color: #ffffff;
 }
 
 .keeper-benefit-indicator__icon svg {
@@ -2411,7 +2411,7 @@
   stroke-width: 1.2;
 }
 
-.keeper-benefit-indicator > span:last-child {
+.keeper-benefit-indicator>span:last-child {
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -2424,18 +2424,18 @@
   height: 32px;
 }
 
-.keeper-benefit-panel--exclusive .keeper-benefit-indicator > span:last-child {
+.keeper-benefit-panel--exclusive .keeper-benefit-indicator>span:last-child {
   font-size: 12px;
   font-weight: 400 !important;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
-.keeper-benefit-panel--exclusive .keeper-benefit-indicator > span:last-child strong {
+.keeper-benefit-panel--exclusive .keeper-benefit-indicator>span:last-child strong {
   font-weight: 400 !important;
 }
 
-.keeper-benefit-panel--exclusive .keeper-benefit-indicator + .keeper-benefit-indicator {
+.keeper-benefit-panel--exclusive .keeper-benefit-indicator+.keeper-benefit-indicator {
   border-left: 1px solid rgba(245, 241, 234, 0.2);
   padding-left: 18px;
 }
@@ -2503,8 +2503,9 @@
 
 .keeper-benefit-panel__actions {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 48px;
+  gap: 24px;
   flex-wrap: wrap;
 }
 
@@ -2560,22 +2561,35 @@
 }
 
 @media (max-width: 768px) {
-  .keeper-benefit-panel--exclusive .keeper-benefit-indicator + .keeper-benefit-indicator {
+  .keeper-benefit-panel--exclusive .keeper-benefit-indicator +.keeper-benefit-indicator {
     border-left: 0;
     border-top: 1px solid rgba(245, 241, 234, 0.2);
     padding-top: 18px;
     padding-left: 0;
+    
+    
+  }
+  
+  .keeper-benefit-panel--exclusive .keeper-benefit-indicator {
+    
+    display: flex;
+    align-items: center;
+  }
+
+  .keeper-benefit-panel--exclusive .keeper-benefit-indicator>span:last-child {
+    display: flex;
+    flex-direction: row;
   }
 
   .keeper-benefit-panel__actions {
     width: 100%;
-    flex-direction: column;
+    // flex-direction: column;
     align-items: stretch;
   }
 
   .keeper-benefit-panel__cta,
   .keeper-benefit-panel__cta--secondary {
-    width: 100%;
+    // width: 100%;
     min-width: 0;
   }
 }
@@ -2640,6 +2654,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .keeper-sticky-visual,
   .keeper-sticky-visual img,
   .keeper-benefit-panel,
@@ -3169,7 +3184,7 @@
 
   .keeper-benefit-panel {
     position: relative;
-    height: auto;
+    height: fit-content;
     min-height: auto;
     padding: 88px 40px 96px;
     opacity: 1;
@@ -3179,13 +3194,105 @@
   .keeper-scroll-indicator {
     display: none;
   }
+
+  .keeper-benefit-panel__title>.keeper-benefit-panel__title-line {
+    white-space: normal;
+  }
 }
 
 @media (max-width: 768px) {
+  .home-section--keeper-circle {
+    overflow: hidden;
+  }
+
+  .keeper-sticky-visual {
+    height: 56vh;
+    min-height: 320px;
+    max-height: 560px;
+  }
+
+  .keeper-scroll-content {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    padding: 0;
+    height: fit-content !important;
+  }
+
+  .keeper-scroll-content::-webkit-scrollbar {
+    display: none;
+  }
+
+  .keeper-benefit-panel {
+    flex: 0 0 100%;
+    width: 100%;
+    // min-height: 520px;
+    padding: 48px 24px 48px;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .keeper-benefit-panel__title,
+  .keeper-benefit-panel__copy,
+  .keeper-benefit-panel__indicators,
+  .keeper-benefit-panel__actions {
+    width: min(100%, 420px);
+  }
+
+  .keeper-benefit-panel__copy p {
+    text-align: left;
+  }
+
+  .keeper-benefit-panel__indicators {
+    grid-template-columns: 1fr;
+    margin-bottom: 48px  !important;
+  }
+
+  .keeper-benefit-panel__actions {
+    align-items: flex-start;
+  }
+
+  .keeper-scroll-indicator {
+    position: relative;
+    top: auto;
+    right: auto;
+    display: flex;
+    flex-direction: row;
+    justify-self: center;
+    gap: 22px;
+    transform: none;
+    padding: 18px 24px 28px;
+  }
+
+  .keeper-scroll-indicator__line {
+    top: 50%;
+    right: 24px;
+    bottom: auto;
+    left: 24px;
+    width: auto;
+    height: 1px;
+  }
+
+  .keeper-scroll-indicator a {
+    padding: 0 4px;
+    background: #080808;
+  }
+
+  .home-section.home-section--keeper-circle {
+    padding: 0;
+  }
+
   .home-section--shop {
     height: auto;
     min-height: auto;
-    padding: 72px 0;
+    padding-bottom:  0 !important;
+    padding-top: 72px !important;
+  }
+
+  .website-footer-spacer {
+    display: none;
   }
 
   .home-section--shop .home-shell,
@@ -3659,15 +3766,112 @@
   .home-section--tops,
   .home-section--bottoms {
     min-height: auto;
+    padding : 0 !important;
   }
 
   .home-section--keeper-circle {
     height: auto;
     min-height: auto;
+    padding-top: 72px !important;
   }
 
   .keeper-benefit-panel__title {
-    font-size: clamp(46px, 14vw, 70px);
+    font-size: clamp(22px, 4vw, 46px);
+    line-height: 1.35 !important;
+    margin-bottom: 24px !important;
+  }
+
+  .keeper-benefit-panel__title-segment--muted {
+    font-size: 1rem;
+  }
+
+  .keeper-benefit-panel {
+    padding: 48px 24px 48px;
+    flex: 0 0 100%;
+    width: 100%;
+    // min-height: 520px;
+    scroll-snap-align: start;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .keeper-benefit-indicator {
+
+    flex-direction: row;
+  }
+
+  .keeper-scroll-content {
+    display: flex;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    padding: 0;
+  }
+
+  .keeper-scroll-content::-webkit-scrollbar {
+    display: none;
+  }
+
+  .keeper-benefit-panel__title,
+  .keeper-benefit-panel__copy {
+    width: min(100%, 420px);
+  }
+
+  .keeper-benefit-panel__copy p {
+    text-align: left;
+  }
+
+  .keeper-benefit-panel__indicators {
+    width: min(100%, 420px);
+    grid-template-columns: 1fr;
+  }
+
+  .keeper-benefit-panel__actions {
+    width: min(100%, 420px);
+    align-items: flex-start;
+  }
+
+  .keeper-scroll-indicator {
+    position: relative;
+    top: auto;
+    right: auto;
+    grid-column: auto;
+    grid-row: auto;
+    justify-self: center;
+    display: flex;
+    flex-direction: row;
+    gap: 22px;
+    transform: none;
+    padding: 18px 24px 28px;
+    background: #080808;
+    width: 100%;
+    padding-inline: auto;
+  }
+
+  .keeper-benefit-panel__eyebrow {
+    font-size: 9px;
+  }
+
+  .keeper-scroll-indicator__line {
+    top: 50%;
+    right: 24px;
+    bottom: auto;
+    left: 24px;
+    width: auto;
+    height: 1px;
+  }
+
+  .keeper-scroll-indicator a {
+    padding: 0 4px;
+    background: #080808;
+  }
+
+  .keeper-benefit-panel__copy {
+    font-size: 14px;
+    line-height: 1.65;
   }
 
   .keeper-benefit-panel__indicators {
@@ -3717,7 +3921,7 @@
   }
 
   .home-tops-editorial__grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-auto-rows: auto;
   }
 
@@ -3727,7 +3931,7 @@
 
   .home-tops-product-card__image {
     height: auto;
-    aspect-ratio: 1 / 1.12;
+    aspect-ratio: 1 / 1.3;
   }
 
   .home-section--collections {
@@ -3774,4 +3978,3 @@
     font-size: 16px;
   }
 }
-
