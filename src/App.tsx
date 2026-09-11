@@ -3,10 +3,6 @@ import type { Screen } from './types'
 import WebsiteApp from './website/WebsiteApp'
 import { ADMIN_ROUTES, adminPathForScreen, adminStateFromPath } from './routes/admin'
 import { logout as authLogout } from './shared/services/auth'
-import izliLogo from './assets/logo/IZLI_logo.svg'
-
-const INDIGO = '#1E2F44'
-const CREAM = '#E7DFD2'
 import Sidebar from './components/Sidebar'
 import Topbar from './components/Topbar'
 import Dashboard from './screens/Dashboard'
@@ -65,6 +61,7 @@ import Legacies from './screens/Legacies'
 import HeritageLibrary from './screens/HeritageLibrary'
 import BrandAssets from './screens/BrandAssets'
 import QRExperiences from './screens/QRExperiences'
+import QRCodeGenerator from './screens/QRCodeGenerator'
 import LegacyKeeperLevels from './screens/LegacyKeeperLevels'
 import SystemAutomation from './screens/SystemAutomation'
 import ProductionAnalytics from './screens/ProductionAnalytics'
@@ -155,13 +152,6 @@ export default function App() {
     setProductEditorId(nextState.productEditorId)
   }
 
-  const openWebsite = () => {
-    if (window.location.pathname !== '/') {
-      window.history.pushState({}, '', '/')
-    }
-    setApp('website')
-  }
-
   const handleAdminLogout = async () => {
     await authLogout()
     if (window.location.pathname !== '/login') {
@@ -231,6 +221,7 @@ export default function App() {
       case 'heritage-library': return <HeritageLibrary onNavigate={navigate} />
       case 'brand-assets': return <BrandAssets onNavigate={navigate} />
       case 'qr-experiences': return <QRExperiences onNavigate={navigate} />
+      case 'qr-code-generator': return <QRCodeGenerator onNavigate={navigate} />
       case 'legacy-keeper-levels': return <LegacyKeeperLevels onNavigate={navigate} />
       case 'system-automation': return <SystemAutomation onNavigate={navigate} />
       case 'production-analytics': return <ProductionAnalytics onNavigate={navigate} />
@@ -244,13 +235,6 @@ export default function App() {
     return (
       <div style={{ position: 'relative' }}>
         <WebsiteApp onAdminRequest={openAdmin} />
-        {/* App switcher */}
-        <div style={{ position: 'fixed', bottom: 24, left: 24, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, background: INDIGO, borderRadius: 999, padding: '8px 16px 8px 12px', boxShadow: '0 4px 20px rgba(30,47,68,0.3)' }}>
-          <img src={izliLogo} alt="IZLI" style={{ width: 28, height: 'auto', display: 'block' }} />
-          <button onClick={openAdmin} style={{ padding: '6px 14px', background: CREAM, color: INDIGO, border: 'none', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', letterSpacing: '0.02em' }}>
-            Admin →
-          </button>
-        </div>
       </div>
     )
   }
@@ -270,13 +254,6 @@ export default function App() {
         <main style={{ flex: 1, overflowY: 'auto' }}>
           {renderScreen()}
         </main>
-      </div>
-      {/* App switcher */}
-      <div style={{ position: 'fixed', bottom: 24, left: 24, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, background: INDIGO, borderRadius: 999, padding: '8px 16px 8px 12px', boxShadow: '0 4px 20px rgba(30,47,68,0.3)' }}>
-        <img src={izliLogo} alt="IZLI" style={{ width: 28, height: 'auto', display: 'block' }} />
-        <button onClick={openWebsite} style={{ padding: '6px 14px', background: CREAM, color: INDIGO, border: 'none', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', letterSpacing: '0.02em' }}>
-          Website →
-        </button>
       </div>
     </div>
   )

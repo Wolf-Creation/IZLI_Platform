@@ -1,0 +1,29 @@
+.keeper-access {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 120px 24px 72px;
+  background: #080808;
+  color: #f5f1ea;
+}
+
+.keeper-access__panel { width: min(100%, 680px); }
+.keeper-access__eyebrow { color: #c9924e; font-size: 10px; font-weight: 700; letter-spacing: .18em; }
+.keeper-access h1 { max-width: 620px; margin: 18px 0 12px; font: 500 clamp(38px, 7vw, 72px)/1.02 'Playfair Display', serif; }
+.keeper-access p { max-width: 480px; margin: 0 0 30px; color: rgba(245,241,234,.62); line-height: 1.7; }
+.keeper-access__tabs { display: flex; gap: 8px; margin-bottom: 22px; }
+.keeper-access__tabs button, .keeper-access__back { border: 1px solid rgba(245,241,234,.22); background: transparent; color: rgba(245,241,234,.65); cursor: pointer; padding: 10px 16px; font: inherit; }
+.keeper-access__tabs button.is-active { border-color: #c9924e; color: #c9924e; }
+.keeper-access form { display: grid; gap: 14px; }
+.keeper-access label span { display: block; margin-bottom: 6px; color: rgba(245,241,234,.65); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.keeper-access input, .keeper-access select { width: 100%; box-sizing: border-box; border: 1px solid rgba(245,241,234,.22); background: #151515; color: #f5f1ea; padding: 12px; font: inherit; }
+.keeper-access__password-field > div { position: relative; }
+.keeper-access__password-field input { padding-right: 44px; }
+.keeper-access__password-field button { position: absolute; top: 50%; right: 10px; width: 28px; height: 28px; transform: translateY(-50%); border: 0; background: transparent; color: #c9924e; cursor: pointer; font-size: 16px; }
+.keeper-access__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.keeper-access__grid label:nth-child(4), .keeper-access__grid label:nth-child(5) { grid-column: span 2; }
+.keeper-access__submit { margin-top: 8px; border: 0; background: #c9924e; color: #111; padding: 14px; cursor: pointer; font-weight: 700; }
+.keeper-access__message { margin-bottom: 16px; padding: 12px; background: rgba(201,146,78,.12); color: #e2b36f; font-size: 13px; }
+.keeper-access__message--error { background: rgba(166,61,47,.18); color: #f0a99d; }
+.keeper-access__back { margin-top: 20px; padding-inline: 0; border: 0; color: rgba(245,241,234,.55); }
+@media (max-width: 600px) { .keeper-access__grid { grid-template-columns: 1fr; } .keeper-access__grid label:nth-child(4), .keeper-access__grid label:nth-child(5) { grid-column: auto; } }

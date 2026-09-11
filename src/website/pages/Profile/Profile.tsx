@@ -27,11 +27,17 @@ const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
   Approved: { bg: '#E8EDF3', color: INDIGO },
 }
 
-export default function Profile({ onNavigate: _onNavigate }: Props) {
+export default function Profile({ onNavigate }: Props) {
   const [tab, setTab] = useState<ProfileTab>('Overview')
 
+  const handleLogout = () => {
+    localStorage.removeItem('izli.accessToken')
+    localStorage.removeItem('izli.currentUser')
+    onNavigate('keeper-circle')
+  }
+
   return (
-    <div style={{ background: BG, minHeight: '100vh' }}>
+    <div style={{ background: BG, minHeight: '100vh', marginTop: 100 }}>
       <div style={{ background: INDIGO, padding: '48px 40px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 28 }}>
           <div style={{ width: 72, height: 72, borderRadius: 999, background: 'rgba(231,223,210,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: CREAM, fontFamily: FONT_SERIF, flexShrink: 0, border: '2px solid rgba(231,223,210,0.25)' }}>YB</div>
@@ -56,6 +62,20 @@ export default function Profile({ onNavigate: _onNavigate }: Props) {
               </div>
             ))}
           </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Log out"
+            aria-label="Log out"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 13px', background: 'transparent', border: '1px solid rgba(231,223,210,0.35)', borderRadius: 8, color: CREAM, cursor: 'pointer', fontSize: 12, fontFamily: FONT_SANS }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <path d="M10 17l5-5-5-5" />
+              <path d="M15 12H3" />
+              <path d="M21 3v18" />
+            </svg>
+            Log out
+          </button>
         </div>
       </div>
       <div style={{ background: SURFACE, borderBottom: `1px solid ${BORDER}` }}>

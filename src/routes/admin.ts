@@ -124,6 +124,7 @@ export function adminPathForScreen(screen: Screen, productId?: string | null) {
     case 'heritage-library': return '/admin/content/heritage-library'
     case 'brand-assets': return '/admin/content/brand-assets'
     case 'qr-experiences': return '/admin/content/qr-experiences'
+    case 'qr-code-generator': return '/admin/content/qr-code-generator'
     case 'legacy-keeper-levels': return '/admin/legacy/keeper-levels'
     case 'system-automation': return '/admin/system/automation'
     case 'production-analytics': return '/admin/analytics/production'
@@ -143,6 +144,7 @@ export function adminStateFromPath(pathname: string): { screen: Screen; productE
   if (pathname === '/admin/commerce/recommendation-hub/editor') return { screen: 'recommendation-hub-editor', productEditorId: null }
   if (pathname === '/admin/commerce/product-passports') return { screen: 'product-passports', productEditorId: null }
   if (pathname === '/admin/commerce/product-passports/editor') return { screen: 'product-passport-editor', productEditorId: null }
+  if (pathname === '/admin/content/qr-code-generator') return { screen: 'qr-code-generator', productEditorId: null }
   if (pathname === ADMIN_ROUTES.LEGACY) return { screen: 'legacies', productEditorId: null }
   if (pathname === `${ADMIN_ROUTES.LEGACY}/`) return { screen: 'legacies', productEditorId: null }
 
@@ -157,6 +159,75 @@ export function adminStateFromPath(pathname: string): { screen: Screen; productE
   const productMatch = pathname.match(/^\/admin\/products\/([^/]+)$/)
   if (productMatch) {
     return { screen: 'product-editor', productEditorId: productMatch[1] }
+  }
+
+  if (pathname.startsWith('/admin/cms/pages/')) return { screen: 'site-page-editor', productEditorId: null }
+  if (pathname.startsWith('/admin/stories/new') || (pathname.startsWith('/admin/stories/') && !pathname.startsWith('/admin/stories/review'))) return { screen: 'story-editor', productEditorId: null }
+  if (pathname.startsWith('/admin/commerce/style-guides/editor')) return { screen: 'style-guide-editor', productEditorId: null }
+  if (pathname.startsWith('/admin/commerce/recommendation-hub/editor')) return { screen: 'recommendation-hub-editor', productEditorId: null }
+  if (pathname.startsWith('/admin/commerce/product-passports/editor')) return { screen: 'product-passport-editor', productEditorId: null }
+  if (pathname.startsWith('/admin/collections/new') || pathname.startsWith('/admin/collections/')) return { screen: 'collection-editor', productEditorId: null }
+  if (pathname.startsWith('/admin/challenges/new') || pathname.match(/^\/admin\/challenges\/[^/]+$/)) return { screen: 'challenge-editor', productEditorId: null }
+  if (pathname.includes('/submissions')) return { screen: 'challenge-submissions', productEditorId: null }
+  if (pathname.includes('/results')) return { screen: 'challenge-results', productEditorId: null }
+  if (pathname.startsWith('/admin/lab/new') || pathname.match(/^\/admin\/lab\/[^/]+$/)) return { screen: 'lab-project-editor', productEditorId: null }
+  if (pathname.startsWith('/admin/community/members/')) return { screen: 'member-profile', productEditorId: null }
+  if (pathname.startsWith('/admin/community/contributions/')) return { screen: 'contribution-detail', productEditorId: null }
+  if (pathname.startsWith('/admin/customers/')) return { screen: 'customer', productEditorId: null }
+
+  const routeScreens: Array<[string, Screen]> = [
+    ['/admin/dashboard', 'dashboard'],
+    ['/admin/products', 'products'],
+    ['/admin/collections', 'collections'],
+    ['/admin/orders', 'orders'],
+    ['/admin/customers', 'customer'],
+    ['/admin/cms/home', 'home-builder'],
+    ['/admin/media', 'media-library'],
+    ['/admin/stories', 'stories'],
+    ['/admin/stories/review', 'story-review'],
+    ['/admin/community/members', 'members'],
+    ['/admin/community/contributions', 'contributions'],
+    ['/admin/challenges', 'challenges'],
+    ['/admin/lab', 'lab-projects'],
+    ['/admin/lab/open-calls', 'calls-for-contribution'],
+    ['/admin/analytics/commerce', 'commerce-analytics'],
+    ['/admin/analytics/community', 'community-analytics'],
+    ['/admin/analytics/content', 'content-analytics'],
+    ['/admin/system/team', 'team-roles'],
+    ['/admin/system/settings', 'global-settings'],
+    ['/admin/system/audit', 'audit-log'],
+    ['/admin/components', 'components'],
+    ['/admin/commerce/style-guides', 'style-guides'],
+    ['/admin/commerce/recommendation-hub', 'recommendation-hub'],
+    ['/admin/commerce/product-passports', 'product-passports'],
+    ['/admin/content/qr-experiences', 'qr-experiences'],
+    ['/admin/content/qr-code-generator', 'qr-code-generator'],
+    ['/admin/production', 'production-center'],
+    ['/admin/production/templates', 'production-templates'],
+    ['/admin/production/assets', 'production-assets'],
+    ['/admin/production/batch-jobs', 'batch-generator'],
+    ['/admin/production/exports', 'export-center'],
+    ['/admin/legacy', 'legacies'],
+    ['/admin/legacy/archives', 'legacy-archives'],
+    ['/admin/legacy/timeline', 'legacy-timeline'],
+    ['/admin/legacy/keeper-circle', 'legacy-keeper-circle'],
+    ['/admin/legacy/keeper-levels', 'legacy-keeper-levels'],
+    ['/admin/legacy/voting', 'legacy-voting'],
+    ['/admin/legacy/rewards', 'legacy-rewards'],
+    ['/admin/legacy/achievements', 'legacy-achievements'],
+    ['/admin/legacy/invitations', 'legacy-invitations'],
+    ['/admin/legacy/referral', 'legacy-referral'],
+    ['/admin/analytics/production', 'production-analytics'],
+    ['/admin/analytics/recommendations', 'recommendation-analytics'],
+    ['/admin/content/heritage-library', 'heritage-library'],
+    ['/admin/content/brand-assets', 'brand-assets'],
+    ['/admin/legacy/keeper-levels', 'legacy-keeper-levels'],
+  ]
+
+  const normalizedPath = pathname.replace(/\/$/, '') || '/'
+  const matchedRoute = routeScreens.find(([route]) => route === normalizedPath)
+  if (matchedRoute) {
+    return { screen: matchedRoute[1], productEditorId: null }
   }
 
   return { screen: 'dashboard', productEditorId: null }

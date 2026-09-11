@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Screen } from '../types'
+import { coreApi } from '../core/api'
 
 const INDIGO = '#1E2F44'
 const TEXT = '#2E2E2E'
@@ -74,8 +75,29 @@ const LEVEL_FILTER_MAP: Record<string, Level[]> = {
 export default function LegacyKeeperCircle({ onNavigate: _ }: Props) {
   const [pill, setPill] = useState('All')
   const [search, setSearch] = useState('')
+  const [keepers, setKeepers] = useState<KeeperRow[]>(KEEPERS)
 
-  const filtered = KEEPERS.filter(k => {
+  useEffect(() => {
+    coreApi.get<Array<{ id: string; displayName: string; level: number }>>('/resources/community')
+      .then(members => {
+        if (members.length === 0) return
+        const levelByNumber: Record<number, Level> = { 1: 'visitor', 2: 'customer', 3: 'keeper', 4: 'senior-keeper', 5: 'legacy-keeper' }
+        setKeepers(members.map((member, index) => ({
+          id: `KPR-${String(index + 1).padStart(4, '0')}`,
+          name: member.displayName,
+          initials: member.displayName.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase(),
+          level: levelByNumber[member.level] ?? 'keeper',
+          archives: 0,
+          products: 0,
+          points: '0',
+          votes: 0,
+          referrals: 0,
+        })))
+      })
+      .catch(() => {})
+  }, [])
+
+  const filtered = keepers.filter(k => {
     const allowed = LEVEL_FILTER_MAP[pill] ?? LEVEL_FILTER_MAP['All']
     if (!allowed.includes(k.level)) return false
     if (search && !k.name.toLowerCase().includes(search.toLowerCase())) return false

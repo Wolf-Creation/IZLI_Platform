@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 import { AppError } from '../utils/AppError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { successResponse } from '../utils/apiResponse.js';
+import { QRCodeBatch } from '../modules/uploads/model.js';
+import { Product } from '../modules/products/model.js';
 
 const RESOURCE_MODELS = {
   users: 'User',
@@ -37,6 +39,7 @@ const RESOURCE_MODELS = {
   productionTemplates: 'ProductionTemplate',
   generatedAssets: 'GeneratedAsset',
   batchJobs: 'BatchJob',
+  qrCodeBatches: 'QRCodeBatch',
   printPresets: 'PrintPreset',
   auditLogs: 'AuditLog',
   globalSettings: 'GlobalSetting',
@@ -46,7 +49,7 @@ const RESOURCE_MODELS = {
 };
 
 const serialize = (document) => {
-  const plain = document.toObject({ virtuals: true });
+  const plain = typeof document.toObject === 'function' ? document.toObject({ virtuals: true }) : document;
   const normalized = JSON.parse(JSON.stringify(plain));
   normalized.id = String(normalized._id ?? normalized.id);
   delete normalized._id;
@@ -78,6 +81,42 @@ const buildFilter = (query) => {
 };
 
 export const resourcesRouter = Router();
+
+resourcesRouter.get('/qrCodeBatches/summary', asyncHandler(async (_request, response) => {
+  const batches = await QRCodeBatch.find().sort({ createdAt: -1 });
+  const summary = batches.map(batch => {
+    const codes = batch.codes ?? [];
+    const usedCount = codes.filter(code => code.status === 'assigned').length;
+    return serialize({
+      ...batch.toObject(),
+      usedCount,
+      blankCount: codes.filter(code => code.status === 'generated').length,
+    });
+  });
+  return response.status(200).json(successResponse('QR series retrieved successfully', summary));
+}));
+
+resourcesRouter.post('/qrCodeBatches/assign', asyncHandler(async (request, response) => {
+  const { identifier, productId } = request.body;
+  if (!identifier || !productId) throw new AppError('QR identifier and product are required', 400);
+
+  const product = await Product.findById(productId);
+  if (!product) throw new AppError('Product not found', 404);
+
+  const batch = await QRCodeBatch.findOne({ 'codes.identifier': String(identifier).trim().toUpperCase() });
+  if (!batch) throw new AppError('QR code not found', 404);
+
+  const code = batch.codes.find(item => item.identifier === String(identifier).trim().toUpperCase());
+  if (!code) throw new AppError('QR code not found', 404);
+  if (code.status === 'assigned') throw new AppError('QR code is already assigned', 409);
+  code.status = 'assigned';
+  code.assignedProductId = product._id;
+  code.assignedProductName = product.name;
+  code.assignedAt = new Date();
+  await batch.save();
+
+  return response.status(200).json(successResponse('QR code assigned successfully', serialize(batch)));
+}));
 
 resourcesRouter.get('/:resource', asyncHandler(async (request, response) => {
   const Model = getModel(request.params.resource);

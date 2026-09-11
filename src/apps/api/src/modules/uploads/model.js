@@ -90,6 +90,42 @@ batchJobSchema.index({ createdBy: 1 });
 
 export const BatchJob = mongoose.model('BatchJob', batchJobSchema);
 
+// ─── QR Code Batch ──────────────────────────────────────────────────────────
+const qrCodeItemSchema = new mongoose.Schema({
+  identifier: { type: String, required: true },
+  url: { type: String, required: true },
+  sequence: { type: Number, required: true },
+  status: { type: String, enum: ['generated', 'assigned', 'revoked'], default: 'generated' },
+  assignedProductId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+  assignedProductName: { type: String, trim: true },
+  assignedAt: { type: Date },
+}, { _id: false });
+
+const qrCodeBatchSchema = new mongoose.Schema({
+  seriesName: { type: String, required: true, trim: true },
+  seriesNumber: { type: Number, min: 1 },
+  createdBy: { type: String, required: true, trim: true },
+  product: {
+    pieceName: { type: String, required: true, trim: true },
+    productName: { type: String, required: true, trim: true },
+    collection: { type: String, required: true, trim: true },
+    reference: { type: String, required: true, trim: true },
+    color: { type: String, required: true, trim: true },
+    size: { type: String, required: true, trim: true },
+    materials: [{ type: String, trim: true }],
+    weightGsm: { type: Number, min: 0 },
+    originStatement: { type: String, enum: ['MADE IN TUNISIA', 'DESIGNED IN TUNISIA'], required: true },
+  },
+  quantity: { type: Number, required: true, min: 1 },
+  codes: { type: [qrCodeItemSchema], required: true },
+  exportFormats: [{ type: String, enum: ['svg', 'png'] }],
+}, { timestamps: true });
+
+qrCodeBatchSchema.index({ 'product.reference': 1 });
+qrCodeBatchSchema.index({ createdBy: 1, createdAt: -1 });
+
+export const QRCodeBatch = mongoose.model('QRCodeBatch', qrCodeBatchSchema);
+
 // ─── PrintPreset ───────────────────────────────────────────────────────────
 const printPresetSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },

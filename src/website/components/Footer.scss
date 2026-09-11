@@ -228,9 +228,7 @@
 
   .site-footer--home .home-legacy-editorial__collage,
   .site-footer--home .home-legacy-editorial__model {
-    min-height: 300px;
-    height: 58vw;
-    max-height: 420px;
+    display: none;
   }
 
   .site-footer__grid {

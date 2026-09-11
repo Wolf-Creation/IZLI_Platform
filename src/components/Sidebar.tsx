@@ -104,6 +104,7 @@ const NAV: NavItem[] = [
     label: 'Content',
     icon: 'mdi:book-open-page-variant-outline',
     children: [
+      { label: 'QR Generator', screen: 'qr-code-generator', icon: 'mdi:qrcode-edit' },
       { label: 'Stories', screen: 'stories', icon: 'mdi:newspaper-variant-outline' },
       { label: 'Heritage Library', screen: 'heritage-library', icon: 'mdi:archive-outline' },
       { label: 'Media Library', screen: 'media-library', icon: 'mdi:image-multiple-outline' },

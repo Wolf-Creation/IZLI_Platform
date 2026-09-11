@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { WebPage } from '../../types'
+import KeeperCircleAccess from './KeeperCircleAccess'
 import './KeeperCircle.scss'
 
 const INDIGO = '#1E2F44'
@@ -53,6 +54,15 @@ const voteCards: VoteCard[] = [
 export default function KeeperCircle({ onNavigate }: Props) {
   const [votes, setVotes] = useState<Record<number, string>>({})
   const [copied, setCopied] = useState(false)
+  const [hasAccess, setHasAccess] = useState(false)
+
+  useEffect(() => {
+    setHasAccess(Boolean(localStorage.getItem('izli.accessToken') && localStorage.getItem('izli.currentUser')))
+  }, [])
+
+  if (!hasAccess) {
+    return <KeeperCircleAccess onNavigate={onNavigate} onVerified={() => setHasAccess(true)} />
+  }
 
   function handleCopy() {
     navigator.clipboard.writeText('IZLI-YOU-B42').catch(() => {})

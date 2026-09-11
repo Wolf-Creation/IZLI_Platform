@@ -663,7 +663,7 @@ export default function Home({ onNavigate }: Props) {
             {KEEPER_PANELS.map((benefit, benefitIndex) => (
               <article
                 id={benefit.id}
-                key={benefit.number}
+                key={benefit.id}
                 data-keeper-panel=""
                 className={`keeper-benefit-panel ${benefitIndex === 0 ? `keeper-benefit-panel--intro ${introTitleRevealed ? 'keeper-benefit-panel--intro-revealed' : ''}` : ''} ${benefitIndex > 0 ? 'keeper-benefit-panel--exclusive' : ''} ${benefitIndex === KEEPER_PANELS.length - 1 ? 'keeper-benefit-panel--community' : ''} ${activeKeeperBenefit === benefitIndex ? 'is-active' : ''}`}
               >

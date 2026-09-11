@@ -15,14 +15,28 @@ const MENU_ITEMS = [
   // { label: 'Archives', page: 'archives' as WebPage },
   // { label: 'Stories', page: 'stories' as WebPage },
   { label: 'Community', page: 'community' as WebPage },
-  { label: 'Keeper Circle', page: 'keeper-circle' as WebPage },
 ]
 
 const TRANSITION_DISTANCE = 350 // Same as animation distance in NewHero
 
+interface AccountMenuProps {
+  onProfile: () => void
+  onLogout: () => void
+}
+
+function AccountMenu({ onProfile, onLogout }: AccountMenuProps) {
+  return (
+    <div className="hero-header__account-popover" role="menu">
+      <button type="button" role="menuitem" onClick={onProfile}>Profile</button>
+      <button type="button" role="menuitem" onClick={onLogout}>Log out</button>
+    </div>
+  )
+}
+
 export function HeroHeader({ onNavigate, scrollY, isHomePage = true }: Props) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
 
   // On non-home pages, always show scrolled state
   const effectiveScrollY = isHomePage ? scrollY : 350
@@ -47,9 +61,51 @@ export function HeroHeader({ onNavigate, scrollY, isHomePage = true }: Props) {
     }
   }, [isMobileMenuOpen])
 
+  useEffect(() => {
+    const closeAccountMenu = (event: MouseEvent) => {
+      if (!(event.target as Element).closest('.hero-header__account-menu')) {
+        setIsAccountMenuOpen(false)
+      }
+    }
+    const closeAccountMenuOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsAccountMenuOpen(false)
+    }
+
+    document.addEventListener('mousedown', closeAccountMenu)
+    document.addEventListener('keydown', closeAccountMenuOnEscape)
+    return () => {
+      document.removeEventListener('mousedown', closeAccountMenu)
+      document.removeEventListener('keydown', closeAccountMenuOnEscape)
+    }
+  }, [])
+
   const navigateFromMobileMenu = (page: WebPage) => {
     setIsMobileMenuOpen(false)
     onNavigate(page)
+  }
+
+  const navigateToProfile = () => {
+    const isAuthenticated = Boolean(localStorage.getItem('izli.accessToken') && localStorage.getItem('izli.currentUser'))
+    setIsAccountMenuOpen(false)
+    onNavigate(isAuthenticated ? 'profile' : 'keeper-circle')
+  }
+
+  const handleAccountClick = () => {
+    const isAuthenticated = Boolean(localStorage.getItem('izli.accessToken') && localStorage.getItem('izli.currentUser'))
+    if (!isAuthenticated) {
+      setIsAccountMenuOpen(false)
+      onNavigate('keeper-circle')
+      return
+    }
+
+    setIsAccountMenuOpen(value => !value)
+  }
+
+  const logout = () => {
+    localStorage.removeItem('izli.accessToken')
+    localStorage.removeItem('izli.currentUser')
+    setIsAccountMenuOpen(false)
+    onNavigate('keeper-circle')
   }
 
   return (
@@ -85,9 +141,12 @@ export function HeroHeader({ onNavigate, scrollY, isHomePage = true }: Props) {
           </button>
 
           <div className="hero-header__mobile-actions">
-            <button className="hero-header__mobile-action" onClick={() => onNavigate('login')} aria-label="Account">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="12" cy="7" r="3.5"/><path d="M5 20c1.2-4 12.8-4 14 0"/></svg>
-            </button>
+            <div className="hero-header__account-menu">
+              <button className="hero-header__mobile-action" onClick={handleAccountClick} aria-label="Account" aria-expanded={isAccountMenuOpen} aria-haspopup="menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="12" cy="7" r="3.5"/><path d="M5 20c1.2-4 12.8-4 14 0"/></svg>
+              </button>
+              {isAccountMenuOpen && <AccountMenu onProfile={navigateToProfile} onLogout={logout} />}
+            </div>
             <button className="hero-header__mobile-action" onClick={() => onNavigate('cart')} aria-label="Cart">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 5h2l2.2 9.2a1.4 1.4 0 0 0 1.4 1.1h7.9a1.4 1.4 0 0 0 1.4-1.1L21 8H6.1"/><circle cx="10" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></svg>
             </button>
@@ -140,12 +199,15 @@ export function HeroHeader({ onNavigate, scrollY, isHomePage = true }: Props) {
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
           </button>
-          <button className="hero-header__icon" title="Account" aria-label="Account">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </button>
+          <div className="hero-header__account-menu">
+            <button className="hero-header__icon" title="Account" aria-label="Account" onClick={handleAccountClick} aria-expanded={isAccountMenuOpen} aria-haspopup="menu">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </button>
+            {isAccountMenuOpen && <AccountMenu onProfile={navigateToProfile} onLogout={logout} />}
+          </div>
           <button className="hero-header__icon" title="Cart" aria-label="Cart">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="9" cy="21" r="1" />

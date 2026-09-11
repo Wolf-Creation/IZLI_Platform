@@ -14,7 +14,7 @@ export const WEBSITE_ROUTES = {
   ABOUT: '/about',
   CART: '/cart',
   LOGIN: '/login',
-  PROFILE: '/profile',
+  PROFILE: '/keeper-circle/profile',
 } as const
 
 export type WebsiteRoutePath = (typeof WEBSITE_ROUTES)[keyof typeof WEBSITE_ROUTES]
@@ -56,7 +56,7 @@ export function websitePageFromPath(pathname: string) {
   if (normalizedPath === WEBSITE_ROUTES.ABOUT) return 'about'
   if (normalizedPath === WEBSITE_ROUTES.CART) return 'cart'
   if (normalizedPath === WEBSITE_ROUTES.LOGIN) return 'login'
-  if (normalizedPath === WEBSITE_ROUTES.PROFILE) return 'profile'
+  if (normalizedPath === WEBSITE_ROUTES.PROFILE || normalizedPath === '/profile') return 'profile'
   if (normalizedPath === '/legacy') return 'legacy'
   if (normalizedPath === '/archives') return 'archives'
   if (normalizedPath === '/keeper-circle') return 'keeper-circle'

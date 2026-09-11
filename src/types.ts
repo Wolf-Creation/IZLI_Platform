@@ -54,6 +54,7 @@ export type Screen =
   | 'heritage-library'
   | 'brand-assets'
   | 'qr-experiences'
+  | 'qr-code-generator'
   | 'legacy-keeper-levels'
   | 'system-automation'
   | 'production-analytics'

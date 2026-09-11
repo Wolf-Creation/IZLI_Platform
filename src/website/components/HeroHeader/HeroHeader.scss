@@ -136,6 +136,43 @@
   }
 }
 
+.hero-header__account-menu {
+  position: relative;
+}
+
+.hero-header__account-popover {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  z-index: 20;
+  min-width: 150px;
+  padding: 6px;
+  background: #272626;
+  border: 1px solid rgba(30, 47, 68, 0.16);
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(16, 25, 35, 0.18);
+}
+
+.hero-header__account-popover button {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: #1e2f44;
+  text-align: left;
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.hero-header__account-popover button:hover,
+.hero-header__account-popover button:focus-visible {
+  background: rgba(201, 146, 78, 0.14);
+  outline: none;
+}
+
 @media (max-width: 768px) {
   .hero-header {
     height: 64px;
@@ -217,6 +254,10 @@
   .hero-header__mobile-action svg {
     width: 18px;
     height: 18px;
+  }
+
+  .hero-header__mobile-bar .hero-header__account-popover {
+    top: calc(100% + 8px);
   }
 
   .hero-header__mobile-panel {
