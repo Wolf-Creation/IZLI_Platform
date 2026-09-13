@@ -112,7 +112,12 @@ export default function QRCodeGenerator({ onNavigate: _onNavigate }: { onNavigat
         setProducts(savedProducts)
         setQrCodes(savedQrs)
       })
-      .catch(() => setBatches([]))
+      .catch (loadError => {
+        setBatches([])
+        setProducts([])
+        setQrCodes([])
+        setError(loadError instanceof Error ? `Chargement QR impossible : ${loadError.message}` : 'Chargement QR impossible.')
+      })
   }, [])
 
   useEffect(() => {

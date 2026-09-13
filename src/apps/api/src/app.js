@@ -44,7 +44,7 @@ const startServer = async () => {
   await registerModels();
 
   // 3. Start HTTP server
-  app.listen(port, () => {
+  app.listen(port, '0.0.0.0', () => {
     console.log(`[API] IZLI API listening on port ${port}`);
   });
 };

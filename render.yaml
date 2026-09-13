@@ -21,7 +21,9 @@ services:
       - key: CLOUDINARY_API_SECRET
         sync: false
       - key: CLIENT_URLS
-        value: https://izli-website.onrender.com,https://izli-admin.onrender.com
+        value: https://www.izli.tn
+      - key: QR_BASE_URL
+        value: https://www.izli.tn/p/
 
   - type: static
     name: izli-website
@@ -33,7 +35,7 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://izli-api.onrender.com/api
+        value: https://izli-platform.onrender.com/api
 
   - type: static
     name: izli-admin
@@ -45,4 +47,4 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://izli-api.onrender.com/api
+        value: https://izli-platform.onrender.com/api

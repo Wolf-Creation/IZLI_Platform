@@ -3,7 +3,7 @@ import { Product } from '../products/model.js';
 import crypto from 'node:crypto';
 import { env } from '../../config/env.js';
 
-const QR_BASE_URL = process.env.QR_BASE_URL || 'https://izli.tn/p/';
+const QR_BASE_URL = process.env.QR_BASE_URL || 'https://www.izli.tn/p/';
 const QR_URL_SECRET = process.env.QR_URL_SECRET || env.jwtSecret;
 
 function encryptionKey() {

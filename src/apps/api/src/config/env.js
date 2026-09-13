@@ -11,7 +11,7 @@ export const env = {
   cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
   cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || '',
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || '',
-  clientUrls: (process.env.CLIENT_URLS || process.env.CLIENT_URL || '')
+  clientUrls: (process.env.CLIENT_URLS || [process.env.CLIENT_URL, process.env.ADMIN_URL].filter(Boolean).join(',') || '')
     .split(',')
     .map((url) => url.trim())
     .filter(Boolean),
