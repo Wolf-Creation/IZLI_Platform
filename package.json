@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
+    "dev:admin": "vite --host 0.0.0.0 --mode admin",
+    "dev:website": "vite --host 0.0.0.0 --mode website",
     "build": "vite build",
+    "build:admin": "vite build --mode admin",
+    "build:website": "vite build --mode website",
     "preview": "vite preview",
     "format": "oxfmt"
   },

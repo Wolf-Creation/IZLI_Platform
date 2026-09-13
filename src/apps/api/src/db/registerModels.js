@@ -35,15 +35,19 @@ import '../modules/notifications/model.js';
 
 // Production & Assets
 import '../modules/uploads/model.js';
+import '../modules/qr/model.js';
 
 // Admin & Cross-cutting
 import '../modules/admin/model.js';
 import '../modules/analytics/model.js';
 import '../modules/search/model.js';
+import { QRCode } from '../modules/qr/model.js';
 
 import mongoose from 'mongoose';
 
-export function registerModels() {
+export async function registerModels() {
+  await QRCode.collection.dropIndex('serialNumber_1').catch(() => undefined);
+  await QRCode.createIndexes();
   const count = mongoose.modelNames().length;
   console.log(`[DB] ${count} Mongoose models registered.`);
 }

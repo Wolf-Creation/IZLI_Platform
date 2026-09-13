@@ -60,6 +60,7 @@ export function websitePageFromPath(pathname: string) {
   if (normalizedPath === '/legacy') return 'legacy'
   if (normalizedPath === '/archives') return 'archives'
   if (normalizedPath === '/keeper-circle') return 'keeper-circle'
+  if (normalizedPath.startsWith('/p/')) return 'qr-product'
   if (normalizedPath.startsWith('/product/')) return 'product-detail'
 
   return 'home'

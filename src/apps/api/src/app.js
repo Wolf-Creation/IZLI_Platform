@@ -41,7 +41,7 @@ const startServer = async () => {
   console.log('[DB] Connected to MongoDB Atlas.');
 
   // 2. Register all Mongoose models & load indexes
-  registerModels();
+  await registerModels();
 
   // 3. Start HTTP server
   app.listen(port, () => {

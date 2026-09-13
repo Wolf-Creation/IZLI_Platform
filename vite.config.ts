@@ -1,4 +1,4 @@
-import { defineConfig, type HtmlTagDescriptor, type Plugin } from 'vite'
+import { defineConfig, loadEnv, type HtmlTagDescriptor, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
@@ -8,7 +8,10 @@ import siteConfiguration from './.figma/make/site.json'
 const isFigmaSandbox = process.env.FIGMA === '1' || process.env.FIGMA === 'true'
 
 // Vite config — https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+
+  return {
   base: process.env.FIGMA_PUBLIC_URL ? `${process.env.FIGMA_PUBLIC_URL}/` : '/',
   plugins: [
     react(),
@@ -25,11 +28,11 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: parseInt(process.env.PORT || '8443'),
+    port: parseInt(env.PORT || process.env.PORT || '8443'),
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: env.VITE_API_PROXY_TARGET || 'http://localhost:5000',
         changeOrigin: true,
       },
     },
@@ -38,8 +41,9 @@ export default defineConfig({
   },
   preview: {
     host: '0.0.0.0',
-    port: parseInt(process.env.PORT || '8443'),
+    port: parseInt(env.PORT || process.env.PORT || '8443'),
   },
+  }
 })
 
 type FigmaSiteConfiguration = {
