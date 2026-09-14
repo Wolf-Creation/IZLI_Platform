@@ -1,4 +1,6 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') || '/api'
+import { environment } from '../environments'
+
+const API_BASE_URL = environment.apiURL.replace(/\/$/, '')
 
 type JsonValue = Record<string, unknown> | Array<unknown> | string | number | boolean | null
 
