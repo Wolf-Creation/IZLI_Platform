@@ -16,6 +16,7 @@ export default defineConfig(({ mode }) => {
   plugins: [
     react(),
     tailwindcss(),
+    appEntryPlugin(mode),
     figmaSiteConfiguration(siteConfiguration),
     figmaErrorOverlayReplay(),
     figmaReactRefreshBoundaryFallback(),
@@ -70,6 +71,17 @@ type FigmaSiteConfiguration = {
   }
   accessibility?: {
     addBypassLinks?: boolean
+  }
+}
+
+function appEntryPlugin(mode: string): Plugin {
+  const entry = mode === 'admin' || mode === 'admin-render' ? '/src/apps/admin/index.tsx' : '/src/apps/website/index.tsx'
+
+  return {
+    name: 'izli-app-entry',
+    transformIndexHtml(html) {
+      return html.replace('/src/main.tsx', entry)
+    },
   }
 }
 
