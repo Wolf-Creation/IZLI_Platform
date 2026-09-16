@@ -19,6 +19,7 @@ import Legacy from './pages/Legacy/Legacy'
 import Archives from './pages/Archives/Archives'
 import KeeperCircle from './pages/KeeperCircle/KeeperCircle'
 import QrProduct from './pages/QrProduct/QrProduct'
+import NotFoundPage from '../../shared/components/NotFoundPage'
 import { websitePageFromPath, websitePathForPage } from '../../routes/website'
 import type { User } from '../../entities'
 import './WebsiteTheme.scss'
@@ -74,6 +75,7 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
 
   const renderPage = () => {
     switch (page) {
+      case 'not-found': return <NotFoundPage onReturnHome={() => navigate('home')} />
       case 'home':           return <Home onNavigate={navigate} />
       case 'collections':    return <Collections onNavigate={navigate} />
       case 'shop':           return <Shop onNavigate={navigate} />

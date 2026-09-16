@@ -63,7 +63,7 @@ export function websitePageFromPath(pathname: string) {
   if (normalizedPath.startsWith('/p/')) return 'qr-product'
   if (normalizedPath.startsWith('/product/')) return 'product-detail'
 
-  return 'home'
+  return 'not-found'
 }
 
 export function productPath(id: string) {

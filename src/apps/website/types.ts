@@ -1,4 +1,5 @@
 export type WebPage =
+  | 'not-found'
   | 'home'
   | 'collections'
   | 'shop'

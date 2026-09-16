@@ -65,6 +65,7 @@ import LegacyKeeperLevels from './pages/LegacyKeeperLevels'
 import SystemAutomation from './pages/SystemAutomation'
 import ProductionAnalytics from './pages/ProductionAnalytics'
 import RecommendationAnalytics from './pages/RecommendationAnalytics'
+import NotFoundPage from '../../shared/components/NotFoundPage'
 
 export default function AdminApp() {
 	const initialState = adminStateFromPath(window.location.pathname)
@@ -119,6 +120,7 @@ export default function AdminApp() {
 
 	function renderScreen() {
 		switch (screen) {
+			case 'not-found': return <NotFoundPage onReturnHome={() => navigate('dashboard')} homeLabel="Return to the dashboard" />
 			case 'dashboard': return <Dashboard onNavigate={navigate} onCreateProduct={openProductCreate} onEditProduct={openProductEdit} />
 			case 'products': return <ProductsList onNavigate={navigate} onCreateProduct={openProductCreate} onEditProduct={openProductEdit} />
 			case 'product-editor': return <ProductEditor onNavigate={navigate} productId={productEditorId} onDone={closeProductEditor} />

@@ -1,4 +1,5 @@
 export type Screen =
+  | 'not-found'
   | 'dashboard'
   | 'products'
   | 'product-editor'

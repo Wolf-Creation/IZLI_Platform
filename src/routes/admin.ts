@@ -198,7 +198,7 @@ export function adminStateFromPath(pathname: string): { screen: Screen; productE
     return { screen: matchedRoute[1], productEditorId: null }
   }
 
-  return { screen: 'dashboard', productEditorId: null }
+  return { screen: 'not-found', productEditorId: null }
 }
 
 export function adminProductPath(id: string) {
