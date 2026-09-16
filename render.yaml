@@ -21,7 +21,7 @@ services:
       - key: CLOUDINARY_API_SECRET
         sync: false
       - key: CLIENT_URLS
-        value: https://www.izli.tn,http://localhost:8443,http://localhost:8444,http://192.168.1.132:8443,http://192.168.1.132:8444
+        value: https://izli.tn,https://www.izli.tn,https://admin.izli.tn,https://www.admin.izli.tn,http://localhost:8443,http://localhost:8444,http://192.168.1.132:8443,http://192.168.1.132:8444
       - key: QR_BASE_URL
         value: https://www.izli.tn/p/
 
@@ -29,6 +29,9 @@ services:
     name: izli-website
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build:website
     staticPublishPath: ./dist
+    domains:
+      - izli.tn
+      - www.izli.tn
     routes:
       - type: rewrite
         source: /*
@@ -41,7 +44,13 @@ services:
     name: izli-admin
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build:admin
     staticPublishPath: ./dist
+    domains:
+      - admin.izli.tn
+      - www.admin.izli.tn
     routes:
+      - type: redirect
+        source: /
+        destination: /admin
       - type: rewrite
         source: /*
         destination: /index.html
