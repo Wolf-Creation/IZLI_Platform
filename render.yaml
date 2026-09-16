@@ -15,12 +15,6 @@ services:
         sync: false
       - key: JWT_REFRESH_SECRET
         sync: false
-      - key: CLOUDINARY_CLOUD_NAME
-        sync: false
-      - key: CLOUDINARY_API_KEY
-        sync: false
-      - key: CLOUDINARY_API_SECRET
-        sync: false
       - key: CLIENT_URLS
         value: https://izli.tn,https://www.izli.tn,https://admin.izli.tn,https://www.admin.izli.tn,http://localhost:8443,http://localhost:8444,http://192.168.1.132:8443,http://192.168.1.132:8444
       - key: QR_BASE_URL
@@ -29,7 +23,7 @@ services:
   - type: web
     name: izli-website
     runtime: static
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build:website
+    buildCommand: pnpm install --frozen-lockfile && pnpm build:website
     staticPublishPath: ./dist
     domains:
       - izli.tn
@@ -44,7 +38,7 @@ services:
   - type: web
     name: izli-admin
     runtime: static
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build:admin
+    buildCommand: pnpm install --frozen-lockfile && pnpm build:admin
     staticPublishPath: ./dist
     domains:
       - admin.izli.tn
