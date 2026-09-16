@@ -25,8 +25,9 @@ services:
       - key: QR_BASE_URL
         value: https://www.izli.tn/p/
 
-  - type: static
+  - type: web
     name: izli-website
+    runtime: static
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build:website
     staticPublishPath: ./dist
     domains:
@@ -39,8 +40,9 @@ services:
       - key: VITE_API_BASE_URL
         value: https://izli-platform.onrender.com/api
         
-  - type: static
+  - type: web
     name: izli-admin
+    runtime: static
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build:admin
     staticPublishPath: ./dist
     domains:
