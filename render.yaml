@@ -21,7 +21,7 @@ services:
       - key: CLOUDINARY_API_SECRET
         sync: false
       - key: CLIENT_URLS
-        value: https://www.izli.tn
+        value: https://www.izli.tn,http://localhost:8443,http://localhost:8444,http://192.168.1.132:8443,http://192.168.1.132:8444
       - key: QR_BASE_URL
         value: https://www.izli.tn/p/
 
