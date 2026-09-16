@@ -2,6 +2,7 @@ services:
   - type: web
     name: izli-api
     runtime: node
+    plan: free
     rootDir: src/apps/api
     buildCommand: npm install
     startCommand: npm start
