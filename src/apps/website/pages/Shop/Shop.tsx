@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { WebPage } from '../../types'
 import { motion } from 'framer-motion'
-import bannerImage from '../../../../assets/Website_img/banner/banner_001.png'
+import { ProductCard } from '../../components/ProductCard/ProductCard'
 import tshirtsImage from '../../../../assets/Website_img/Shop/categories/T-shirts.png'
 import shirtsImage from '../../../../assets/Website_img/Shop/categories/Shirts.png'
 import pantsImage from '../../../../assets/Website_img/Shop/categories/pants.png'
@@ -43,12 +43,8 @@ const PRODUCTS = [
 ] as const
 
 export default function Shop({ onNavigate }: Props) {
-  const [activeTab, setActiveTab] = useState<'new' | 'last'>('new')
   const [activeCategory, setActiveCategory] = useState<Category>('All')
   const [query, setQuery] = useState('')
-  const [sort, setSort] = useState<'featured' | 'price-low' | 'price-high'>('featured')
-  const [cartCount, setCartCount] = useState(0)
-  const [imageIndexes, setImageIndexes] = useState<Record<string, number>>({})
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [filters, setFilters] = useState<FilterState>({ productType: '', collection: '', color: '', clothingSize: '', shoeSize: '' })
 
@@ -57,27 +53,16 @@ export default function Shop({ onNavigate }: Props) {
   const visibleProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
     const filtered = PRODUCTS.filter(product => {
-      const matchesTab = activeTab === 'new' ? product.release === 'New release' : product.release === 'Last release'
+      const matchesTab = product.release === 'New release'
       const matchesCategory = activeCategory === 'All' || product.category === activeCategory
       const matchesQuery = !normalizedQuery || product.name.toLowerCase().includes(normalizedQuery)
       return matchesTab && matchesCategory && matchesQuery
     })
 
-    return [...filtered].sort((a, b) => {
-      if (sort === 'price-low') return a.price - b.price
-      if (sort === 'price-high') return b.price - a.price
-      return a.id.localeCompare(b.id)
-    })
-  }, [activeCategory, activeTab, query, sort])
+    return [...filtered].sort((a, b) => a.id.localeCompare(b.id))
+  }, [activeCategory, query])
 
   const selectCategory = (category: Category) => setActiveCategory(category)
-
-  const changeImage = (id: string, direction: 1 | -1, imageCount: number) => {
-    setImageIndexes(current => ({
-      ...current,
-      [id]: ((current[id] ?? 0) + direction + imageCount) % imageCount,
-    }))
-  }
 
   return (
     <div className="shop-page">
@@ -85,11 +70,10 @@ export default function Shop({ onNavigate }: Props) {
         <div className="shop-page__topbar-inner">
           <div className="shop-page__brand-block">
             <span className="shop-page__label">Shop</span>
-            <small>Timeless essentials built for everyday wear.</small>
-          </div>
-          <div className="shop-page__meta">
-            <span>Discover</span>
-            <span>Minimal</span>
+            <div className="flex flex-col gap-4">
+              <small >Discover all products.</small>
+              <small >Timeless essentials built for everyday wear.</small>
+            </div>
           </div>
         </div>
       </header>
@@ -143,24 +127,21 @@ export default function Shop({ onNavigate }: Props) {
 
       <section className="shop-catalogue" id="shop-catalogue">
         <div className="shop-shell">
-          <div className="shop-toolbar">
-            <div className="shop-release-tabs" role="tablist" aria-label="Release filter">
-              <button type="button" className={activeTab === 'new' ? 'is-active' : ''} onClick={() => setActiveTab('new')}>New releases</button>
-              <button type="button" className={activeTab === 'last' ? 'is-active' : ''} onClick={() => setActiveTab('last')}>Archive releases</button>
-            </div>
-            <div className="shop-toolbar__controls">
-              <label className="shop-search"><span>Search</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Find a piece" /></label>
-              <select aria-label="Sort products" value={sort} onChange={event => setSort(event.target.value as typeof sort)}><option value="featured">Featured</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option></select>
-            </div>
-          </div>
+          
 
           {visibleProducts.length > 0 ? <div className="shop-product-grid">
             {visibleProducts.map((product, index) => {
-              const imageIndex = imageIndexes[product.id] ?? 0
-              return <motion.article key={product.id} className="shop-product-card" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.16 }} transition={{ duration: 0.45, delay: index * 0.04 }}>
-                <div className="shop-product-card__media"><img src={product.images[imageIndex]} alt={product.name} /><span className="shop-product-card__release">{product.release}</span><button type="button" className="shop-product-card__cta" onClick={() => setCartCount(count => count + 1)}>Add to bag <span aria-hidden="true">+</span></button><button type="button" className="shop-product-card__arrow shop-product-card__arrow--prev" onClick={() => changeImage(product.id, -1, product.images.length)} aria-label={`Previous ${product.name} image`}>←</button><button type="button" className="shop-product-card__arrow shop-product-card__arrow--next" onClick={() => changeImage(product.id, 1, product.images.length)} aria-label={`Next ${product.name} image`}>→</button></div>
-                <div className="shop-product-card__info"><div><p>{product.category} / {product.id}</p><h3>{product.name}</h3></div><strong>{product.price} TND</strong></div>
-              </motion.article>
+              return <motion.div key={product.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.16 }} transition={{ duration: 0.45, delay: index * 0.04 }}>
+                <ProductCard
+                  name={product.name}
+                  subtitle={`${product.category} / ${product.id}`}
+                  price={`${product.price} TND`}
+                  image={product.images[0]}
+                  badge={product.release}
+                  onClick={() => onNavigate('product-detail')}
+                  className="shop-product-card"
+                />
+              </motion.div>
             })}
           </div> : <div className="shop-empty"><p className="shop-eyebrow">No match</p><h3>Nothing here yet.</h3><button type="button" onClick={() => { setQuery(''); setActiveCategory('All') }}>Clear filters</button></div>}
         </div>

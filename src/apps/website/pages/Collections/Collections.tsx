@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { INDIGO, CLAY, SAGE, BG } from '../../../../tokens'
 import type { WebPage } from '../../types'
+import atlasPrincipal from '../../../../assets/Website_img/Shop/new releases/Atlas_symbol_heavy_oversized/001-Principal.png'
+import atlasDetail from '../../../../assets/Website_img/Shop/new releases/Atlas_symbol_heavy_oversized/001-A.png'
+import atlasBack from '../../../../assets/Website_img/Shop/new releases/Atlas_symbol_heavy_oversized/001-B.png'
+import portePrincipal from '../../../../assets/Website_img/Shop/new releases/Porte_ksour_heavy_oversized/002-Principal.png'
+import porteDetail from '../../../../assets/Website_img/Shop/new releases/Porte_ksour_heavy_oversized/002-A.png'
+import porteBack from '../../../../assets/Website_img/Shop/new releases/Porte_ksour_heavy_oversized/002-B.png'
 import './Collections.scss'
 
 interface Props { onNavigate: (p: WebPage) => void }
@@ -15,6 +21,15 @@ const COLLECTIONS = [
 ]
 
 const FILTERS = ['All', 'Heritage', 'Essentials', 'Studio', 'Community Lab']
+
+const LOCAL_PRODUCT_IMAGES = [
+  atlasPrincipal,
+  atlasDetail,
+  atlasBack,
+  portePrincipal,
+  porteDetail,
+  porteBack,
+]
 
 const COLLECTION_COPY: Record<string, { eyebrow: string; headline: string }> = {
   'Echoes of Stone': { eyebrow: 'Heritage / 01', headline: 'Marks that carry forward.' },
@@ -113,10 +128,10 @@ export default function Collections({ onNavigate }: Props) {
                 <div className="collections-editorial__collections">
                   <p className="collections-editorial__copy">{collection.desc}</p>
                   <div className="collections-editorial__grid">
-                    {products.map(product => (
+                    {products.map((product, productIndex) => (
                       <button key={`${collection.name}-${product.name}-${product.color}`} type="button" className="collection-card" onClick={() => onNavigate('product-detail')}>
                         <span className="collection-card__image">
-                          <img src={`https://images.unsplash.com/${product.image}?w=700&h=875&fit=crop&auto=format`} alt={`${product.name} ${product.color}`} />
+                          <img src={LOCAL_PRODUCT_IMAGES[(index * products.length + productIndex) % LOCAL_PRODUCT_IMAGES.length]} alt={`${product.name} ${product.color}`} />
                         </span>
                         <span className="collection-card__info">
                           <span className="collection-card__name">{product.name}</span>

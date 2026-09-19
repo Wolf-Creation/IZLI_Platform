@@ -37,7 +37,7 @@ const REMAINING_STOCK: Record<string, number> = {
 }
 
 const LOCAL_PRODUCT_IMAGES = import.meta.glob(
-  '../../../assets/Website_img/Shop/new releases/**/*.{png,jpg,jpeg,webp}',
+  '../../../../assets/Website_img/Shop/new releases/**/*.{png,jpg,jpeg,webp}',
   { eager: true, import: 'default', query: '?url' },
 ) as Record<string, string>
 

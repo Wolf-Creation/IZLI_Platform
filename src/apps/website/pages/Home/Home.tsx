@@ -6,6 +6,7 @@ import { HeroSlider } from './Hero/HeroSlider'
 import { ScrollToTop } from '../../components/ScrollToTop'
 import { SplashScreen } from '../../components/SplashScreen/SplashScreen'
 import { ProductCarousel } from '../../components/ProductCarousel/ProductCarousel'
+import { ProductCard } from '../../components/ProductCard/ProductCard'
 import { KeeperCircleCta } from '../../components/KeeperCircleCta/KeeperCircleCta'
 import tShirtsImage from '../../../../assets/Website_img/Shop/categories/T-shirts.png'
 import tafuktImage from '../../../../assets/Website_img/Shop/tops/banner/TAFUKT_001.png'
@@ -551,14 +552,16 @@ export default function Home({ onNavigate }: Props) {
           <div className="home-tops-editorial__products">
             <div className="home-tops-editorial__grid">
               {TOP_PRODUCTS.map(product => (
-                <button key={`${product.name}-${product.color}`} type="button" className="home-tops-product-card" onClick={() => onNavigate('product-detail')}>
-                  <span className="home-tops-product-card__image"><img src={product.image} alt={`${product.name} ${product.color}`} /></span>
-                  <span className="home-tops-product-card__info">
-                    <span>{product.name}</span>
-                    <small>{product.color}</small>
-                    <strong>{product.price}</strong>
-                  </span>
-                </button>
+                <ProductCard
+                  key={`${product.name}-${product.color}`}
+                  name={product.name}
+                  subtitle={product.color}
+                  price={product.price}
+                  image={product.image}
+                  badge="new"
+                  onClick={() => onNavigate('product-detail')}
+                  className="home-tops-product-card"
+                />
               ))}
             </div>
           </div>
@@ -585,14 +588,16 @@ export default function Home({ onNavigate }: Props) {
           <div className="home-tops-editorial__products">
             <div className="home-tops-editorial__grid">
               {TOP_PRODUCTS.map(product => (
-                <button key={`${product.name}-${product.color}`} type="button" className="home-tops-product-card" onClick={() => onNavigate('product-detail')}>
-                  <span className="home-tops-product-card__image"><img src={product.image} alt={`${product.name} ${product.color}`} /></span>
-                  <span className="home-tops-product-card__info">
-                    <span>{product.name}</span>
-                    <small>{product.color}</small>
-                    <strong>{product.price}</strong>
-                  </span>
-                </button>
+                <ProductCard
+                  key={`${product.name}-${product.color}`}
+                  name={product.name}
+                  subtitle={product.color}
+                  price={product.price}
+                  image={product.image}
+                  badge="new"
+                  onClick={() => onNavigate('product-detail')}
+                  className="home-tops-product-card"
+                />
               ))}
             </div>
           </div>
