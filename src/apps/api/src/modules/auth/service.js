@@ -173,6 +173,38 @@ export const authService = {
     };
   },
 
+  requestKeeperPasswordReset: async ({ email }) => {
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const customer = await customersRepository.findByEmailWithPasswordReset(normalizedEmail);
+    if (!customer) return { email: normalizedEmail };
+
+    const resetCode = String(crypto.randomInt(100000, 1000000));
+    customer.passwordResetToken = resetCode;
+    customer.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await customer.save();
+
+    try {
+      await sendKeeperPasswordResetEmail(customer.email, customer.firstName, resetCode);
+    } catch (error) {
+      console.error('[Keeper password reset] Email delivery failed:', error.message);
+    }
+
+    const result = { email: customer.email };
+    if (process.env.NODE_ENV !== 'production' && !process.env.SMTP_HOST) result.devCode = resetCode;
+    return result;
+  },
+
+  resetKeeperPassword: async ({ email, code, password }) => {
+    const customer = await customersRepository.findByEmailWithPasswordReset(String(email || '').trim().toLowerCase());
+    if (!customer || customer.passwordResetToken !== String(code) || !customer.passwordResetExpires || customer.passwordResetExpires < new Date()) return null;
+
+    customer.password = password;
+    customer.passwordResetToken = undefined;
+    customer.passwordResetExpires = undefined;
+    await customer.save();
+    return { email: customer.email };
+  },
+
   issueTokens: async (user) => {
     const tokenPayload = {
       sub: String(user._id),
@@ -201,4 +233,14 @@ async function sendKeeperVerificationEmail(email, firstName, code) {
 
   const transporter = nodemailer.createTransport({ host: process.env.SMTP_HOST, port: Number(process.env.SMTP_PORT || 587), secure: process.env.SMTP_SECURE === 'true', auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD } });
   await transporter.sendMail({ from: process.env.SMTP_FROM || process.env.SMTP_USER, to: email, subject: 'Your IZLI Keeper verification code', text: `Hello ${firstName}, your IZLI Keeper verification code is ${code}. It expires in 15 minutes.` });
+}
+
+async function sendKeeperPasswordResetEmail(email, firstName, code) {
+  if (!process.env.SMTP_HOST) {
+    console.info(`[Keeper password reset] ${email}: ${code}`);
+    return;
+  }
+
+  const transporter = nodemailer.createTransport({ host: process.env.SMTP_HOST, port: Number(process.env.SMTP_PORT || 587), secure: process.env.SMTP_SECURE === 'true', auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD } });
+  await transporter.sendMail({ from: process.env.SMTP_FROM || process.env.SMTP_USER, to: email, subject: 'Reset your IZLI Keeper password', text: `Hello ${firstName}, your IZLI Keeper password recovery code is ${code}. It expires in 15 minutes.` });
 }

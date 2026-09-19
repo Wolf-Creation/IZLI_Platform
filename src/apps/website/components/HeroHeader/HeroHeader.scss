@@ -37,6 +37,57 @@
   flex: 1;
 }
 
+.hero-header__submenu-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.hero-header__submenu {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 0;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  background: rgba(22, 18, 16, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.16);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity 200ms ease, transform 200ms ease, visibility 200ms ease;
+  z-index: 20;
+}
+
+.hero-header__submenu-wrap:hover .hero-header__submenu,
+.hero-header__submenu-wrap:focus-within .hero-header__submenu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.hero-header__submenu button {
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+  transition: color 180ms ease, background 180ms ease;
+}
+
+.hero-header__submenu button:hover {
+  background: rgba(201, 146, 78, 0.16);
+  color: #f9d8a2;
+}
+
 .hero-header__menu-item {
   background: none;
   border: none;
@@ -50,6 +101,10 @@
   text-transform: uppercase;
 
   &:hover {
+    color: #c9924e !important;
+  }
+
+  &.is-active {
     color: #c9924e !important;
   }
 }
@@ -171,6 +226,10 @@
 .hero-header__account-popover button:focus-visible {
   background: rgba(201, 146, 78, 0.14);
   outline: none;
+}
+
+.hero-header__mobile-nav button.is-active {
+  color: #c9924e;
 }
 
 @media (max-width: 768px) {

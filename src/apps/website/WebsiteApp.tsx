@@ -22,6 +22,7 @@ import QrProduct from './pages/QrProduct/QrProduct'
 import NotFoundPage from '../../shared/components/NotFoundPage'
 import { websitePageFromPath, websitePathForPage } from '../../routes/website'
 import type { User } from '../../entities'
+import { SplashScreen } from './components/SplashScreen/SplashScreen'
 import './WebsiteTheme.scss'
 
 const PAGES_WITHOUT_FOOTER: WebPage[] = ['login']
@@ -34,6 +35,7 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
   const [page, setPage] = useState<WebPage>(() => websitePageFromPath(window.location.pathname))
   const [cartCount] = useState(2)
   const [scrollY, setScrollY] = useState(0)
+  const [isIntroTransitioning, setIsIntroTransitioning] = useState(false)
 
   useEffect(() => {
     const syncPage = () => {
@@ -60,6 +62,7 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
       window.history.pushState({}, '', path)
     }
 
+    setIsIntroTransitioning(true)
     setPage(p)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -98,20 +101,17 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
   }
 
   const showFooter = !PAGES_WITHOUT_FOOTER.includes(page)
-  const showHeader = page !== 'home'
+  const showHeader = true
+  const isHeroHomeStyle = page === 'home' || page === 'shop'
 
   return (
     <div className="website-app" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {showHeader && <HeroHeader onNavigate={navigate} scrollY={scrollY} isHomePage={false} />}
+      {isIntroTransitioning && <SplashScreen onComplete={() => setIsIntroTransitioning(false)} />}
+      {showHeader && <HeroHeader onNavigate={navigate} scrollY={scrollY} isHomePage={isHeroHomeStyle} currentPage={page} />}
       <main style={{ flex: 1 }}>
         {renderPage()}
       </main>
-      {showFooter && (
-        <>
-          <div className="website-footer-spacer" aria-hidden="true" />
-          <Footer onNavigate={navigate} showHomeAbout={page === 'home'} />
-        </>
-      )}
+      {showFooter && <Footer onNavigate={navigate} showHomeAbout />}
     </div>
   )
 }

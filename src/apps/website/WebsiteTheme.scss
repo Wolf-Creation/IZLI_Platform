@@ -122,10 +122,15 @@
   color: #c9924e !important;
 }
 
+.website-app .hero-header .hero-header__menu-item.is-active,
+.website-app .hero-header .hero-header__mobile-nav button.is-active {
+  color: #e2b36f !important;
+}
+
 .website-app .site-footer {
   background: #000000 !important;
   border-color: var(--website-border) !important;
-  padding: 72px 0 !important;
+  // padding: 72px 0 !important;
 }
 
 .website-app .home-section--shop,
@@ -191,6 +196,53 @@
 .website-app .home-shop-tab--active {
   background: #c9924e !important;
   color: #ffffff !important;
+}
+
+.website-app .shop-release-tabs {
+  width: min(400px, 100%);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #0b0b0b;
+}
+
+.website-app .shop-release-tabs button {
+  min-height: 36px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 0;
+  background: transparent !important;
+  color: #ffffff !important;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.website-app .shop-release-tabs button.is-active {
+  background: #c9924e !important;
+  color: #ffffff !important;
+}
+
+.website-app .shop-release-tabs button:hover {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+.website-app .shop-category-strip button {
+  position: relative;
+}
+
+.website-app .shop-category-strip button.is-active::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -17px;
+  left: 0;
+  height: 2px;
+  background: #c9924e !important;
 }
 
 .website-app .home-page .home-services-bar,

@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
 import type { WebPage } from '../../types'
 import { HeroSlider } from './Hero/HeroSlider'
-import { HeroHeader } from '../../components/HeroHeader'
 import { ScrollToTop } from '../../components/ScrollToTop'
 import { SplashScreen } from '../../components/SplashScreen/SplashScreen'
 import { ProductCarousel } from '../../components/ProductCarousel/ProductCarousel'
@@ -515,7 +514,6 @@ export default function Home({ onNavigate }: Props) {
   return (
     <div className="home-page" style={{ background: BG }}>
       {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
-      <HeroHeader onNavigate={onNavigate} scrollY={scrollY} />
       <HeroSlider scrollY={scrollY} onNavigate={onNavigate} />
 
       <section className="home-section home-section--shop">
@@ -595,6 +593,42 @@ export default function Home({ onNavigate }: Props) {
                     <strong>{product.price}</strong>
                   </span>
                 </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="home-section home-section--keeper-access">
+        <header className="home-tops-editorial__header">
+          <div>
+            <h2>Keeper Circle</h2>
+          </div>
+          <KeeperCircleCta onClick={() => onNavigate('keeper-circle')}>Join the circle</KeeperCircleCta>
+        </header>
+        <div className="home-tops-editorial home-keeper-editorial">
+          <div className="home-tops-editorial__visual">
+            <img src={keeperCircleImage} alt="Keeper Circle community" />
+            <div className="home-tops-editorial__visual-overlay" />
+            <div className="home-tops-editorial__visual-caption">
+              <span>Member access</span>
+              <strong>First access, deeper stories.</strong>
+            </div>
+          </div>
+
+          <div className="home-tops-editorial__products">
+            <div className="home-tops-editorial__grid home-keeper-editorial__grid">
+              {[
+                { title: 'Private drops', copy: 'Early access to each release before the public opens.' },
+                { title: 'Community rituals', copy: 'Gatherings, edits, and moments behind the archive.' },
+                { title: 'Status & rewards', copy: 'Earn more access as you grow with the community.' },
+                { title: 'Collective memory', copy: 'Contribute to the stories, objects, and symbols that define IZLI.' },
+              ].map(item => (
+                <article key={item.title} className="home-keeper-card">
+                  <span className="home-keeper-card__index">Keeper</span>
+                  <h3>{item.title}</h3>
+                  <p>{item.copy}</p>
+                </article>
               ))}
             </div>
           </div>

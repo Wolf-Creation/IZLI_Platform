@@ -47,4 +47,18 @@ export const authController = {
 
     return response.status(200).json(successResponse('Email verified', result));
   },
+
+  requestKeeperPasswordReset: async (request, response) => {
+    const result = await authService.requestKeeperPasswordReset(request.body);
+    return response.status(200).json(successResponse('Password recovery code sent', result));
+  },
+
+  resetKeeperPassword: async (request, response) => {
+    const result = await authService.resetKeeperPassword(request.body);
+    if (!result) {
+      throw new AppError('Invalid or expired password recovery code', 400);
+    }
+
+    return response.status(200).json(successResponse('Password updated', result));
+  },
 };

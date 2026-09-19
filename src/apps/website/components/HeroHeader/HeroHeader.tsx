@@ -6,15 +6,30 @@ interface Props {
   onNavigate: (page: WebPage) => void
   scrollY: number
   isHomePage?: boolean
+  currentPage: WebPage
 }
 
 const MENU_ITEMS = [
+  { label: 'IZLI', page: 'home' as WebPage },
   { label: 'Shop', page: 'shop' as WebPage },
   { label: 'Collections', page: 'collections' as WebPage },
+  { label: 'Keeper Circle', page: 'keeper-circle' as WebPage },
   // { label: 'Legacy', page: 'legacy' as WebPage },
   // { label: 'Archives', page: 'archives' as WebPage },
   // { label: 'Stories', page: 'stories' as WebPage },
-  { label: 'Community', page: 'community' as WebPage },
+  // { label: 'Community', page: 'community' as WebPage },
+]
+
+const HOME_SUBMENU_ITEMS = [
+  { label: 'Heritage', page: 'heritage' as WebPage },
+  { label: 'Legacy', page: 'legacy' as WebPage },
+  { label: 'Community Lab', page: 'community-lab' as WebPage },
+  { label: 'Stories', page: 'stories' as WebPage },
+]
+
+const KEEPER_SUBMENU_ITEMS = [
+  { label: 'Archives', page: 'archives' as WebPage },
+  { label: 'Profile', page: 'profile' as WebPage },
 ]
 
 const TRANSITION_DISTANCE = 350 // Same as animation distance in NewHero
@@ -33,7 +48,7 @@ function AccountMenu({ onProfile, onLogout }: AccountMenuProps) {
   )
 }
 
-export function HeroHeader({ onNavigate, scrollY, isHomePage = true }: Props) {
+export function HeroHeader({ onNavigate, scrollY, isHomePage = true, currentPage }: Props) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
@@ -84,6 +99,8 @@ export function HeroHeader({ onNavigate, scrollY, isHomePage = true }: Props) {
     onNavigate(page)
   }
 
+  // const currentSubmenu = isHomePage ? { label: 'IZLI', items: HOME_SUBMENU_ITEMS, triggerPage: 'home' as WebPage } : { label: 'Keeper Circle', items: KEEPER_SUBMENU_ITEMS, triggerPage: 'keeper-circle' as WebPage }
+
   const navigateToProfile = () => {
     const isAuthenticated = Boolean(localStorage.getItem('izli.accessToken') && localStorage.getItem('izli.currentUser'))
     setIsAccountMenuOpen(false)
@@ -106,6 +123,13 @@ export function HeroHeader({ onNavigate, scrollY, isHomePage = true }: Props) {
     localStorage.removeItem('izli.currentUser')
     setIsAccountMenuOpen(false)
     onNavigate('keeper-circle')
+  }
+
+  const isMenuItemActive = (page: WebPage) => {
+    if (page === currentPage) return true
+    if (page === 'shop') return currentPage === 'product-detail' || currentPage === 'cart'
+    if (page === 'keeper-circle') return currentPage === 'profile' || currentPage === 'login' || currentPage === 'archives'
+    return false
   }
 
   return (
@@ -158,12 +182,28 @@ export function HeroHeader({ onNavigate, scrollY, isHomePage = true }: Props) {
           {MENU_ITEMS.map(item => (
             <button
               key={item.label}
-              className="hero-header__menu-item"
+              className={`hero-header__menu-item${isMenuItemActive(item.page) ? ' is-active' : ''}`}
               onClick={() => onNavigate(item.page)}
             >
               {item.label}
             </button>
           ))}
+          {/* <div className="hero-header__submenu-wrap">
+            <button
+              type="button"
+              className="hero-header__menu-item hero-header__menu-item--submenu"
+              onClick={() => onNavigate(currentSubmenu.triggerPage)}
+            >
+              {currentSubmenu.label}
+            </button>
+            <div className="hero-header__submenu" aria-label={`${currentSubmenu.label} submenu`}>
+              {currentSubmenu.items.map(item => (
+                <button key={item.label} type="button" onClick={() => onNavigate(item.page)}>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div> */}
         </nav>
 
         {/* Center Brand - Logo */}
@@ -225,7 +265,7 @@ export function HeroHeader({ onNavigate, scrollY, isHomePage = true }: Props) {
         </div>
         <nav className="hero-header__mobile-nav" aria-label="Mobile navigation">
           {MENU_ITEMS.map(item => (
-            <button key={item.label} type="button" onClick={() => navigateFromMobileMenu(item.page)}>
+            <button key={item.label} type="button" className={isMenuItemActive(item.page) ? 'is-active' : ''} onClick={() => navigateFromMobileMenu(item.page)}>
               <span>{item.label}</span>
               <b aria-hidden="true">↗</b>
             </button>

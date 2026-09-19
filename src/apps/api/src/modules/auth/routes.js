@@ -8,3 +8,5 @@ authRouter.post('/register', authController.register);
 authRouter.post('/keeper/register', authController.registerKeeper);
 authRouter.post('/keeper/login', authController.loginKeeper);
 authRouter.post('/keeper/verify', authController.verifyKeeperEmail);
+authRouter.post('/keeper/forgot-password', authController.requestKeeperPasswordReset);
+authRouter.post('/keeper/reset-password', authController.resetKeeperPassword);

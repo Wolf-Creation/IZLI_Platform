@@ -18,6 +18,14 @@ interface Props { onNavigate: (p: WebPage) => void }
 
 type Category = 'All' | 'T-Shirts' | 'Shirts' | 'Pants' | 'Accessories'
 
+type FilterState = {
+  productType: string
+  collection: string
+  color: string
+  clothingSize: string
+  shoeSize: string
+}
+
 const CATEGORIES = [
   { label: 'T-Shirts', image: tshirtsImage },
   { label: 'Shirts', image: shirtsImage },
@@ -41,6 +49,10 @@ export default function Shop({ onNavigate }: Props) {
   const [sort, setSort] = useState<'featured' | 'price-low' | 'price-high'>('featured')
   const [cartCount, setCartCount] = useState(0)
   const [imageIndexes, setImageIndexes] = useState<Record<string, number>>({})
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [filters, setFilters] = useState<FilterState>({ productType: '', collection: '', color: '', clothingSize: '', shoeSize: '' })
+
+  const activeFilterCount = Object.values(filters).filter(Boolean).length
 
   const visibleProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
@@ -69,44 +81,68 @@ export default function Shop({ onNavigate }: Props) {
 
   return (
     <div className="shop-page">
-      <section className="shop-hero">
-        <img src={bannerImage} alt="IZLI collection" className="shop-hero__image" />
-        <div className="shop-hero__veil" />
-        <div className="shop-hero__content">
-          <p className="shop-eyebrow">IZLI / SHOP 001</p>
-          <h1>Objects with a<br /><em>memory.</em></h1>
-          <p className="shop-hero__copy">Contemporary essentials shaped by North African heritage, made to be carried forward.</p>
-          <button type="button" className="shop-hero__link" onClick={() => document.getElementById('shop-catalogue')?.scrollIntoView({ behavior: 'smooth' })}>
-            Explore the collection <span aria-hidden="true">↘</span>
-          </button>
-        </div>
-        <div className="shop-hero__index" aria-hidden="true"><span>01</span><i /><span>SHOP</span></div>
-      </section>
-
-      <section className="shop-categories" aria-label="Shop categories">
-        <div className="shop-shell">
-          <div className="shop-section-heading">
-            <div><p className="shop-eyebrow">Browse the universe</p><h2>Find your piece.</h2></div>
-            <p>From daily uniforms to considered layers, each release carries a fragment of the IZLI story.</p>
+      <header className="shop-page__topbar">
+        <div className="shop-page__topbar-inner">
+          <div className="shop-page__brand-block">
+            <span className="shop-page__label">Shop</span>
+            <small>Timeless essentials built for everyday wear.</small>
           </div>
-          <div className="shop-category-grid">
-            {CATEGORIES.map(category => (
-              <button type="button" className="shop-category-card" key={category.label} onClick={() => { selectCategory(category.label); document.getElementById('shop-catalogue')?.scrollIntoView({ behavior: 'smooth' }) }}>
-                <img src={category.image} alt="" />
-                <span>{category.label}</span><b aria-hidden="true">↗</b>
+          <div className="shop-page__meta">
+            <span>Discover</span>
+            <span>Minimal</span>
+          </div>
+        </div>
+      </header>
+
+      <div className="shop-shell shop-shell--category-bar">
+        <div className="shop-category-strip" aria-label="Shop categories">
+          <div className="shop-category-strip__categories">
+            {(['All', ...CATEGORIES.map(category => category.label)] as Category[]).map(category => (
+              <button
+                key={category}
+                type="button"
+                className={activeCategory === category ? 'is-active' : ''}
+                onClick={() => selectCategory(category)}
+              >
+                {category}
               </button>
             ))}
           </div>
+          <button type="button" className={`shop-filter-trigger ${isFilterOpen ? 'is-open' : ''}`} onClick={() => setIsFilterOpen(true)} aria-expanded={isFilterOpen}>
+            <span aria-hidden="true">+</span> Filter ({activeFilterCount})
+          </button>
         </div>
-      </section>
+      </div>
+
+      {isFilterOpen && <>
+        <button type="button" className="shop-filter-overlay" onClick={() => setIsFilterOpen(false)} aria-label="Close filters" />
+        <aside className="shop-filter-drawer" aria-label="Shop filters">
+          <div className="shop-filter-drawer__header">
+            <h2>Filter</h2>
+            <button type="button" onClick={() => setIsFilterOpen(false)} aria-label="Close filters">×</button>
+          </div>
+          <div className="shop-filter-drawer__body">
+            {([
+              ['productType', 'Product type', ['Tops', 'Bottoms', 'Outerwear', 'Footwear']],
+              ['collection', 'Collection', ['Basics', 'Classics', 'Essentials']],
+              ['color', 'Color', ['Beige', 'Black', 'White', 'Olive', 'Grey']],
+              ['clothingSize', 'Clothe', ['S', 'M', 'L', 'XL']],
+              ['shoeSize', 'Shoes', ['38', '40', '42', '44']],
+            ] as const).map(([key, label, options]) => (
+              <section className="shop-filter-group" key={key}>
+                <h3>{label}</h3>
+                <div className="shop-filter-options">
+                  {options.map(option => <button key={option} type="button" className={filters[key] === option ? 'is-active' : ''} onClick={() => setFilters(current => ({ ...current, [key]: current[key] === option ? '' : option }))}>{option}</button>)}
+                </div>
+              </section>
+            ))}
+          </div>
+          <button type="button" className="shop-filter-clear" onClick={() => setFilters({ productType: '', collection: '', color: '', clothingSize: '', shoeSize: '' })}>Clear filters</button>
+        </aside>
+      </>}
 
       <section className="shop-catalogue" id="shop-catalogue">
         <div className="shop-shell">
-          <div className="shop-catalogue__topline">
-            <div><p className="shop-eyebrow">The catalogue</p><h2>Choose what stays.</h2></div>
-            <div className="shop-cart-status">{cartCount} {cartCount === 1 ? 'piece' : 'pieces'} in your bag</div>
-          </div>
-
           <div className="shop-toolbar">
             <div className="shop-release-tabs" role="tablist" aria-label="Release filter">
               <button type="button" className={activeTab === 'new' ? 'is-active' : ''} onClick={() => setActiveTab('new')}>New releases</button>
@@ -118,17 +154,12 @@ export default function Shop({ onNavigate }: Props) {
             </div>
           </div>
 
-          <div className="shop-filter-row" aria-label="Product categories">
-            {(['All', ...CATEGORIES.map(category => category.label)] as Category[]).map(category => <button type="button" key={category} className={activeCategory === category ? 'is-active' : ''} onClick={() => selectCategory(category)}>{category}</button>)}
-          </div>
-
           {visibleProducts.length > 0 ? <div className="shop-product-grid">
             {visibleProducts.map((product, index) => {
               const imageIndex = imageIndexes[product.id] ?? 0
               return <motion.article key={product.id} className="shop-product-card" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.16 }} transition={{ duration: 0.45, delay: index * 0.04 }}>
-                <div className="shop-product-card__media"><img src={product.images[imageIndex]} alt={product.name} /><span className="shop-product-card__release">{product.release}</span><button type="button" className="shop-product-card__arrow shop-product-card__arrow--prev" onClick={() => changeImage(product.id, -1, product.images.length)} aria-label={`Previous ${product.name} image`}>←</button><button type="button" className="shop-product-card__arrow shop-product-card__arrow--next" onClick={() => changeImage(product.id, 1, product.images.length)} aria-label={`Next ${product.name} image`}>→</button></div>
+                <div className="shop-product-card__media"><img src={product.images[imageIndex]} alt={product.name} /><span className="shop-product-card__release">{product.release}</span><button type="button" className="shop-product-card__cta" onClick={() => setCartCount(count => count + 1)}>Add to bag <span aria-hidden="true">+</span></button><button type="button" className="shop-product-card__arrow shop-product-card__arrow--prev" onClick={() => changeImage(product.id, -1, product.images.length)} aria-label={`Previous ${product.name} image`}>←</button><button type="button" className="shop-product-card__arrow shop-product-card__arrow--next" onClick={() => changeImage(product.id, 1, product.images.length)} aria-label={`Next ${product.name} image`}>→</button></div>
                 <div className="shop-product-card__info"><div><p>{product.category} / {product.id}</p><h3>{product.name}</h3></div><strong>{product.price} TND</strong></div>
-                <button type="button" className="shop-product-card__cta" onClick={() => setCartCount(count => count + 1)}>Add to bag <span aria-hidden="true">+</span></button>
               </motion.article>
             })}
           </div> : <div className="shop-empty"><p className="shop-eyebrow">No match</p><h3>Nothing here yet.</h3><button type="button" onClick={() => { setQuery(''); setActiveCategory('All') }}>Clear filters</button></div>}

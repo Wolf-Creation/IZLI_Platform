@@ -37,11 +37,10 @@ const COLLECTION_LINKS: { label: string; page: WebPage }[] = [
   { label: 'Essentials', page: 'shop' },
 ]
 
-const SOCIALS = [
-  { label: 'Instagram', icon: <><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" /></> },
-  { label: 'Twitch', icon: <><path d="M4 3h16v12l-4 4h-4l-3 3v-3H4z" /><path d="M9 8v4M15 8v4" /></> },
-  { label: 'YouTube', icon: <><rect x="3" y="6" width="18" height="12" rx="3" /><path d="m10 9 5 3-5 3z" /></> },
-  { label: 'Facebook', icon: <path d="M14 21v-8h3l.5-3H14V8.2c0-.9.3-1.5 1.6-1.5H18V4.1c-.4-.1-1.4-.2-2.5-.2-2.5 0-4.2 1.5-4.2 4.3V10H8.5v3h2.8v8z" /> },
+const KEEPER_CIRCLE_LINKS: { label: string; page: WebPage }[] = [
+  { label: 'Become a Keeper', page: 'keeper-circle' },
+  { label: 'Member benefits', page: 'keeper-circle' },
+  { label: 'Early access', page: 'shop' },
 ]
 
 export default function Footer({ onNavigate, showHomeAbout = false }: Props) {
@@ -68,23 +67,21 @@ export default function Footer({ onNavigate, showHomeAbout = false }: Props) {
                 <p className="home-legacy-editorial__intro">IZLI is more than a clothing brand — it is a contemporary universe inspired by Amazigh heritage, carrying stories, identity, and culture from one generation to the next.</p>
               </div>
               <div className="home-about-socials" aria-label="IZLI social media links">
-                <a href="#instagram" aria-label="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" /></svg></a>
-                <a href="#twitch" aria-label="Twitch"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16v12l-4 4h-4l-3 3v-3H4z" /><path d="M9 8v4M15 8v4" /></svg></a>
-                <a href="#youtube" aria-label="YouTube"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="3" /><path d="m10 9 5 3-5 3z" /></svg></a>
-                <a href="#facebook" aria-label="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 21v-8h3l.5-3H14V8.2c0-.9.3-1.5 1.6-1.5H18V4.1c-.4-.1-1.4-.2-2.5-.2-2.5 0-4.2 1.5-4.2 4.3V10H8.5v3h2.8v8z" /></svg></a>
+                <a href="https://www.instagram.com/izli.tn/" target="_blank" rel="noreferrer" aria-label="Instagram @izli.tn"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" /></svg></a>
+                <a href="https://www.facebook.com/izli.tn/" target="_blank" rel="noreferrer" aria-label="Facebook @izli.tn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 21v-8h3l.5-3H14V8.2c0-.9.3-1.5 1.6-1.5H18V4.1c-.4-.1-1.4-.2-2.5-.2-2.5 0-4.2 1.5-4.2 4.3V10H8.5v3h2.8v8z" /></svg></a>
+                <a href="https://wa.me/21690577555" target="_blank" rel="noreferrer" aria-label="WhatsApp +216 90 577 555"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z" /><path d="M9 9.3c.2-.4.4-.4.7-.4h.5c.2 0 .4.1.5.4l.6 1.4c.1.2 0 .4-.1.6l-.5.6c.5 1 1.2 1.7 2.2 2.2l.6-.5c.2-.2.4-.2.6-.1l1.4.6c.3.1.4.3.4.5v.5c0 .3 0 .5-.4.7-.3.2-.8.3-1.2.2-2.5-.6-4.8-2.9-5.4-5.4-.1-.4 0-.9.2-1.2Z" /></svg></a>
               </div>
             </aside>
             <div className="home-legacy-editorial__collage" aria-label="IZLI textile archive">
               <img src={legacyProductsImage} alt="IZLI legacy products" />
             </div>
-            <button className="home-legacy-editorial__model" onClick={() => onNavigate('archives')} aria-label="Explore the IZLI legacy archive">
+            <div className="home-legacy-editorial__model" aria-label="IZLI legacy archive">
               <img
                 key={LEGACY_NATURE_IMAGES[legacyNatureIndex].src}
                 src={LEGACY_NATURE_IMAGES[legacyNatureIndex].src}
                 alt={LEGACY_NATURE_IMAGES[legacyNatureIndex].alt}
               />
-              <span>Explore the legacy <b aria-hidden="true">↗</b></span>
-            </button>
+            </div>
           </div>
         </section>
       )}
@@ -97,6 +94,9 @@ export default function Footer({ onNavigate, showHomeAbout = false }: Props) {
           <FooterGroup title="Discover" links={DISCOVER_LINKS} onNavigate={onNavigate} />
           <FooterGroup title="Collections" links={COLLECTION_LINKS.slice(2)} onNavigate={onNavigate} />
           <FooterGroup title="Categories" links={COLLECTION_LINKS.slice(0, 2)} onNavigate={onNavigate} />
+        </div>
+        <div className="site-footer__column site-footer__column--keeper">
+          <FooterGroup title="Keeper Circle" links={KEEPER_CIRCLE_LINKS} onNavigate={onNavigate} />
         </div>
         {/* <div className="site-footer__column site-footer__column--newsletter">
           <h2>Join IZLI. Get 15% off your first order.</h2>
