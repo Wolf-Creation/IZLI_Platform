@@ -77,6 +77,30 @@ const buildFilter = (query) => {
   return filter;
 };
 
+const syncProductCollections = async (productId, collectionIds = [], previousCollectionIds = []) => {
+  const Collection = mongoose.models.Collection;
+  if (!Collection) return;
+
+  const nextIds = [...new Set((collectionIds ?? []).map(String))];
+  const previousIds = [...new Set((previousCollectionIds ?? []).map(String))];
+  const removedIds = previousIds.filter(id => !nextIds.includes(id));
+  const addedIds = nextIds.filter(id => !previousIds.includes(id));
+
+  if (removedIds.length > 0) {
+    await Collection.updateMany(
+      { _id: { $in: removedIds } },
+      { $pull: { productIds: productId } },
+    );
+  }
+
+  if (addedIds.length > 0) {
+    await Collection.updateMany(
+      { _id: { $in: addedIds } },
+      { $addToSet: { productIds: productId } },
+    );
+  }
+};
+
 export const resourcesRouter = Router();
 
 resourcesRouter.get('/:resource', asyncHandler(async (request, response) => {
@@ -98,14 +122,34 @@ resourcesRouter.get('/:resource/:id', asyncHandler(async (request, response) => 
 resourcesRouter.post('/:resource', asyncHandler(async (request, response) => {
   const Model = getModel(request.params.resource);
   const doc = await Model.create(request.body);
+  if (request.params.resource === 'products') {
+    await syncProductCollections(doc._id, doc.collectionIds);
+  }
   return response.status(201).json(successResponse('Resource created successfully', serialize(doc)));
 }));
 
 resourcesRouter.patch('/:resource/:id', asyncHandler(async (request, response) => {
   const Model = getModel(request.params.resource);
+  const existing = request.params.resource === 'products' ? await Model.findById(request.params.id) : null;
+  if (request.params.resource === 'collections' && request.body.productIds) {
+    const Product = mongoose.models.Product;
+    if (Product) {
+      await Product.updateMany(
+        { collectionIds: request.params.id },
+        { $pull: { collectionIds: request.params.id } },
+      );
+      await Product.updateMany(
+        { _id: { $in: request.body.productIds } },
+        { $addToSet: { collectionIds: request.params.id } },
+      );
+    }
+  }
   const doc = await Model.findByIdAndUpdate(request.params.id, request.body, { new: true });
   if (!doc) {
     throw new AppError('Resource not found', 404);
+  }
+  if (request.params.resource === 'products') {
+    await syncProductCollections(doc._id, doc.collectionIds, existing?.collectionIds);
   }
   return response.status(200).json(successResponse('Resource updated successfully', serialize(doc)));
 }));

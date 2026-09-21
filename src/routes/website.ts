@@ -15,6 +15,7 @@ export const WEBSITE_ROUTES = {
   CART: '/cart',
   LOGIN: '/login',
   PROFILE: '/keeper-circle/profile',
+  KEEPER_CIRCLE_LOGIN: '/keeper-circle/login',
 } as const
 
 export type WebsiteRoutePath = (typeof WEBSITE_ROUTES)[keyof typeof WEBSITE_ROUTES]
@@ -35,6 +36,7 @@ const WEBSITE_ROUTE_BY_PAGE: Record<string, string> = {
   legacy: '/legacy',
   archives: '/archives',
   'keeper-circle': '/keeper-circle',
+  'keeper-circle-login': WEBSITE_ROUTES.KEEPER_CIRCLE_LOGIN,
   'product-detail': '/product/demo',
 }
 
@@ -60,6 +62,7 @@ export function websitePageFromPath(pathname: string) {
   if (normalizedPath === '/legacy') return 'legacy'
   if (normalizedPath === '/archives') return 'archives'
   if (normalizedPath === '/keeper-circle') return 'keeper-circle'
+  if (normalizedPath === WEBSITE_ROUTES.KEEPER_CIRCLE_LOGIN) return 'keeper-circle-login'
   if (normalizedPath.startsWith('/p/')) return 'qr-product'
   if (normalizedPath.startsWith('/product/')) return 'product-detail'
 

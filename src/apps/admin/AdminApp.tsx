@@ -7,6 +7,7 @@ import Topbar from '../../components/Topbar'
 import Dashboard from './pages/Dashboard'
 import ProductsList from './pages/ProductsList'
 import ProductEditor from './pages/ProductEditor'
+import CategoriesList from './pages/CategoriesList'
 import CollectionsList from './pages/CollectionsList'
 import CollectionEditor from './pages/CollectionEditor'
 import OrdersList from './pages/OrdersList'
@@ -124,6 +125,7 @@ export default function AdminApp() {
 			case 'dashboard': return <Dashboard onNavigate={navigate} onCreateProduct={openProductCreate} onEditProduct={openProductEdit} />
 			case 'products': return <ProductsList onNavigate={navigate} onCreateProduct={openProductCreate} onEditProduct={openProductEdit} />
 			case 'product-editor': return <ProductEditor onNavigate={navigate} productId={productEditorId} onDone={closeProductEditor} />
+			case 'categories': return <CategoriesList onNavigate={navigate} />
 			case 'collections': return <CollectionsList onNavigate={navigate} />
 			case 'collection-editor': return <CollectionEditor onNavigate={navigate} />
 			case 'orders': return <OrdersList onNavigate={navigate} />

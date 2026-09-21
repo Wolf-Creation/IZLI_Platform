@@ -16,4 +16,5 @@ export type WebPage =
   | 'legacy'
   | 'archives'
   | 'keeper-circle'
+  | 'keeper-circle-login'
   | 'qr-product'

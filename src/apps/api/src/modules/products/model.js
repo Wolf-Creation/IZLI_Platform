@@ -4,6 +4,15 @@ const productSizeSchema = new mongoose.Schema({
   size: { type: String, required: true },
   availability: { type: String, enum: ['available', 'low', 'sold-out'], default: 'available' },
   stock: { type: Number, default: 0, min: 0 },
+  colorStocks: { type: Map, of: Number, default: {} },
+}, { _id: false });
+
+const productColorwaySchema = new mongoose.Schema({
+  id: { type: String, required: true },
+  name: { type: String, required: true },
+  hex: { type: String, default: '#D8D0C4' },
+  images: [{ type: String, default: [] }],
+  sizeStocks: { type: Map, of: Number, default: {} },
 }, { _id: false });
 
 const productSchema = new mongoose.Schema({
@@ -38,10 +47,14 @@ const productSchema = new mongoose.Schema({
   coverImageUrl: { type: String, default: '' },
   images: [{ type: String }],
   sizes: [productSizeSchema],
+  colorways: [productColorwaySchema],
   materials: [{ type: String }],
+  fit: [{ type: String }],
   careInstructions: [{ type: String }],
+  sizeGuideIncluded: { type: Boolean, default: false },
   relatedStoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Story' },
   relatedChallengeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Challenge' },
+  categoryIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
   collectionIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Collection' }],
   tags: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Tag' }],
   publishedAt: { type: Date },
@@ -50,6 +63,7 @@ const productSchema = new mongoose.Schema({
 productSchema.index({ status: 1 });
 productSchema.index({ universe: 1 });
 productSchema.index({ collectionIds: 1 });
+productSchema.index({ categoryIds: 1 });
 
 export const Product = mongoose.model('Product', productSchema);
 

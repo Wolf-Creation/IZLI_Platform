@@ -104,14 +104,14 @@ export function HeroHeader({ onNavigate, scrollY, isHomePage = true, currentPage
   const navigateToProfile = () => {
     const isAuthenticated = Boolean(localStorage.getItem('izli.accessToken') && localStorage.getItem('izli.currentUser'))
     setIsAccountMenuOpen(false)
-    onNavigate(isAuthenticated ? 'profile' : 'keeper-circle')
+    onNavigate(isAuthenticated ? 'profile' : 'keeper-circle-login')
   }
 
   const handleAccountClick = () => {
     const isAuthenticated = Boolean(localStorage.getItem('izli.accessToken') && localStorage.getItem('izli.currentUser'))
     if (!isAuthenticated) {
       setIsAccountMenuOpen(false)
-      onNavigate('keeper-circle')
+      onNavigate('keeper-circle-login')
       return
     }
 

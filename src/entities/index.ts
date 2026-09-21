@@ -110,6 +110,15 @@ export interface ProductSize {
   size: string
   availability: SizeAvailability
   stock: number
+  colorStocks?: Record<string, number>
+}
+
+export interface ProductColorway {
+  id: ID
+  name: string
+  hex: string
+  images: URL[]
+  sizeStocks: Record<string, number>
 }
 
 export interface Product {
@@ -135,8 +144,12 @@ export interface Product {
   sizes: ProductSize[]
   materials: string[]
   careInstructions: string[]
+  fit?: string[]
+  colorways?: ProductColorway[]
+  sizeGuideIncluded?: boolean
   relatedStoryId?: ID
   relatedChallengeId?: ID
+  categoryIds: ID[]
   collectionIds: ID[]
   tags: Tag[]
   createdAt: ISODate

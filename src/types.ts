@@ -3,6 +3,7 @@ export type Screen =
   | 'dashboard'
   | 'products'
   | 'product-editor'
+  | 'categories'
   | 'collections'
   | 'collection-editor'
   | 'orders'

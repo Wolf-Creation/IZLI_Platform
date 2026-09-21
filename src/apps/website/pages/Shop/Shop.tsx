@@ -2,21 +2,11 @@ import { useMemo, useState } from 'react'
 import type { WebPage } from '../../types'
 import { motion } from 'framer-motion'
 import { ProductCard } from '../../components/ProductCard/ProductCard'
-import tshirtsImage from '../../../../assets/Website_img/Shop/categories/T-shirts.png'
-import shirtsImage from '../../../../assets/Website_img/Shop/categories/Shirts.png'
-import pantsImage from '../../../../assets/Website_img/Shop/categories/pants.png'
-import bandanaImage from '../../../../assets/Website_img/Shop/categories/bandana.png'
-import atlasPrincipal from '../../../../assets/Website_img/Shop/new releases/Atlas_symbol_heavy_oversized/001-Principal.png'
-import atlasDetail from '../../../../assets/Website_img/Shop/new releases/Atlas_symbol_heavy_oversized/001-A.png'
-import atlasBack from '../../../../assets/Website_img/Shop/new releases/Atlas_symbol_heavy_oversized/001-B.png'
-import portePrincipal from '../../../../assets/Website_img/Shop/new releases/Porte_ksour_heavy_oversized/002-Principal.png'
-import porteDetail from '../../../../assets/Website_img/Shop/new releases/Porte_ksour_heavy_oversized/002-A.png'
-import porteBack from '../../../../assets/Website_img/Shop/new releases/Porte_ksour_heavy_oversized/002-B.png'
+import { useProducts } from '../../../../shared/hooks/useProducts'
+import { useCategories } from '../../../../shared/hooks/useCategories'
 import './Shop.scss'
 
 interface Props { onNavigate: (p: WebPage) => void }
-
-type Category = 'All' | 'T-Shirts' | 'Shirts' | 'Pants' | 'Accessories'
 
 type FilterState = {
   productType: string
@@ -26,24 +16,10 @@ type FilterState = {
   shoeSize: string
 }
 
-const CATEGORIES = [
-  { label: 'T-Shirts', image: tshirtsImage },
-  { label: 'Shirts', image: shirtsImage },
-  { label: 'Pants', image: pantsImage },
-  { label: 'Accessories', image: bandanaImage },
-] as const
-
-const PRODUCTS = [
-  { id: 'PRD-0008', name: 'Atlas Symbol Heavy Oversized', category: 'T-Shirts' as Category, price: 65, release: 'New release', images: [atlasPrincipal, atlasDetail, atlasBack] },
-  { id: 'PRD-0054', name: 'Porte Ksour Heavy Oversized', category: 'T-Shirts' as Category, price: 85, release: 'New release', images: [portePrincipal, porteDetail, porteBack] },
-  { id: 'PRD-0016', name: 'Mountain Mark Crewneck', category: 'Shirts' as Category, price: 125, release: 'Last release', images: [atlasDetail, atlasPrincipal] },
-  { id: 'PRD-0022', name: 'Loom Stripe Shirt', category: 'Shirts' as Category, price: 145, release: 'Last release', images: [porteDetail, portePrincipal] },
-  { id: 'PRD-0044', name: 'Essentials Straight Trouser', category: 'Pants' as Category, price: 115, release: 'Last release', images: [pantsImage, atlasBack] },
-  { id: 'PRD-0052', name: 'Heritage Bandana', category: 'Accessories' as Category, price: 45, release: 'Last release', images: [bandanaImage, porteBack] },
-] as const
-
 export default function Shop({ onNavigate }: Props) {
-  const [activeCategory, setActiveCategory] = useState<Category>('All')
+  const { products, loading, error } = useProducts({ status: 'published' })
+  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories()
+  const [activeCategory, setActiveCategory] = useState('All')
   const [query, setQuery] = useState('')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [filters, setFilters] = useState<FilterState>({ productType: '', collection: '', color: '', clothingSize: '', shoeSize: '' })
@@ -52,17 +28,16 @@ export default function Shop({ onNavigate }: Props) {
 
   const visibleProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
-    const filtered = PRODUCTS.filter(product => {
-      const matchesTab = product.release === 'New release'
-      const matchesCategory = activeCategory === 'All' || product.category === activeCategory
+    const filtered = products.filter(product => {
+      const matchesCategory = activeCategory === 'All' || (product.categoryIds ?? []).includes(activeCategory)
       const matchesQuery = !normalizedQuery || product.name.toLowerCase().includes(normalizedQuery)
-      return matchesTab && matchesCategory && matchesQuery
+      return matchesCategory && matchesQuery
     })
 
     return [...filtered].sort((a, b) => a.id.localeCompare(b.id))
-  }, [activeCategory, query])
+  }, [activeCategory, products, query])
 
-  const selectCategory = (category: Category) => setActiveCategory(category)
+  const selectCategory = (categoryId: string) => setActiveCategory(categoryId)
 
   return (
     <div className="shop-page">
@@ -81,14 +56,14 @@ export default function Shop({ onNavigate }: Props) {
       <div className="shop-shell shop-shell--category-bar">
         <div className="shop-category-strip" aria-label="Shop categories">
           <div className="shop-category-strip__categories">
-            {(['All', ...CATEGORIES.map(category => category.label)] as Category[]).map(category => (
+            {[{ id: 'All', label: 'All' }, ...categories].map(category => (
               <button
-                key={category}
+                key={category.id}
                 type="button"
-                className={activeCategory === category ? 'is-active' : ''}
-                onClick={() => selectCategory(category)}
+                className={activeCategory === category.id ? 'is-active' : ''}
+                onClick={() => selectCategory(category.id)}
               >
-                {category}
+                {category.label}
               </button>
             ))}
           </div>
@@ -129,15 +104,17 @@ export default function Shop({ onNavigate }: Props) {
         <div className="shop-shell">
           
 
-          {visibleProducts.length > 0 ? <div className="shop-product-grid">
+          {loading || categoriesLoading ? <div className="shop-empty"><h3>Loading catalogue...</h3></div> : error || categoriesError ? <div className="shop-empty"><h3>Catalogue unavailable.</h3><p>{error ?? categoriesError}</p></div> : visibleProducts.length > 0 ? <div className="shop-product-grid">
             {visibleProducts.map((product, index) => {
+              const remainingStock = (product.sizes ?? []).reduce((total, size) => total + size.stock, 0) || product.quantity || 0
+              const categoryLabel = categories.find(category => (product.categoryIds ?? []).includes(category.id))?.label ?? product.universe
               return <motion.div key={product.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.16 }} transition={{ duration: 0.45, delay: index * 0.04 }}>
                 <ProductCard
                   name={product.name}
-                  subtitle={`${product.category} / ${product.id}`}
-                  price={`${product.price} TND`}
-                  image={product.images[0]}
-                  badge={product.release}
+                  subtitle={`${categoryLabel} / ${product.sku}`}
+                  price={`${product.price} ${product.currency}`}
+                  image={product.coverImageUrl || product.images?.[0] || ''}
+                  badge={`Only ${remainingStock} left`}
                   onClick={() => onNavigate('product-detail')}
                   className="shop-product-card"
                 />

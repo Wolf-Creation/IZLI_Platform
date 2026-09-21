@@ -7,6 +7,7 @@ import { ScrollToTop } from '../../components/ScrollToTop'
 import { SplashScreen } from '../../components/SplashScreen/SplashScreen'
 import { ProductCarousel } from '../../components/ProductCarousel/ProductCarousel'
 import { ProductCard } from '../../components/ProductCard/ProductCard'
+import { useProducts } from '../../../../shared/hooks/useProducts'
 import { KeeperCircleCta } from '../../components/KeeperCircleCta/KeeperCircleCta'
 import tShirtsImage from '../../../../assets/Website_img/Shop/categories/T-shirts.png'
 import tafuktImage from '../../../../assets/Website_img/Shop/tops/banner/TAFUKT_001.png'
@@ -99,28 +100,6 @@ const COLLECTION_FEATURES = [
   { title: 'Product', desc: 'Heavy Oversized Tee', icon: '👕' },
   { title: 'Release', desc: '001', icon: '✦' },
 ] as const
-
-const PRODUCTS_NEW_BASE = [
-  { id: 'PRD-0008', name: 'Atlas Symbol Heavy Oversized', price: 65, release: 'Release 01', images: [] },
-  { id: 'PRD-0054', name: 'Porte Ksour Heavy Oversized', price: 85, release: 'Release 01', images: [] },
-]
-
-const PRODUCTS_NEW = [...PRODUCTS_NEW_BASE, ...PRODUCTS_NEW_BASE, ...PRODUCTS_NEW_BASE]
-
-const PRODUCTS_LAST = [
-  { id: 'PRD-0016', name: 'Mountain Mark Crewneck', price: 125, release: 'Release 03', images: ['photo-1469334031218-e382a71b716b', 'photo-1523381210434-271e8be1f52b', 'photo-1617196034183-421b4040ed20'] },
-  { id: 'PRD-0022', name: 'Loom Stripe Shirt', price: 145, release: 'Release 02', images: ['photo-1516762689617-e1cffcef479d', 'photo-1618354691373-d851c5c3a990', 'photo-1490481651871-ab68de25d43d'] },
-  { id: 'PRD-0044', name: 'Essentials Straight Trouser', price: 115, release: 'Release 01', images: ['photo-1611312449408-fcece27cdbb7', 'photo-1521572163474-6864f9cf17ab', 'photo-1469334031218-e382a71b716b'] },
-  { id: 'PRD-0051', name: 'Sahara Work Jacket', price: 285, release: 'Release 03', images: ['photo-1620799140408-edc6dcb6d633', 'photo-1617196034183-421b4040ed20', 'photo-1516762689617-e1cffcef479d'] },
-  { id: 'PRD-0014', name: 'Tifinagh Frame Tee', price: 89, release: 'Release 01', images: ['photo-1523381210434-271e8be1f52b', 'photo-1490481651871-ab68de25d43d', 'photo-1618354691373-d851c5c3a990'] },
-  { id: 'PRD-0031', name: 'Woven Sahara Overshirt', price: 175, release: 'Release 01', images: ['photo-1617196034183-421b4040ed20', 'photo-1469334031218-e382a71b716b', 'photo-1516762689617-e1cffcef479d'] },
-  { id: 'PRD-0039', name: 'Community Lab Archive Jersey', price: 105, release: 'Release 02', images: ['photo-1521572163474-6864f9cf17ab', 'photo-1523381210434-271e8be1f52b', 'photo-1617196034183-421b4040ed20'] },
-  { id: 'PRD-0048', name: 'Desert Denim Jacket', price: 195, release: 'Release 02', images: ['photo-1551028719-00167b16ebc5', 'photo-1551028727-430b22ef4ba2', 'photo-1551028719-00167b16ebc5'] },
-  { id: 'PRD-0049', name: 'Archive Print Tee', price: 75, release: 'Release 03', images: ['photo-1553062407-98eeb64c6a62', 'photo-1523381210434-271e8be1f52b', 'photo-1618354691373-d851c5c3a990'] },
-  { id: 'PRD-0050', name: 'Studio Knit Sweater', price: 135, release: 'Release 02', images: ['photo-1521572163474-6864f9cf17ab', 'photo-1550258987-920a2eae2e8d', 'photo-1516824750904-b878cd98c67c'] },
-  { id: 'PRD-0052', name: 'Heritage Leather Belt', price: 85, release: 'Release 01', images: ['photo-1548036328-c9fa89d128fa', 'photo-1553062407-98eeb64c6a62', 'photo-1520256262607-b135b80006a1'] },
-  { id: 'PRD-0053', name: 'Community Backpack', price: 165, release: 'Release 03', images: ['photo-1553338896-f4b87faa54d8', 'photo-1553062407-98eeb64c6a62', 'photo-1548036328-c9fa89d128fa'] },
-]
 
 const RELEASE_POINTS = ['Release 001 badge', '100 Keeper points', 'Exclusive archive access']
 
@@ -312,10 +291,20 @@ const bannerCtaVariants = {
 }
 
 export default function Home({ onNavigate }: Props) {
+  const { products } = useProducts({ status: 'published' })
   const [scrollY, setScrollY] = useState(0)
   const [showSplash, setShowSplash] = useState(true)
   const [activeTab, setActiveTab] = useState('new')
   const [activeKeeperBenefit, setActiveKeeperBenefit] = useState(0)
+  const websiteProducts = products.map(product => ({
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    release: `Release ${product.releaseNumber ?? '01'}`,
+    images: product.images ?? [],
+    releaseStatus: product.releaseStatus,
+  }))
+  const displayedShopProducts = websiteProducts.filter(product => activeTab === 'new' ? product.releaseStatus === 'live' : product.releaseStatus !== 'live')
   const [introTitleRevealed, setIntroTitleRevealed] = useState(false)
   const keeperSectionRef = useRef<HTMLElement>(null)
   const introTitleRevealedRef = useRef(false)
@@ -528,7 +517,7 @@ export default function Home({ onNavigate }: Props) {
             </button>
           </div>
 
-          <ProductCarousel products={activeTab === 'new' ? PRODUCTS_NEW : PRODUCTS_LAST} />
+          <ProductCarousel products={displayedShopProducts} />
         </div>
       </section>
 
@@ -598,42 +587,6 @@ export default function Home({ onNavigate }: Props) {
                   onClick={() => onNavigate('product-detail')}
                   className="home-tops-product-card"
                 />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="home-section home-section--keeper-access">
-        <header className="home-tops-editorial__header">
-          <div>
-            <h2>Keeper Circle</h2>
-          </div>
-          <KeeperCircleCta onClick={() => onNavigate('keeper-circle')}>Join the circle</KeeperCircleCta>
-        </header>
-        <div className="home-tops-editorial home-keeper-editorial">
-          <div className="home-tops-editorial__visual">
-            <img src={keeperCircleImage} alt="Keeper Circle community" />
-            <div className="home-tops-editorial__visual-overlay" />
-            <div className="home-tops-editorial__visual-caption">
-              <span>Member access</span>
-              <strong>First access, deeper stories.</strong>
-            </div>
-          </div>
-
-          <div className="home-tops-editorial__products">
-            <div className="home-tops-editorial__grid home-keeper-editorial__grid">
-              {[
-                { title: 'Private drops', copy: 'Early access to each release before the public opens.' },
-                { title: 'Community rituals', copy: 'Gatherings, edits, and moments behind the archive.' },
-                { title: 'Status & rewards', copy: 'Earn more access as you grow with the community.' },
-                { title: 'Collective memory', copy: 'Contribute to the stories, objects, and symbols that define IZLI.' },
-              ].map(item => (
-                <article key={item.title} className="home-keeper-card">
-                  <span className="home-keeper-card__index">Keeper</span>
-                  <h3>{item.title}</h3>
-                  <p>{item.copy}</p>
-                </article>
               ))}
             </div>
           </div>

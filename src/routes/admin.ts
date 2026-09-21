@@ -8,6 +8,7 @@ export const ADMIN_ROUTES = {
   PRODUCTS: '/products',
   PRODUCT_NEW: '/products/new',
   PRODUCT_EDIT: '/products/:id',
+  CATEGORIES: '/products/categories',
   COLLECTIONS: '/collections',
   COLLECTION_NEW: '/collections/new',
   COLLECTION_EDIT: '/collections/:id',
@@ -71,6 +72,7 @@ export function adminPathForScreen(screen: Screen, productId?: string | null) {
     case 'dashboard': return ADMIN_ROUTES.DASHBOARD
     case 'products': return ADMIN_ROUTES.PRODUCTS
     case 'product-editor': return productId ? adminProductPath(productId) : ADMIN_ROUTES.PRODUCT_NEW
+    case 'categories': return ADMIN_ROUTES.CATEGORIES
     case 'collections': return ADMIN_ROUTES.COLLECTIONS
     case 'collection-editor': return ADMIN_ROUTES.COLLECTION_NEW
     case 'orders': return ADMIN_ROUTES.ORDERS
@@ -156,6 +158,10 @@ export function adminStateFromPath(pathname: string): { screen: Screen; productE
     return { screen: 'product-editor', productEditorId: null }
   }
 
+  if (pathname === ADMIN_ROUTES.CATEGORIES || pathname === `${ADMIN_ROUTES.CATEGORIES}/`) {
+    return { screen: 'categories', productEditorId: null }
+  }
+
   const productMatch = pathname.match(/^\/products\/([^/]+)$/)
   if (productMatch) {
     return { screen: 'product-editor', productEditorId: productMatch[1] }
@@ -176,7 +182,7 @@ export function adminStateFromPath(pathname: string): { screen: Screen; productE
   if (pathname.startsWith('/customers/')) return { screen: 'customer', productEditorId: null }
 
   const routeScreens: Array<[string, Screen]> = [
-    ['/dashboard', 'dashboard'], ['/products', 'products'], ['/collections', 'collections'], ['/orders', 'orders'], ['/customers', 'customer'],
+    ['/dashboard', 'dashboard'], ['/products', 'products'], ['/products/categories', 'categories'], ['/collections', 'collections'], ['/orders', 'orders'], ['/customers', 'customer'],
     ['/cms/home', 'home-builder'], ['/media', 'media-library'], ['/stories', 'stories'], ['/stories/review', 'story-review'],
     ['/community/members', 'members'], ['/community/contributions', 'contributions'], ['/challenges', 'challenges'], ['/lab', 'lab-projects'],
     ['/lab/open-calls', 'calls-for-contribution'], ['/analytics/commerce', 'commerce-analytics'], ['/analytics/community', 'community-analytics'],

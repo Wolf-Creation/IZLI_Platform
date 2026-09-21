@@ -25,7 +25,7 @@ import type { User } from '../../entities'
 import { SplashScreen } from './components/SplashScreen/SplashScreen'
 import './WebsiteTheme.scss'
 
-const PAGES_WITHOUT_FOOTER: WebPage[] = ['login']
+const PAGES_WITHOUT_FOOTER: WebPage[] = ['login', 'keeper-circle-login']
 
 interface Props {
   onAdminRequest?: () => void
@@ -95,6 +95,7 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
       case 'legacy':         return <Legacy onNavigate={navigate} />
       case 'archives':       return <Archives onNavigate={navigate} />
       case 'keeper-circle':  return <KeeperCircle onNavigate={navigate} />
+      case 'keeper-circle-login': return <KeeperCircle onNavigate={navigate} />
       case 'qr-product':    return <QrProduct qrNumber={decodeURIComponent(window.location.pathname.split('/').pop() || '')} onNavigate={navigate} />
       default:               return <Home onNavigate={navigate} />
     }

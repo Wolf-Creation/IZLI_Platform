@@ -221,100 +221,34 @@ const PRODUCTS: Product[] = [
 ]
 
 export async function getProducts(filters?: { universe?: string; status?: string; search?: string }): Promise<Product[]> {
-  try {
-    const remote = await api.get<Product[]>('/resources/products')
-    let results = [...remote]
-    if (filters?.universe) {
-      results = results.filter(p => p.universe === filters.universe)
-    }
-    if (filters?.status) {
-      results = results.filter(p => p.status === filters.status)
-    }
-    if (filters?.search) {
-      const q = filters.search.toLowerCase()
-      results = results.filter(p => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q))
-    }
-    return results
-  } catch {
-    let results = [...PRODUCTS]
-    if (filters?.universe) {
-      results = results.filter(p => p.universe === filters.universe)
-    }
-    if (filters?.status) {
-      results = results.filter(p => p.status === filters.status)
-    }
-    if (filters?.search) {
-      const q = filters.search.toLowerCase()
-      results = results.filter(p => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q))
-    }
-    return Promise.resolve(results)
+  const remote = await api.get<Product[]>('/resources/products')
+  let results = [...remote]
+  if (filters?.universe) {
+    results = results.filter(p => p.universe === filters.universe)
   }
+  if (filters?.status) {
+    results = results.filter(p => p.status === filters.status)
+  }
+  if (filters?.search) {
+    const q = filters.search.toLowerCase()
+    results = results.filter(p => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q))
+  }
+  return results
 }
 
 export async function getProduct(id: string): Promise<Product | null> {
-  try {
-    return await api.get<Product>(`/resources/products/${id}`)
-  } catch {
-    return Promise.resolve(PRODUCTS.find(p => p.id === id) ?? null)
-  }
+  return api.get<Product>(`/resources/products/${id}`)
 }
 
 export async function createProduct(data: Partial<Product>): Promise<Product> {
-  try {
-    return await api.post<Product>('/resources/products', data as Record<string, unknown>)
-  } catch {
-    const product: Product = {
-      id: `prod-${Date.now()}`,
-      sku: data.sku ?? `IZL-NEW-${Date.now()}`,
-      name: data.name ?? 'New Product',
-      universe: data.universe ?? 'Essentials',
-      status: data.status ?? 'draft',
-      releaseNumber: data.releaseNumber ?? '01',
-      quantity: data.quantity ?? 150,
-      launchDate: data.launchDate ?? new Date().toISOString(),
-      releaseStatus: data.releaseStatus ?? 'draft',
-      qrExperienceUrl: data.qrExperienceUrl ?? '',
-      productPassportId: data.productPassportId ?? '',
-      archiveTitle: data.archiveTitle ?? '',
-      storyTitle: data.storyTitle ?? '',
-      productionNotes: data.productionNotes ?? '',
-      price: data.price ?? 0,
-      currency: data.currency ?? 'EUR',
-      description: data.description ?? '',
-      coverImageUrl: data.coverImageUrl ?? '',
-      images: data.images ?? [],
-      sizes: data.sizes ?? [],
-      materials: data.materials ?? [],
-      careInstructions: data.careInstructions ?? [],
-      collectionIds: data.collectionIds ?? [],
-      tags: data.tags ?? [],
-      createdAt: new Date().toISOString(),
-      ...data,
-    }
-    PRODUCTS.push(product)
-    return Promise.resolve(product)
-  }
+  return api.post<Product>('/resources/products', data as Record<string, unknown>)
 }
 
 export async function updateProduct(id: string, data: Partial<Product>): Promise<Product | null> {
-  try {
-    return await api.patch<Product>(`/resources/products/${id}`, data as Record<string, unknown>)
-  } catch {
-    const idx = PRODUCTS.findIndex(p => p.id === id)
-    if (idx === -1) return Promise.resolve(null)
-    PRODUCTS[idx] = { ...PRODUCTS[idx], ...data }
-    return Promise.resolve(PRODUCTS[idx])
-  }
+  return api.patch<Product>(`/resources/products/${id}`, data as Record<string, unknown>)
 }
 
 export async function archiveProduct(id: string): Promise<boolean> {
-  try {
-    await api.patch(`/resources/products/${id}`, { status: 'archived' })
-    return true
-  } catch {
-    const idx = PRODUCTS.findIndex(p => p.id === id)
-    if (idx === -1) return Promise.resolve(false)
-    PRODUCTS[idx] = { ...PRODUCTS[idx], status: 'archived' }
-    return Promise.resolve(true)
-  }
+  await api.patch(`/resources/products/${id}`, { status: 'archived' })
+  return true
 }

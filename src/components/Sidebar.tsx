@@ -96,6 +96,7 @@ const NAV: NavItem[] = [
     icon: 'mdi:shopping-outline',
     children: [
       { label: 'Products', screen: 'products', icon: 'mdi:tshirt-crew-outline' },
+      { label: 'Categories', screen: 'categories', icon: 'mdi:layers-outline' },
       { label: 'Collections', screen: 'collections', icon: 'mdi:folder-multiple-outline' },
       { label: 'Orders', screen: 'orders', icon: 'mdi:package-variant-closed-outline' },
     ],

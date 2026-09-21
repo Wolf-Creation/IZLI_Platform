@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { Screen } from '../../../types'
-import type { Currency, Product, ProductReleaseStatus, ProductStatus, ProductUniverse, SizeAvailability } from '../../../entities'
+import type { Currency, Product, ProductColorway, ProductReleaseStatus, ProductStatus, ProductUniverse, SizeAvailability } from '../../../entities'
 import { useProduct } from '../../../shared/hooks/useProducts'
+import { useCategories } from '../../../shared/hooks/useCategories'
+import { useCollections } from '../../../shared/hooks/useCollections'
 import { createProduct, updateProduct } from '../../../shared/services/products'
 
 const INDIGO = '#1E2F44'
@@ -35,9 +37,14 @@ interface ProductForm {
   coverImageUrl: string
   imagesText: string
   sizesText: string
+  colorwaysText: string
   materialsText: string
+  fitText: string
   careInstructionsText: string
   productionNotes: string
+  categoryIds: string[]
+  collectionIds: string[]
+  sizeGuideIncluded: boolean
 }
 
 const EMPTY_FORM: ProductForm = {
@@ -59,23 +66,52 @@ const EMPTY_FORM: ProductForm = {
   coverImageUrl: '',
   imagesText: '',
   sizesText: '',
+  colorwaysText: '',
   materialsText: '',
+  fitText: '',
   careInstructionsText: '',
   productionNotes: '',
+  categoryIds: [],
+  collectionIds: [],
+  sizeGuideIncluded: false,
 }
 
 const UPPER_RELEASE_STATUSES: ProductReleaseStatus[] = ['draft', 'ready', 'production', 'upcoming', 'live', 'sold-out', 'archived']
 const CATALOG_STATUSES: ProductStatus[] = ['published', 'draft', 'archived', 'out-of-stock']
 const UNIVERSES: ProductUniverse[] = ['Heritage', 'Essentials', 'Studio', 'Community Lab']
 const CURRENCIES: Currency[] = ['EUR', 'USD', 'MAD', 'DZD']
+const SIZE_OPTIONS = ['S', 'M', 'L', 'XL', '2XL', '3XL']
+const DEFAULT_COLOR_SWATCHES = [
+  { name: 'Natural', hex: '#F2E7D6' },
+  { name: 'Black', hex: '#111111' },
+  { name: 'Indigo', hex: '#1E2F44' },
+  { name: 'Sand', hex: '#B58C63' },
+  { name: 'Stone', hex: '#C7C3BA' },
+  { name: 'Olive', hex: '#6D7B5F' },
+]
+
+interface SizeRow {
+  size: string
+  stock: number
+  availability: SizeAvailability
+  colorQuantities: Record<string, number>
+}
+
+interface ColorRow {
+  id: string
+  name: string
+  hex: string
+  sizeQuantities: Record<string, number>
+}
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: '#F5F1EA', border: `1px solid ${BORDER}`, borderRadius: 20, overflow: 'hidden', marginBottom: 20 }}>
-      <div style={{ padding: '18px 24px', borderBottom: `1px solid ${BORDER}`, background: '#EFE8DD' }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: TEXT, letterSpacing: '0.01em' }}>{title}</div>
+    <div style={{ background: '#F7F3EC', border: `1px solid ${BORDER}`, borderRadius: 16, overflow: 'hidden', marginBottom: 18, boxShadow: '0 8px 24px rgba(30, 47, 68, 0.04)' }}>
+      <div style={{ padding: '16px 22px', borderBottom: `1px solid ${BORDER}`, background: '#EEE6DA', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: CLAY, display: 'inline-block' }} />
+        <div style={{ fontSize: 13, fontWeight: 700, color: INDIGO, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{title}</div>
       </div>
-      <div style={{ padding: 24 }}>{children}</div>
+      <div style={{ padding: 22 }}>{children}</div>
     </div>
   )
 }
@@ -143,9 +179,14 @@ function mapProductToForm(product: Product): ProductForm {
     coverImageUrl: product.coverImageUrl ?? '',
     imagesText: (product.images ?? []).join('\n'),
     sizesText: (product.sizes ?? []).map(size => `${size.size}, ${size.stock}, ${size.availability}`).join('\n'),
+    colorwaysText: (product.colorways ?? []).map(colorway => `${colorway.name} | ${colorway.hex} | ${colorway.images.join(', ')} | ${Object.entries(colorway.sizeStocks ?? {}).map(([size, qty]) => `${size}:${qty}`).join(', ')}`).join('\n'),
     materialsText: (product.materials ?? []).join('\n'),
+    fitText: (product.fit ?? []).join('\n'),
     careInstructionsText: (product.careInstructions ?? []).join('\n'),
     productionNotes: product.productionNotes ?? '',
+    categoryIds: product.categoryIds ?? [],
+    collectionIds: product.collectionIds ?? [],
+    sizeGuideIncluded: Boolean(product.sizeGuideIncluded),
   }
 }
 
@@ -168,11 +209,133 @@ function parseSizes(text: string) {
   })
 }
 
+function parseColorways(text: string): ProductColorway[] {
+  return splitLines(text).map(line => {
+    const [name, hex, mediaText, sizeInventoryText] = line.split('|').map(part => part.trim())
+    const images = splitLines(mediaText ?? '').map(url => url.replace(/,$/, ''))
+    const sizeStocks: Record<string, number> = {}
+
+    for (const entry of splitLines(sizeInventoryText ?? '')) {
+      const [size, qty] = entry.split(':').map(part => part.trim())
+      if (!size) continue
+      sizeStocks[size] = Number(qty || 0)
+    }
+
+    return {
+      id: `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'color'}-${Math.random().toString(36).slice(2, 8)}`,
+      name: name || 'Color',
+      hex: hex || '#D8D0C4',
+      images,
+      sizeStocks,
+    }
+  })
+}
+
+function parseSizeRows(text: string): SizeRow[] {
+  const entries = splitLines(text).map(line => {
+    const [sizeRaw, stockRaw, availabilityRaw] = line.split(',').map(part => part.trim())
+    const size = sizeRaw || 'M'
+    const stock = Number(stockRaw || 0)
+    const availability = (availabilityRaw as SizeAvailability) || 'available'
+    return { size, stock, availability, colorQuantities: {} }
+  })
+
+  if (entries.length === 0) {
+    return SIZE_OPTIONS.map(size => ({ size, stock: 0, availability: 'available', colorQuantities: {} }))
+  }
+
+  const seen = new Set<string>()
+  const normalized = entries.filter(item => {
+    if (seen.has(item.size)) return false
+    seen.add(item.size)
+    return true
+  })
+
+  const bySize = Object.fromEntries(normalized.map(item => [item.size, item]))
+  const result: SizeRow[] = []
+
+  for (const size of SIZE_OPTIONS) {
+    if (bySize[size]) {
+      result.push(bySize[size])
+    } else if (normalized.some(item => item.size === size)) {
+      continue
+    } else {
+      result.push({ size, stock: 0, availability: 'available', colorQuantities: {} })
+    }
+  }
+
+  for (const item of normalized) {
+    if (!SIZE_OPTIONS.includes(item.size)) {
+      result.push(item)
+    }
+  }
+
+  return result
+}
+
+function serializeSizeRows(rows: SizeRow[]) {
+  return rows
+    .filter(row => row?.size)
+    .map(row => `${row.size}, ${row.stock}, ${row.availability}`)
+    .join('\n')
+}
+
+function parseColorRows(text: string): ColorRow[] {
+  const parsed = splitLines(text).map(line => {
+    const [name, hex, mediaText, sizeInventoryText] = line.split('|').map(part => part.trim())
+    const sizeQuantities: Record<string, number> = {}
+    for (const entry of splitLines(sizeInventoryText ?? '')) {
+      const [size, qty] = entry.split(':').map(part => part.trim())
+      if (!size) continue
+      sizeQuantities[size] = Number(qty || 0)
+    }
+
+    return {
+      id: `${(name || 'color').toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'color'}-${Math.random().toString(36).slice(2, 8)}`,
+      name: name || 'Color',
+      hex: hex || '#D8D0C4',
+      sizeQuantities,
+    }
+  })
+
+  if (parsed.length === 0) {
+    return DEFAULT_COLOR_SWATCHES.map(color => ({
+      id: `${color.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-default`,
+      name: color.name,
+      hex: color.hex,
+      sizeQuantities: Object.fromEntries(SIZE_OPTIONS.map(size => [size, 0])),
+    }))
+  }
+
+  return parsed
+}
+
+function serializeColorRows(rows: ColorRow[]) {
+  return rows
+    .filter(color => color?.name)
+    .map(color => {
+      const sizeEntries = Object.entries(color.sizeQuantities ?? {})
+        .filter(([, qty]) => qty > 0)
+        .map(([size, qty]) => `${size}:${qty}`)
+      return `${color.name} | ${color.hex} | ${color.name} | ${sizeEntries.join(', ')}`
+    })
+    .join('\n')
+}
+
 export default function ProductEditor({ onNavigate, productId, onDone }: Props) {
   const { product, loading } = useProduct(productId ?? '')
+  const { categories } = useCategories()
+  const { collections } = useCollections()
   const [form, setForm] = useState<ProductForm>(EMPTY_FORM)
+  const [sizeRows, setSizeRows] = useState<SizeRow[]>(() => parseSizeRows(EMPTY_FORM.sizesText))
+  const [colorRows, setColorRows] = useState<ColorRow[]>(() => parseColorRows(EMPTY_FORM.colorwaysText))
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    setSizeRows(parseSizeRows(form.sizesText))
+    setColorRows(parseColorRows(form.colorwaysText))
+  }, [form.sizesText, form.colorwaysText])
 
   useEffect(() => {
     if (productId) {
@@ -202,8 +365,8 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
     const payload: Partial<Product> = {
       sku: form.sku.trim(),
       name: form.name.trim(),
-      universe: form.universe,
-      status: form.status,
+      universe: 'Heritage',
+      status: 'draft',
       releaseNumber: form.releaseNumber.trim(),
       quantity: Number(form.quantity || 0),
       launchDate: form.launchDate ? new Date(form.launchDate).toISOString() : undefined,
@@ -219,8 +382,13 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
       images: splitLines(form.imagesText),
       sizes: parseSizes(form.sizesText),
       materials: splitLines(form.materialsText),
+      fit: splitLines(form.fitText),
+      colorways: parseColorways(form.colorwaysText),
       careInstructions: splitLines(form.careInstructionsText),
       productionNotes: form.productionNotes.trim(),
+      categoryIds: form.categoryIds,
+      collectionIds: form.collectionIds,
+      sizeGuideIncluded: form.sizeGuideIncluded,
     }
 
     try {
@@ -247,10 +415,11 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
 
   return (
     <div style={{ padding: '40px 48px 80px', maxWidth: 1440, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28, gap: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32, gap: 20, paddingBottom: 22, borderBottom: `1px solid ${BORDER}` }}>
         <div>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 500, color: INDIGO, letterSpacing: '-0.01em' }}>{pageTitle}</div>
-          <div style={{ fontSize: 13, color: TEXT_SEC, marginTop: 4 }}>{subtitle}</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: CLAY, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>{isEditing ? 'Product release / Edit' : 'Product release / New'}</div>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 32, fontWeight: 500, color: INDIGO, letterSpacing: '-0.01em' }}>{pageTitle}</div>
+          <div style={{ fontSize: 13, color: TEXT_SEC, marginTop: 6, maxWidth: 620, lineHeight: 1.5 }}>{subtitle}</div>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <button onClick={() => onNavigate('products')} style={{ padding: '9px 18px', border: `1px solid ${BORDER}`, borderRadius: 10, background: 'transparent', fontSize: 13, color: TEXT_SEC, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
@@ -278,16 +447,6 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
               <Field label="SKU" hint="Use the release identifier convention from the protocol">
                 <input value={form.sku} onChange={e => updateField('sku', e.target.value)} style={{ ...inputStyle, fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }} />
               </Field>
-              <Field label="Universe">
-                <select value={form.universe} onChange={e => updateField('universe', e.target.value as ProductUniverse)} style={{ ...inputStyle, cursor: 'pointer' }}>
-                  {UNIVERSES.map(universe => <option key={universe}>{universe}</option>)}
-                </select>
-              </Field>
-              <Field label="Catalog Status">
-                <select value={form.status} onChange={e => updateField('status', e.target.value as ProductStatus)} style={{ ...inputStyle, cursor: 'pointer' }}>
-                  {CATALOG_STATUSES.map(status => <option key={status}>{status}</option>)}
-                </select>
-              </Field>
               <Field label="Release Number">
                 <input value={form.releaseNumber} onChange={e => updateField('releaseNumber', e.target.value)} style={{ ...inputStyle, fontFamily: 'JetBrains Mono, monospace' }} />
               </Field>
@@ -314,6 +473,30 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
             <Field label="Description" hint="Shown in the public product page and the admin preview">
               <textarea value={form.description} onChange={e => updateField('description', e.target.value)} style={{ ...inputStyle, height: 96, resize: 'vertical' }} />
             </Field>
+              <Field label="Collection" hint="Link this release to a website collection">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {collections.map(collection => {
+                    const selected = form.collectionIds.includes(collection.id)
+                    return <label key={collection.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 10px', border: `1px solid ${selected ? INDIGO : BORDER}`, borderRadius: 9, background: selected ? '#E8EDF3' : '#EDE8DF', color: selected ? INDIGO : TEXT_SEC, fontSize: 12, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={selected} onChange={() => updateField('collectionIds', selected ? form.collectionIds.filter(id => id !== collection.id) : [...form.collectionIds, collection.id])} />
+                      {collection.name}
+                    </label>
+                  })}
+                  {collections.length === 0 && <span style={{ fontSize: 12, color: TEXT_SEC }}>No collections available yet.</span>}
+                </div>
+              </Field>
+              <Field label="Categories" hint="Select the persisted website categories for this product">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {categories.map(category => {
+                    const selected = form.categoryIds.includes(category.id)
+                    return <label key={category.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 10px', border: `1px solid ${selected ? INDIGO : BORDER}`, borderRadius: 9, background: selected ? '#E8EDF3' : '#EDE8DF', color: selected ? INDIGO : TEXT_SEC, fontSize: 12, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={selected} onChange={() => updateField('categoryIds', selected ? form.categoryIds.filter(id => id !== category.id) : [...form.categoryIds, category.id])} />
+                      {category.label}
+                    </label>
+                  })}
+                  {categories.length === 0 && <span style={{ fontSize: 12, color: TEXT_SEC }}>Create categories from the dedicated category page first.</span>}
+                </div>
+              </Field>
           </SectionCard>
 
           <SectionCard title="Release Context">
@@ -339,18 +522,114 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
             </Field>
           </SectionCard>
 
-          <SectionCard title="Media / Materials / Sizes">
-            <Field label="Image URLs" hint="One URL per line">
+          <SectionCard title="Size / Color / Gallery Setup">
+            <Field label="Size availability" hint="Choose the standard garment sizes, then define the stock and the colors available for each size.">
+              <div style={{ display: 'grid', gap: 12 }}>
+                {sizeRows.map((row, index) => (
+                  <div key={row.size + index} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 1.2fr 1.3fr', gap: 10, alignItems: 'center', padding: 12, border: `1px solid ${BORDER}`, borderRadius: 10, background: '#FBF9F5' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 28, height: 28, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, background: INDIGO, color: '#F5F1EA', fontSize: 10, fontWeight: 700 }}>{row.size}</span><span style={{ fontSize: 10, color: TEXT_SEC, textTransform: 'uppercase' }}>Size</span></div>
+                    <input type="number" min="0" value={row.stock} onChange={e => {
+                      const next = [...sizeRows]
+                      next[index] = { ...next[index], stock: Number(e.target.value || 0) }
+                      setSizeRows(next)
+                      updateField('sizesText', serializeSizeRows(next))
+                    }} style={{ ...inputStyle, maxWidth: 120 }} />
+                    <select value={row.availability} onChange={e => {
+                      const next = [...sizeRows]
+                      next[index] = { ...next[index], availability: e.target.value as SizeAvailability }
+                      setSizeRows(next)
+                      updateField('sizesText', serializeSizeRows(next))
+                    }} style={{ ...inputStyle, cursor: 'pointer' }}>
+                      <option value="available">Available</option>
+                      <option value="low">Low</option>
+                      <option value="sold-out">Sold out</option>
+                    </select>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {colorRows.map((color, colorIndex) => (
+                        <label key={color.id || colorIndex} title={`${color.name} stock for ${row.size}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderRadius: 999, background: '#EDE8DF', border: `1px solid ${BORDER}` }}>
+                          <span style={{ width: 12, height: 12, borderRadius: '50%', background: color.hex, border: '1px solid rgba(0,0,0,0.12)', display: 'inline-block' }} />
+                          <input type="number" min="0" value={color.sizeQuantities?.[row.size] ?? 0} onChange={e => {
+                            const nextColors = [...colorRows]
+                            const currentQty = nextColors[colorIndex].sizeQuantities ?? {}
+                            nextColors[colorIndex] = { ...nextColors[colorIndex], sizeQuantities: { ...currentQty, [row.size]: Number(e.target.value || 0) } }
+                            setColorRows(nextColors)
+                            updateField('colorwaysText', serializeColorRows(nextColors))
+                          }} style={{ width: 52, border: 'none', background: 'transparent', color: TEXT, fontSize: 11, outline: 'none' }} />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Field>
+            <Field label="Available colors" hint="Add the color variants and specify the stock available for each size in that color.">
+              <div style={{ display: 'grid', gap: 10 }}>
+                {colorRows.map((color, colorIndex) => (
+                  <div key={color.id || colorIndex} style={{ display: 'grid', gridTemplateColumns: '1fr 140px 1fr', gap: 10, alignItems: 'center', padding: 12, border: `1px solid ${BORDER}`, borderRadius: 10, background: '#FBF9F5' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <input type="color" value={color.hex} onChange={e => {
+                        const next = [...colorRows]
+                        next[colorIndex] = { ...next[colorIndex], hex: e.target.value }
+                        setColorRows(next)
+                        updateField('colorwaysText', serializeColorRows(next))
+                      }} style={{ width: 36, height: 36, border: 'none', background: 'transparent', borderRadius: 999, cursor: 'pointer' }} />
+                      <input value={color.name} onChange={e => {
+                        const next = [...colorRows]
+                        next[colorIndex] = { ...next[colorIndex], name: e.target.value }
+                        setColorRows(next)
+                        updateField('colorwaysText', serializeColorRows(next))
+                      }} style={{ ...inputStyle }} />
+                    </div>
+                    <div style={{ fontSize: 12, color: TEXT_SEC, fontWeight: 600 }}>Qty by size</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {SIZE_OPTIONS.map(size => (
+                        <label key={size} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#EDE8DF', border: `1px solid ${BORDER}`, borderRadius: 999, padding: '4px 8px' }}>
+                          <span style={{ fontSize: 10, color: TEXT_SEC, fontWeight: 700 }}>{size}</span>
+                          <input type="number" min="0" value={color.sizeQuantities?.[size] ?? 0} onChange={e => {
+                            const next = [...colorRows]
+                            const current = next[colorIndex].sizeQuantities ?? {}
+                            next[colorIndex] = { ...next[colorIndex], sizeQuantities: { ...current, [size]: Number(e.target.value || 0) } }
+                            setColorRows(next)
+                            updateField('colorwaysText', serializeColorRows(next))
+                          }} style={{ width: 40, border: 'none', background: 'transparent', color: TEXT, fontSize: 11, outline: 'none' }} />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <button type="button" onClick={() => {
+                  const next = [...colorRows]
+                  next.push({
+                    id: `color-${Math.random().toString(36).slice(2, 8)}`,
+                    name: `Color ${next.length + 1}`,
+                    hex: DEFAULT_COLOR_SWATCHES[next.length % DEFAULT_COLOR_SWATCHES.length].hex,
+                    sizeQuantities: Object.fromEntries(SIZE_OPTIONS.map(size => [size, 0])),
+                  })
+                  setColorRows(next)
+                  updateField('colorwaysText', serializeColorRows(next))
+                }} style={{ padding: '10px 14px', border: `1px dashed ${BORDER}`, borderRadius: 10, background: '#F5F1EA', color: TEXT_SEC, cursor: 'pointer', fontSize: 12, width: 'fit-content' }}>
+                  + Add color variant
+                </button>
+              </div>
+            </Field>
+            <Field label="Image URLs" hint="All product media; color-specific images can be listed in the colorway block above">
               <textarea value={form.imagesText} onChange={e => updateField('imagesText', e.target.value)} style={{ ...inputStyle, height: 96, resize: 'vertical' }} />
             </Field>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
+              <input type="checkbox" checked={form.sizeGuideIncluded} onChange={e => updateField('sizeGuideIncluded', e.target.checked)} />
+              <label style={{ fontSize: 12, color: TEXT_SEC }}>Include size guide</label>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Materials / Fit / Care">
             <Field label="Materials" hint="One material per line">
               <textarea value={form.materialsText} onChange={e => updateField('materialsText', e.target.value)} style={{ ...inputStyle, height: 84, resize: 'vertical' }} />
             </Field>
+            <Field label="Fit" hint="One fit point per line">
+              <textarea value={form.fitText} onChange={e => updateField('fitText', e.target.value)} style={{ ...inputStyle, height: 84, resize: 'vertical' }} />
+            </Field>
             <Field label="Care Instructions" hint="One instruction per line">
               <textarea value={form.careInstructionsText} onChange={e => updateField('careInstructionsText', e.target.value)} style={{ ...inputStyle, height: 84, resize: 'vertical' }} />
-            </Field>
-            <Field label="Sizes" hint="Format: size, stock, availability. One size per line">
-              <textarea value={form.sizesText} onChange={e => updateField('sizesText', e.target.value)} style={{ ...inputStyle, height: 120, resize: 'vertical', fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }} />
             </Field>
           </SectionCard>
         </div>
