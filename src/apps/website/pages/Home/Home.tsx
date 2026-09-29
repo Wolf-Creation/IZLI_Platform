@@ -3,12 +3,12 @@ import { motion } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
 import type { WebPage } from '../../types'
 import { HeroSlider } from './Hero/HeroSlider'
-import { ScrollToTop } from '../../components/ScrollToTop'
 import { SplashScreen } from '../../components/SplashScreen/SplashScreen'
 import { ProductCarousel } from '../../components/ProductCarousel/ProductCarousel'
 import { ProductCard } from '../../components/ProductCard/ProductCard'
 import { useProducts } from '../../../../shared/hooks/useProducts'
 import { KeeperCircleCta } from '../../components/KeeperCircleCta/KeeperCircleCta'
+import type { CartItemInput } from '../../cart'
 import tShirtsImage from '../../../../assets/Website_img/Shop/categories/T-shirts.png'
 import tafuktImage from '../../../../assets/Website_img/Shop/tops/banner/TAFUKT_001.png'
 import tafuktBottomsImage from '../../../../assets/Website_img/Shop/tops/banner/TAFUKT_002.png'
@@ -27,7 +27,7 @@ import arrowTopRightIcon from '../../../../assets/icons/arrow_top_right.svg'
 import motifIcon from '../../../../assets/icons/motif_001.svg'
 import './Home.scss'
 
-interface Props { onNavigate: (p: WebPage) => void }
+interface Props { onNavigate: (p: WebPage, productId?: string) => void; onAddToCart: (item: CartItemInput) => void; onToggleWishlist: (item: CartItemInput) => void; isWishlisted: (id: string) => boolean }
 
 const SHOP_CARDS = [
   { type: 'category', area: 'tshirts', name: 'T-Shirts', img: tShirtsImage, icon: '✳' },
@@ -290,7 +290,7 @@ const bannerCtaVariants = {
   },
 }
 
-export default function Home({ onNavigate }: Props) {
+export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWishlisted }: Props) {
   const { products } = useProducts({ status: 'published' })
   const [scrollY, setScrollY] = useState(0)
   const [showSplash, setShowSplash] = useState(true)
@@ -540,7 +540,7 @@ export default function Home({ onNavigate }: Props) {
 
           <div className="home-tops-editorial__products">
             <div className="home-tops-editorial__grid">
-              {TOP_PRODUCTS.map(product => (
+              {TOP_PRODUCTS.map((product, index) => (
                 <ProductCard
                   key={`${product.name}-${product.color}`}
                   name={product.name}
@@ -549,6 +549,9 @@ export default function Home({ onNavigate }: Props) {
                   image={product.image}
                   badge="new"
                   onClick={() => onNavigate('product-detail')}
+                  onAddToCart={() => onAddToCart({ id: `home-${product.name}-${product.color}-${index}`, name: product.name, universe: 'Essentials', price: Number(product.price.replace(/[^0-9.]/g, '')), currency: 'TND', size: 'M', img: product.image })}
+                  onToggleWishlist={() => onToggleWishlist({ id: `home-${product.name}-${product.color}-${index}`, name: product.name, universe: 'Essentials', price: Number(product.price.replace(/[^0-9.]/g, '')), currency: 'TND', size: 'M', img: product.image })}
+                  isWishlisted={isWishlisted(`home-${product.name}-${product.color}-${index}`)}
                   className="home-tops-product-card"
                 />
               ))}
@@ -576,7 +579,7 @@ export default function Home({ onNavigate }: Props) {
 
           <div className="home-tops-editorial__products">
             <div className="home-tops-editorial__grid">
-              {TOP_PRODUCTS.map(product => (
+              {TOP_PRODUCTS.map((product, index) => (
                 <ProductCard
                   key={`${product.name}-${product.color}`}
                   name={product.name}
@@ -585,6 +588,9 @@ export default function Home({ onNavigate }: Props) {
                   image={product.image}
                   badge="new"
                   onClick={() => onNavigate('product-detail')}
+                  onAddToCart={() => onAddToCart({ id: `home-${product.name}-${product.color}-${index}`, name: product.name, universe: 'Essentials', price: Number(product.price.replace(/[^0-9.]/g, '')), currency: 'TND', size: 'M', img: product.image })}
+                  onToggleWishlist={() => onToggleWishlist({ id: `home-${product.name}-${product.color}-${index}`, name: product.name, universe: 'Essentials', price: Number(product.price.replace(/[^0-9.]/g, '')), currency: 'TND', size: 'M', img: product.image })}
+                  isWishlisted={isWishlisted(`home-${product.name}-${product.color}-${index}`)}
                   className="home-tops-product-card"
                 />
               ))}
@@ -746,9 +752,14 @@ export default function Home({ onNavigate }: Props) {
             ))}
           </nav>
         </div>
+
+        <div className="home-about-socials" aria-label="IZLI social media links">
+          <a href="https://www.instagram.com/izli.tn/" target="_blank" rel="noreferrer" aria-label="Instagram @izli.tn"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" /></svg></a>
+          <a href="https://www.facebook.com/izli.tn/" target="_blank" rel="noreferrer" aria-label="Facebook @izli.tn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 21v-8h3l.5-3H14V8.2c0-.9.3-1.5 1.6-1.5H18V4.1c-.4-.1-1.4-.2-2.5-.2-2.5 0-4.2 1.5-4.2 4.3V10H8.5v3h2.8v8z" /></svg></a>
+          <a href="https://wa.me/21690577555" target="_blank" rel="noreferrer" aria-label="WhatsApp +216 90 577 555"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z" /><path d="M9 9.3c.2-.4.4-.4.5.4l.6 1.4c.1.2 0 .4-.1.6l-.5.6c.5 1 1.2 1.7 2.2 2.2l.6-.5c.2-.2.4-.2.6-.1l1.4.6c.3.1.4.3.4.5v.5c0 .3 0 .5-.4.7-.3.2-.8.3-1.2.2-2.5-.6-4.8-2.9-5.4-5.4-.1-.4 0-.9.2-1.2Z" /></svg></a>
+        </div>
       </section>
 
-      <ScrollToTop />
     </div>
   )
 }

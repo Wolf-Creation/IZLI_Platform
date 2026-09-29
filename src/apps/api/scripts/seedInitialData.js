@@ -11,6 +11,7 @@ import '../src/modules/users/model.js';
 import '../src/modules/customers/model.js';
 import '../src/modules/products/model.js';
 import '../src/modules/collections/model.js';
+import { OFFICIAL_COLLECTIONS } from '../src/modules/collections/officialCollections.js';
 import '../src/modules/stories/model.js';
 import '../src/modules/community/model.js';
 import '../src/modules/events/model.js';
@@ -50,7 +51,7 @@ const Notification = mongoose.model('Notification');
 const GlobalSetting = mongoose.model('GlobalSetting');
 
 await replaceMany(User, [
-  { email: 'admin@izli.com', password: 'Admin1234!', displayName: 'IZLI Admin', role: 'admin', status: 'active' },
+  { email: 'admin@izli.tn', password: '11110000', displayName: 'IZLI Admin', role: 'admin', status: 'active' },
   { email: 'editor@izli.com', password: 'Editor1234!', displayName: 'IZLI Editor', role: 'editor', status: 'active' },
   { email: 'moderator@izli.com', password: 'Moderator1234!', displayName: 'IZLI Moderator', role: 'moderator', status: 'active' },
 ]);
@@ -68,11 +69,17 @@ await replaceMany(Product, [
   { sku: 'IZL-ESS-TEE-001', name: 'Atlas Symbol Boxy Tee', universe: 'Essentials', status: 'published', releaseNumber: '01', quantity: 300, launchDate: '2026-04-22T09:00:00Z', releaseStatus: 'upcoming', qrExperienceUrl: '/qr/atlas-symbol-boxy-tee', productPassportId: 'PP-2026-000127', archiveTitle: 'Atlas Marks', storyTitle: 'The Atlas Symbol', productionNotes: 'Ready for production package generation.', price: 65, currency: 'EUR', description: 'Oversized tee with Atlas symbol embroidery.', coverImageUrl: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=800&h=1000&fit=crop&auto=format', images: [], sizes: [], materials: [], careInstructions: [], relatedStoryId: null, relatedChallengeId: null, collectionIds: [], tags: [], createdAt: new Date().toISOString() },
 ]);
 
-await replaceMany(Collection, [
-  { slug: 'roots-ss25', name: 'Roots — SS25', universe: 'Heritage', season: 'SS25', status: 'active', coverImageUrl: '', description: '', productIds: [], tags: [], createdAt: new Date().toISOString() },
-  { slug: 'atlas-fw25', name: 'Atlas — FW25', universe: 'Studio', season: 'FW25', status: 'active', coverImageUrl: '', description: '', productIds: [], tags: [], createdAt: new Date().toISOString() },
-  { slug: 'essentials-permanent', name: 'Essentials', universe: 'Essentials', season: 'Permanent', status: 'active', coverImageUrl: '', description: '', productIds: [], tags: [], createdAt: new Date().toISOString() },
-]);
+await replaceMany(Collection, OFFICIAL_COLLECTIONS.map(collection => ({ ...collection, productIds: [], tags: [] })));
+const collectionByUniverse = new Map((await Collection.find()).map(collection => [collection.universe, collection]));
+for (const product of await Product.find()) {
+  const collection = collectionByUniverse.get(product.universe);
+  if (!collection) continue;
+  product.collectionId = collection._id;
+  product.collectionIds = [];
+  await product.save();
+  collection.productIds.addToSet(product._id);
+  await collection.save();
+}
 
 await replaceMany(Story, [
   { slug: 'the-language-of-tifinagh', title: 'The Language of Tifinagh', type: 'heritage', status: 'published', authorId: '000000000000000000000001', authorName: 'Yidir Ait Ouali', coverImageUrl: '', body: 'Tifinagh is one of the world\'s oldest writing systems.', readTimeMinutes: 7, relatedProductIds: [], relatedChallengeIds: [], tags: [], createdAt: new Date().toISOString() },

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Screen } from '../../../types'
+import CollectionsPageBuilder from './CollectionsPageBuilder'
 
 const INDIGO = '#1E2F44'
 const TEXT = '#2E2E2E'
@@ -159,10 +160,15 @@ const inp: React.CSSProperties = { width: '100%', padding: '9px 13px', border: `
 
 export default function HomeBuilder({ onNavigate: _ }: Props) {
   const [selected, setSelected] = useState<string>('b1')
+  const [activeWebsitePage, setActiveWebsitePage] = useState<'home' | 'collections'>('home')
   const selectedBlock = BLOCKS.find(b => b.id === selected)!
 
   return (
     <div style={{ padding: '40px 48px', maxWidth: 1360, margin: '0 auto' }}>
+      <nav aria-label="Website pages" style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: `1px solid ${BORDER}` }}>
+        {([['home', 'Home'], ['collections', 'Collections']] as const).map(([page, label]) => <button key={page} type="button" onClick={() => setActiveWebsitePage(page)} style={{ padding: '11px 15px', border: 0, borderBottom: `2px solid ${activeWebsitePage === page ? CLAY : 'transparent'}`, background: 'transparent', color: activeWebsitePage === page ? INDIGO : TEXT_SEC, fontSize: 12, fontWeight: activeWebsitePage === page ? 700 : 500, cursor: 'pointer' }}>{label}</button>)}
+      </nav>
+      {activeWebsitePage === 'collections' ? <CollectionsPageBuilder /> : <>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32 }}>
         <div>
@@ -204,6 +210,7 @@ export default function HomeBuilder({ onNavigate: _ }: Props) {
           <EditPanel block={selectedBlock} />
         </div>
       </div>
+        </>}
     </div>
   )
 }

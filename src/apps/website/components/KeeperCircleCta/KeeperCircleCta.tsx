@@ -18,6 +18,7 @@ export function KeeperCircleCta({ variant = 'primary', children, className = '',
   return (
     <button
       type="button"
+      data-analytics-cta={typeof children === 'string' ? children : className || 'Keeper CTA'}
       className={`keeper-benefit-panel__cta${variantClass}${className ? ` ${className}` : ''}`}
       {...props}
     >

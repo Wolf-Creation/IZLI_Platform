@@ -1,83 +1,85 @@
+import { useCallback, useEffect, useState } from 'react'
 import type { Screen } from '../../../types'
-import { useCollections } from '../../../shared/hooks/useCollections'
+import type { Collection, Product } from '../../../entities'
+import { getAdminCollections, updateCollection } from '../../../shared/services/collections'
 import { useProducts } from '../../../shared/hooks/useProducts'
 
 const INDIGO = '#1E2F44'
 const TEXT_SEC = '#506681'
 const BORDER = '#D8D0C4'
 
-interface Props { onNavigate: (s: Screen) => void }
-
-function StatusChip({ status }: { status: string }) {
-  const map: Record<string, { bg: string; color: string }> = {
-    'Published': { bg: '#E6EDE8', color: '#4A7A5A' },
-    'Draft': { bg: '#EDE8DF', color: TEXT_SEC },
-    'Active': { bg: '#E8EDF3', color: INDIGO },
-  }
-  const s = map[status] ?? map['Draft']
-  return <span style={{ fontSize: 11, fontWeight: 500, padding: '3px 9px', borderRadius: 999, background: s.bg, color: s.color }}>{status}</span>
+interface Props {
+  onNavigate: (screen: Screen) => void
+  onCreate: () => void
+  onEdit: (id: string) => void
 }
 
-export default function CollectionsList({ onNavigate }: Props) {
-  const { collections, loading: collectionsLoading, error: collectionsError } = useCollections()
-  const { products, loading: productsLoading } = useProducts()
-  const productCount = (collection: typeof collections[number]) => {
-    const linkedIds = new Set([
-      ...(collection.productIds ?? []),
-      ...products.filter(product => (product.collectionIds ?? []).includes(collection.id)).map(product => product.id),
-    ])
-    return linkedIds.size
+function productCount(collection: Collection, products: Product[]) {
+  return products.filter(product => product.collectionId === collection.id || (product.collectionIds ?? []).includes(collection.id)).length
+}
+
+export default function CollectionsList({ onNavigate, onCreate, onEdit }: Props) {
+  const [collections, setCollections] = useState<Collection[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [savingId, setSavingId] = useState<string | null>(null)
+  const { products } = useProducts()
+
+  const refresh = useCallback(() => {
+    setLoading(true)
+    setError('')
+    getAdminCollections()
+      .then(setCollections)
+      .catch(requestError => setError(requestError instanceof Error ? requestError.message : 'Collections could not be loaded.'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(refresh, [refresh])
+
+  const toggleActive = async (collection: Collection) => {
+    setSavingId(collection.id)
+    try {
+      await updateCollection(collection.id, { isActive: !collection.isActive })
+      refresh()
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Collection could not be updated.')
+    } finally {
+      setSavingId(null)
+    }
   }
 
   return (
     <div style={{ padding: '40px 48px', maxWidth: 1360, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32 }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 20, marginBottom: 32 }}>
         <div>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 500, color: INDIGO }}>Collections</div>
-          <div style={{ fontSize: 14, color: TEXT_SEC, marginTop: 4 }}>{collections.length} collections · {collections.reduce((total, collection) => total + productCount(collection), 0)} linked products</div>
+          <h1 style={{ margin: 0, fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 500, color: INDIGO }}>Collections</h1>
+          <p style={{ margin: '6px 0 0', fontSize: 14, color: TEXT_SEC }}>{collections.length} collections · ordered by display order</p>
         </div>
-        <button
-          onClick={() => onNavigate('collection-editor')}
-          style={{ background: INDIGO, color: '#E7DFD2', border: 'none', borderRadius: 12, padding: '10px 20px', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
-          + Create Collection
-        </button>
-      </div>
-
-      {/* Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }}>
-        {collections.map((c, i) => (
-          <div
-            key={i}
-            onClick={() => onNavigate('collection-editor')}
-            style={{ background: '#F5F1EA', border: `1px solid ${BORDER}`, borderRadius: 20, overflow: 'hidden', cursor: 'pointer', transition: 'box-shadow 0.15s' }}
-            onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 24px rgba(30,47,68,0.08)'}
-            onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.boxShadow = 'none'}
-          >
-            {/* Cover */}
-            <div style={{ height: 200, overflow: 'hidden', background: '#EDE8DF', position: 'relative' }}>
-              <img
-                src={c.coverImageUrl}
-                alt={c.name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(30,47,68,0.45), transparent)' }} />
-              <div style={{ position: 'absolute', bottom: 16, left: 20 }}>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 500, color: '#F5F1EA' }}>{c.name}</div>
-              </div>
+        <button type="button" onClick={onCreate} style={{ padding: '10px 20px', border: 0, background: INDIGO, color: '#E7DFD2', fontSize: 13, cursor: 'pointer' }}>+ Create collection</button>
+      </header>
+      {error && <p role="alert" style={{ color: '#A63D2F' }}>{error}</p>}
+      {loading ? <p style={{ color: TEXT_SEC }}>Loading collections...</p> : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 18 }}>
+        {collections.map(collection => {
+          const image = collection.coverImage || collection.coverImageUrl
+          return <article key={collection.id} style={{ overflow: 'hidden', border: `1px solid ${BORDER}`, background: '#F5F1EA' }}>
+            <button type="button" onClick={() => onEdit(collection.id)} style={{ position: 'relative', display: 'grid', width: '100%', aspectRatio: '16 / 7', padding: 0, overflow: 'hidden', placeItems: 'center', border: 0, background: '#EDE8DF', cursor: 'pointer' }}>
+              {image ? <img src={image} alt={collection.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ color: TEXT_SEC, fontSize: 12 }}>No cover image</span>}
+              <strong style={{ position: 'absolute', bottom: 18, left: 20, color: '#fff', fontFamily: "'Playfair Display', serif", fontSize: 24, textShadow: '0 2px 12px #000' }}>{String(collection.displayOrder ?? 0).padStart(2, '0')} — {collection.name}</strong>
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px' }}>
+              <span style={{ color: TEXT_SEC, fontSize: 11 }}>{collection.tagline}</span>
+              <span style={{ marginLeft: 'auto', color: TEXT_SEC, fontSize: 11 }}>{productCount(collection, products)} products</span>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, color: TEXT_SEC, fontSize: 11, cursor: 'pointer' }}>
+                <input type="checkbox" checked={Boolean(collection.isActive)} disabled={savingId === collection.id} onChange={() => void toggleActive(collection)} />
+                Active
+              </label>
             </div>
-            {/* Meta */}
-            <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: '#E8EDF3', color: INDIGO }}>{c.universe}</span>
-              <span style={{ fontSize: 12, color: TEXT_SEC }}>{productCount(c)} products</span>
-              <div style={{ flex: 1 }} />
-              <StatusChip status={c.status} />
-              <span style={{ fontSize: 11, color: TEXT_SEC }}>{c.updated}</span>
-            </div>
-          </div>
-        ))}
-        {!collectionsLoading && !productsLoading && collections.length === 0 && <div style={{ gridColumn: '1 / -1', padding: 32, textAlign: 'center', color: TEXT_SEC }}>No collections found.</div>}
-        {collectionsError && <div style={{ gridColumn: '1 / -1', padding: 32, textAlign: 'center', color: '#A06030' }}>{collectionsError}</div>}
-      </div>
+            <div style={{ padding: '0 18px 16px' }}><button type="button" onClick={() => onEdit(collection.id)} style={{ padding: 0, border: 0, borderBottom: '1px solid #C9924E', background: 'transparent', color: INDIGO, fontSize: 11, cursor: 'pointer' }}>Edit collection</button></div>
+          </article>
+        })}
+        {!collections.length && <p style={{ gridColumn: '1 / -1', color: TEXT_SEC }}>No collections found.</p>}
+      </div>}
+      <button type="button" onClick={() => onNavigate('dashboard')} style={{ marginTop: 24, padding: 0, border: 0, background: 'none', color: TEXT_SEC, cursor: 'pointer' }}>Back to dashboard</button>
     </div>
   )
 }

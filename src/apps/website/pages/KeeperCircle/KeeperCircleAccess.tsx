@@ -8,7 +8,7 @@ interface Props {
   onVerified: () => void
 }
 
-type Mode = 'login' | 'register' | 'verify' | 'forgot-request' | 'forgot-reset'
+type Mode = 'login' | 'register' | 'verify' | 'login-verify' | 'forgot-request' | 'forgot-reset'
 
 const initialForm = { firstName: '', lastName: '', gender: '', phone: '', email: '', password: '', passwordConfirm: '', governorate: '', age: '' }
 const TUNISIAN_GOVERNORATES = ['Ariana', 'Beja', 'Ben Arous', 'Bizerte', 'Gabes', 'Gafsa', 'Jendouba', 'Kairouan', 'Kasserine', 'Kebili', 'Kef', 'Mahdia', 'Manouba', 'Medenine', 'Monastir', 'Nabeul', 'Sfax', 'Sidi Bouzid', 'Siliana', 'Sousse', 'Tataouine', 'Tozeur', 'Tunis', 'Zaghouan']
@@ -30,9 +30,14 @@ export default function KeeperCircleAccess({ onNavigate, onVerified }: Props) {
     setMessage('')
     try {
       if (mode === 'login') {
-        const result = await api.post<{ user: { id: string; email: string; displayName: string }; accessToken: string }>('/auth/keeper/login', { email: form.email, password: form.password })
+        const result = await api.post<{ user?: { id: string; email: string; displayName: string }; accessToken?: string; twoFactorRequired?: boolean; devCode?: string }>('/auth/keeper/login', { email: form.email, password: form.password })
+        if (result.twoFactorRequired) {
+          setMode('login-verify')
+          setMessage(result.devCode ? `Code de test: ${result.devCode}` : `Un code de securite a ete envoye a ${form.email}.`)
+          return
+        }
         localStorage.setItem('izli.currentUser', JSON.stringify(result.user))
-        localStorage.setItem('izli.accessToken', result.accessToken)
+        localStorage.setItem('izli.accessToken', result.accessToken ?? '')
         onVerified()
         onNavigate('profile')
       } else if (mode === 'register') {
@@ -42,6 +47,12 @@ export default function KeeperCircleAccess({ onNavigate, onVerified }: Props) {
       } else {
         if (mode === 'verify') {
           const result = await api.post<{ user: { id: string; email: string; displayName: string }; accessToken: string }>('/auth/keeper/verify', { email: form.email, code })
+          localStorage.setItem('izli.currentUser', JSON.stringify(result.user))
+          localStorage.setItem('izli.accessToken', result.accessToken)
+          onVerified()
+          onNavigate('profile')
+        } else if (mode === 'login-verify') {
+          const result = await api.post<{ user: { id: string; email: string; displayName: string }; accessToken: string }>('/auth/keeper/login/verify', { email: form.email, code })
           localStorage.setItem('izli.currentUser', JSON.stringify(result.user))
           localStorage.setItem('izli.accessToken', result.accessToken)
           onVerified()
@@ -90,10 +101,10 @@ export default function KeeperCircleAccess({ onNavigate, onVerified }: Props) {
     <main className="keeper-access">
       <div className="keeper-access__panel">
         <div className="keeper-access__eyebrow">IZLI / KEEPER CIRCLE</div>
-        <h1>{mode === 'verify' ? 'Verify your Keeper account.' : mode === 'register' ? 'Enter the Circle.' : mode === 'forgot-request' ? 'Recover your Keeper account.' : mode === 'forgot-reset' ? 'Create a new password.' : 'Welcome back, Keeper.'}</h1>
-        <p>{mode === 'verify' ? 'Confirm the code sent to your email to activate your profile.' : isForgotMode ? 'We will send a recovery code to your Keeper email address.' : 'The Keeper Circle is a private space for IZLI members.'}</p>
+        <h1>{mode === 'verify' ? 'Verify your Keeper account.' : mode === 'login-verify' ? 'Verify your sign in.' : mode === 'register' ? 'Enter the Circle.' : mode === 'forgot-request' ? 'Recover your Keeper account.' : mode === 'forgot-reset' ? 'Create a new password.' : 'Welcome back, Keeper.'}</h1>
+        <p>{mode === 'verify' ? 'Confirm the code sent to your email to activate your profile.' : mode === 'login-verify' ? 'Confirm the security code sent to your Keeper email.' : isForgotMode ? 'We will send a recovery code to your Keeper email address.' : 'The Keeper Circle is a private space for IZLI members.'}</p>
 
-        {!isForgotMode && <div className="keeper-access__tabs">
+        {!isForgotMode && mode !== 'login-verify' && <div className="keeper-access__tabs">
           <button className={mode === 'login' ? 'is-active' : ''} onClick={() => setMode('login')}>Sign in</button>
           <button className={mode === 'register' ? 'is-active' : ''} onClick={() => setMode('register')}>Create account</button>
         </div>}
@@ -102,8 +113,8 @@ export default function KeeperCircleAccess({ onNavigate, onVerified }: Props) {
         {message && <div className="keeper-access__message">{message}</div>}
 
         <form onSubmit={submit}>
-          {mode === 'verify' ? (
-            <label><span>Verification code</span><input value={code} onChange={event => setCode(event.target.value)} inputMode="numeric" maxLength={6} placeholder="000000" required /></label>
+          {mode === 'verify' || mode === 'login-verify' ? (
+            <label><span>{mode === 'login-verify' ? 'Security code' : 'Verification code'}</span><input value={code} onChange={event => setCode(event.target.value)} inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" autoFocus required /></label>
           ) : mode === 'forgot-request' ? (
             <label><span>Email address</span><input value={form.email} onChange={event => update('email', event.target.value)} type="email" required /></label>
           ) : mode === 'forgot-reset' ? (
@@ -122,10 +133,10 @@ export default function KeeperCircleAccess({ onNavigate, onVerified }: Props) {
               {renderPasswordField()}
             </div>
           )}
-          <button className="keeper-access__submit" disabled={loading}>{loading ? 'Please wait...' : mode === 'verify' ? 'Verify and continue' : mode === 'register' ? 'Create Keeper account' : mode === 'forgot-request' ? 'Send recovery code' : mode === 'forgot-reset' ? 'Update password' : 'Enter Keeper Circle'}</button>
+          <button className="keeper-access__submit" disabled={loading}>{loading ? 'Please wait...' : mode === 'verify' ? 'Verify and continue' : mode === 'login-verify' ? 'Verify and continue' : mode === 'register' ? 'Create Keeper account' : mode === 'forgot-request' ? 'Send recovery code' : mode === 'forgot-reset' ? 'Update password' : 'Enter Keeper Circle'}</button>
         </form>
         {mode === 'login' && <button type="button" className="keeper-access__forgot" onClick={() => { setMode('forgot-request'); setError(''); setMessage('') }}>Forgot password?</button>}
-        {isForgotMode && <button type="button" className="keeper-access__back" onClick={() => { setMode('login'); setError(''); setMessage('') }}>Back to sign in</button>}
+        {(isForgotMode || mode === 'login-verify') && <button type="button" className="keeper-access__back" onClick={() => { setMode('login'); setCode(''); setError(''); setMessage('') }}>Back to sign in</button>}
         <button className="keeper-access__back" onClick={() => onNavigate('home')}>Back to IZLI home</button>
       </div>
     </main>

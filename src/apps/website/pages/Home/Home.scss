@@ -310,6 +310,7 @@
 
 .home-section {
   position: relative;
+  z-index: 1;
   padding: 96px 0;
 }
 
@@ -333,7 +334,7 @@
 
 .home-section--shop {
   position: relative;
-  height: min(100svh - 50px, 750px);
+  height: min(100svh - 50px, 820px);
   padding-top: 128px;
   padding-bottom: 0;
   box-sizing: border-box;
@@ -1646,7 +1647,7 @@
 .home-about-socials a {
   display: grid;
   place-items: center;
-  min-height: 54px;
+  min-height: 80px;
   border-right: 1px solid rgba(234, 214, 189, 0.12);
   color: rgba(245, 241, 234, 0.58);
   transition: color 220ms ease, background-color 220ms ease;
@@ -1662,8 +1663,8 @@
 }
 
 .home-about-socials svg {
-  width: 18px;
-  height: 18px;
+  width: 30px;
+  height: 30px;
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
@@ -1672,7 +1673,7 @@
 }
 
 .home-legacy-editorial__logo {
-  font-size: clamp(42px, 5vw, 72px);
+  font-size: clamp(22px, 3vw, 48px);
   font-weight: 700;
   letter-spacing: 0.2em;
   line-height: 0.9;
@@ -1690,7 +1691,7 @@
 
 .home-legacy-editorial__intro {
   margin: 30px 0 0;
-  color: rgba(234, 214, 189, 0.78);
+  color: var(--footer-muted);
   font-size: 15px;
   line-height: 2;
 }
@@ -1885,7 +1886,7 @@
 }
 
 .home-section--tops {
-  --home-main-header-height: 83px;
+  --home-main-header-height: 92px;
   height: auto;
   min-height: calc(100vh - var(--home-main-header-height));
   overflow: visible;
@@ -1921,6 +1922,7 @@
   min-height: calc(100svh - var(--home-main-header-height) - 104px);
   overflow: visible;
   align-items: start;
+  gap: 4px;
 }
 
 .home-bottoms-editorial>.home-tops-editorial__visual {
@@ -1983,9 +1985,9 @@
 
 .home-tops-editorial__visual {
   position: sticky;
-  top: calc(var(--home-main-header-height) + 92px);
+  top: calc(var(--home-main-header-height) + 104px);
   align-self: start;
-  height: calc(100svh - var(--home-main-header-height) - 92px);
+  height: calc(100svh - var(--home-main-header-height) - 104px);
   overflow: hidden;
   background: #dedbd6;
 }
@@ -2043,13 +2045,13 @@
 .home-tops-editorial__header {
   position: sticky;
   top: var(--home-main-header-height);
-  z-index: 2;
+  z-index: 3;
   will-change: transform;
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: 24px;
-  height: 92px;
+  height: 104px;
   padding: 24px 64px;
   background: rgba(0, 0, 0);
   border-bottom: 1px solid rgba(23, 23, 23, 0.14);
@@ -2058,16 +2060,18 @@
 
 .home-tops-editorial__header h2 {
   font-family: 'Playfair Display', serif;
-  font-size: clamp(24px, 2vw, 30px);
+  font-size: clamp(24px, 2vw, 32px);
   font-weight: 700;
   line-height: 0.95;
+  margin: 0;
 }
 
 .home-tops-editorial__header button {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  // flex-shrink: 0;
+  height: auto;
+  flex-shrink: 0;
   padding: 6px 0;
   border: 0;
   border-bottom: 1px solid #c9924e;
@@ -2084,20 +2088,26 @@
 .home-tops-editorial__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: minmax(calc(100svh - var(--home-main-header-height) - 104px), auto);
+  grid-auto-rows: 700px;
   gap: 1px;
   background: rgba(23, 23, 23, 0.14);
+  gap: 4px;
 }
 
 .home-tops-product-card {
   min-width: 0;
-  height: 100%;
+  height: 700px;
   padding: 0;
   border: 0;
   background: #dedfe0;
   color: #171717;
   cursor: pointer;
   text-align: left;
+}
+
+.home-tops-product-card:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 .home-tops-product-card__image {
@@ -2116,7 +2126,7 @@
 }
 
 .home-tops-product-card:hover .home-tops-product-card__image img {
-  transform: scale(1);
+  transform: scale(1.05);
 }
 
 .home-tops-product-card__info {
@@ -3200,7 +3210,7 @@
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .home-section--keeper-circle {
     min-height: auto;
   }
@@ -3799,6 +3809,18 @@
   }
 }
 
+@media (max-width: 1024px) {
+  .home-tops-editorial {
+    grid-template-columns: 1fr;
+  }
+
+  .home-bottoms-editorial > .home-tops-editorial__visual,
+  .home-bottoms-editorial > .home-tops-editorial__products {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
 @media (max-width: 768px) {
 
   .home-section--tops,
@@ -4015,5 +4037,17 @@
 
   .home-collections-story-card__title {
     font-size: 16px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .home-section {
+    padding-bottom: 0;
+  }
+}
+
+@media (min-width: 1025px) {
+  .home-section--shop {
+    padding-bottom: 84px;
   }
 }

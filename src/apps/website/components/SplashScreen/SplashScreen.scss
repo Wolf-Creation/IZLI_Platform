@@ -16,10 +16,10 @@
   will-change: transform;
 
   &--exit {
-    animation: splashExit 800ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: splashExit 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 
     .splash-screen__title {
-      animation: titleExitUp 800ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: titleExitUp 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
   }
 }
@@ -39,7 +39,7 @@
   font-family: 'Playfair Display', serif;
   margin: 0;
   text-align: center;
-  animation: titleEnter 900ms cubic-bezier(0.16, 1, 0.3, 1) 500ms forwards;
+  animation: titleEnter 600ms cubic-bezier(0.16, 1, 0.3, 1) 100ms forwards;
   will-change: transform, opacity;
   opacity: 0;
 

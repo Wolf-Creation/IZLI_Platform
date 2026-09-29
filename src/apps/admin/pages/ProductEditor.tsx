@@ -1,718 +1,329 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Screen } from '../../../types'
-import type { Currency, Product, ProductColorway, ProductReleaseStatus, ProductStatus, ProductUniverse, SizeAvailability } from '../../../entities'
+import type { Currency, InventoryPiece, InventoryPieceStatus, Product, ProductActivity, ProductMedia, ProductSeo, ProductStatus, ProductStory, ProductType, ProductUniverse } from '../../../entities'
 import { useProduct } from '../../../shared/hooks/useProducts'
 import { useCategories } from '../../../shared/hooks/useCategories'
 import { useCollections } from '../../../shared/hooks/useCollections'
-import { createProduct, updateProduct } from '../../../shared/services/products'
+import { createProduct, getProductActivity, getProducts, updateProduct } from '../../../shared/services/products'
+import { api } from '../../../shared/services/api'
 
 const INDIGO = '#1E2F44'
 const TEXT = '#2E2E2E'
 const TEXT_SEC = '#506681'
 const BORDER = '#D8D0C4'
 const CLAY = '#8C6B52'
-
-interface Props {
-  onNavigate: (s: Screen) => void
-  productId: string | null
-  onDone: () => void
-}
-
-interface ProductForm {
-  sku: string
-  name: string
-  universe: ProductUniverse
-  status: ProductStatus
-  releaseNumber: string
-  quantity: string
-  launchDate: string
-  releaseStatus: ProductReleaseStatus
-  qrExperienceUrl: string
-  productPassportId: string
-  archiveTitle: string
-  storyTitle: string
-  price: string
-  currency: Currency
-  description: string
-  coverImageUrl: string
-  imagesText: string
-  sizesText: string
-  colorwaysText: string
-  materialsText: string
-  fitText: string
-  careInstructionsText: string
-  productionNotes: string
-  categoryIds: string[]
-  collectionIds: string[]
-  sizeGuideIncluded: boolean
-}
-
-const EMPTY_FORM: ProductForm = {
-  sku: '',
-  name: '',
-  universe: 'Heritage',
-  status: 'draft',
-  releaseNumber: '01',
-  quantity: '150',
-  launchDate: '',
-  releaseStatus: 'draft',
-  qrExperienceUrl: '',
-  productPassportId: '',
-  archiveTitle: '',
-  storyTitle: '',
-  price: '0',
-  currency: 'EUR',
-  description: '',
-  coverImageUrl: '',
-  imagesText: '',
-  sizesText: '',
-  colorwaysText: '',
-  materialsText: '',
-  fitText: '',
-  careInstructionsText: '',
-  productionNotes: '',
-  categoryIds: [],
-  collectionIds: [],
-  sizeGuideIncluded: false,
-}
-
-const UPPER_RELEASE_STATUSES: ProductReleaseStatus[] = ['draft', 'ready', 'production', 'upcoming', 'live', 'sold-out', 'archived']
-const CATALOG_STATUSES: ProductStatus[] = ['published', 'draft', 'archived', 'out-of-stock']
+const PRODUCT_TABS = ['Overview', 'Product Information', 'Caractéristiques produit', 'Design & Heritage', 'Variants', 'Pricing', 'Release', 'Inventory', 'QR Codes', 'Media', 'Story', 'SEO', 'Activity'] as const
+type ProductTab = typeof PRODUCT_TABS[number]
+const PRODUCT_STATUSES: ProductStatus[] = ['draft', 'ready', 'published', 'archived']
+const PRODUCT_TYPES = ['Oversized T-Shirt', 'Heritage Jersey', 'Heavy T-Shirt', 'Hoodie', 'Shirt']
+const GENDERS = ['Men', 'Women', 'Unisex']
 const UNIVERSES: ProductUniverse[] = ['Heritage', 'Essentials', 'Studio', 'Community Lab']
-const CURRENCIES: Currency[] = ['EUR', 'USD', 'MAD', 'DZD']
-const SIZE_OPTIONS = ['S', 'M', 'L', 'XL', '2XL', '3XL']
-const DEFAULT_COLOR_SWATCHES = [
-  { name: 'Natural', hex: '#F2E7D6' },
-  { name: 'Black', hex: '#111111' },
-  { name: 'Indigo', hex: '#1E2F44' },
-  { name: 'Sand', hex: '#B58C63' },
-  { name: 'Stone', hex: '#C7C3BA' },
-  { name: 'Olive', hex: '#6D7B5F' },
-]
+const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+const INVENTORY_STATUSES: InventoryPieceStatus[] = ['available', 'reserved', 'sold', 'returned', 'damaged', 'lost']
+const EMPTY_MEDIA: ProductMedia = { mainImage: '', gallery: [], detailImages: [], front: [], back: [], sleeve: [], embroidery: [], modelImages: [], campaignVideo: '', lifestyleImages: [] }
+const EMPTY_STORY: ProductStory = { fullStory: '', designStory: '' }
+const EMPTY_SEO: ProductSeo = { slug: '', metaTitle: '', metaDescription: '', keywords: [], ogImage: '' }
 
-interface SizeRow {
-  size: string
-  stock: number
-  availability: SizeAvailability
-  colorQuantities: Record<string, number>
+interface Props { onNavigate: (s: Screen) => void; productId: string | null; onDone: () => void }
+interface ProductInformationForm {
+  name: string; sku: string; categoryId: string; collectionId: string; legacy: string; universe: ProductUniverse | ''
+  gender: string; productType: string; shortDescription: string; fullDescription: string; status: ProductStatus
+  characteristics: { fit: string; fabric: string; composition: string; weight: string; finish: string; collar: string; sleeve: string; bottomHem: string; sleeveHem: string }
+  design: { designName: string; tifinaghText: string; meaning: string; inspiration: string; heritageTheme: string; motif: string; motifMeaning: string; designStory: string; heritageStory: string; decorationTechnique: string; decorationPosition: string; customPosition: string; threadColor: string; threadColorHex: string; version: string }
+  colors: { id: string; name: string; colorCode: string; hex: string; image: string }[]
+  sizes: string[]
+  pricing: { sellingPrice: string; compareAtPrice: string; currency: Currency; fabricCost: string; sewingCost: string; embroideryCost: string; washingCost: string; packagingCost: string; otherCost: string }
+  release: { number: string; name: string; date: string; quantity: string; price: string; status: 'draft' | 'upcoming' | 'early-access' | 'live' | 'sold-out' | 'closed'; earlyAccess: boolean; earlyAccessDuration: string; earlyAccessUnit: 'hours' | 'days'; keeperPoints: string; keeperExclusive: boolean }
+}
+const EMPTY_FORM: ProductInformationForm = { name: '', sku: '', categoryId: '', collectionId: '', legacy: '', universe: '', gender: '', productType: '', shortDescription: '', fullDescription: '', status: 'draft', characteristics: { fit: 'Boxy Heavy Oversized', fabric: 'Jersey Cotton', composition: '100% Cotton', weight: '300 GSM', finish: 'Garment Washed', collar: '1x1 Rib', sleeve: '24 cm', bottomHem: '3 cm', sleeveHem: '3 cm' }, design: { designName: '', tifinaghText: '', meaning: '', inspiration: '', heritageTheme: '', motif: '', motifMeaning: '', designStory: '', heritageStory: '', decorationTechnique: '', decorationPosition: '', customPosition: '', threadColor: '', threadColorHex: '#E7DFD2', version: 'v1.0' }, colors: [], sizes: [], pricing: { sellingPrice: '', compareAtPrice: '', currency: 'TND', fabricCost: '', sewingCost: '', embroideryCost: '', washingCost: '', packagingCost: '', otherCost: '' }, release: { number: '01', name: '', date: '', quantity: '', price: '', status: 'draft', earlyAccess: false, earlyAccessDuration: '', earlyAccessUnit: 'hours', keeperPoints: '', keeperExclusive: false } }
+const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 13px', border: `1px solid ${BORDER}`, borderRadius: 9, background: '#FBF9F5', color: TEXT, fontSize: 13, outline: 'none', fontFamily: 'Inter, sans-serif' }
+
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return <label style={{ display: 'grid', gap: 7, color: TEXT_SEC, fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }}><span>{label}{required && <span style={{ color: CLAY }}> *</span>}</span>{children}</label>
 }
 
-interface ColorRow {
-  id: string
-  name: string
-  hex: string
-  sizeQuantities: Record<string, number>
+function slugify(value: string) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 }
 
-function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div style={{ background: '#F7F3EC', border: `1px solid ${BORDER}`, borderRadius: 16, overflow: 'hidden', marginBottom: 18, boxShadow: '0 8px 24px rgba(30, 47, 68, 0.04)' }}>
-      <div style={{ padding: '16px 22px', borderBottom: `1px solid ${BORDER}`, background: '#EEE6DA', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: CLAY, display: 'inline-block' }} />
-        <div style={{ fontSize: 13, fontWeight: 700, color: INDIGO, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{title}</div>
-      </div>
-      <div style={{ padding: 22 }}>{children}</div>
-    </div>
-  )
+type MediaCollectionField = Exclude<keyof ProductMedia, 'mainImage' | 'campaignVideo'>
+
+function MediaSlot({ label, field, media, uploading, onFiles, onReorder, onRemove }: { label: string; field: keyof ProductMedia; media: ProductMedia; uploading: boolean; onFiles: (field: keyof ProductMedia, files: FileList | File[]) => void; onReorder: (field: MediaCollectionField, fromIndex: number, toIndex: number) => void; onRemove: (field: keyof ProductMedia, index?: number) => void }) {
+  const single = field === 'mainImage' || field === 'campaignVideo'
+  const values = single ? (media[field] ? [media[field] as string] : []) : media[field] as string[]
+  return <div style={{ padding: 18, border: `1px solid ${BORDER}`, borderRadius: 10, background: '#FBF9F5' }}><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 12 }}><div style={{ color: INDIGO, fontSize: 14, fontWeight: 600 }}>{label}</div><label style={{ padding: '8px 11px', border: `1px solid ${BORDER}`, borderRadius: 8, background: '#F7F3EC', color: TEXT_SEC, fontSize: 11, cursor: 'pointer' }}>{uploading ? 'Uploading...' : single ? 'Upload' : 'Add files'}<input type="file" accept={field === 'campaignVideo' ? 'video/*' : 'image/*'} multiple={!single} onChange={event => { if (event.target.files) onFiles(field, event.target.files); event.currentTarget.value = '' }} style={{ display: 'none' }} /></label></div>{values.length === 0 ? <div onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); if (event.dataTransfer.files.length) onFiles(field, event.dataTransfer.files) }} style={{ minHeight: 72, display: 'grid', placeItems: 'center', border: `1px dashed ${BORDER}`, borderRadius: 8, color: TEXT_SEC, fontSize: 12 }}>Drag &amp; drop upload</div> : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 }}>{values.map((url, index) => <div key={`${url}-${index}`} draggable={!single} onDragStart={event => event.dataTransfer.setData('text/plain', String(index))} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); const fromIndex = Number(event.dataTransfer.getData('text/plain')); if (!single && Number.isInteger(fromIndex)) onReorder(field as MediaCollectionField, fromIndex, index) }} style={{ position: 'relative', minHeight: 110, overflow: 'hidden', border: `1px solid ${BORDER}`, borderRadius: 8, background: '#EFE8DD', cursor: single ? 'default' : 'grab' }}>{field === 'campaignVideo' ? <video src={url} controls style={{ width: '100%', height: 110, objectFit: 'cover' }} /> : <img src={url} alt={`${label} ${index + 1}`} style={{ width: '100%', height: 110, objectFit: 'cover', display: 'block' }} />}<button type="button" onClick={() => onRemove(field, single ? undefined : index)} aria-label={`Remove ${label} ${index + 1}`} style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, border: 0, borderRadius: '50%', background: 'rgba(30, 47, 68, .82)', color: '#fff', cursor: 'pointer' }}>×</button></div>)}</div>}</div>
 }
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <div style={{ marginBottom: 20 }}>
-      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT_SEC, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 6 }}>{label}</label>
-      {children}
-      {hint && <div style={{ fontSize: 11, color: '#B7AA91', marginTop: 4 }}>{hint}</div>}
-    </div>
-  )
-}
-
-function StatusPill({ label, active }: { label: string; active: boolean }) {
-  return (
-    <span style={{ fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 999, background: active ? INDIGO : '#EDE8DF', color: active ? '#E7DFD2' : TEXT_SEC, textTransform: 'uppercase' }}>
-      {label}
-    </span>
-  )
-}
-
-function Chip({ label, active }: { label: string; active: boolean }) {
-  return (
-    <span style={{ fontSize: 11, fontWeight: 500, padding: '3px 9px', borderRadius: 999, background: active ? '#E8EDF3' : '#EDE8DF', color: active ? INDIGO : TEXT_SEC, textTransform: 'uppercase' }}>
-      {label}
-    </span>
-  )
-}
-
-function CatalogChip({ status }: { status: ProductStatus }) {
-  const map: Record<ProductStatus, { bg: string; color: string }> = {
-    published: { bg: '#E6EDE8', color: '#4A7A5A' },
-    draft: { bg: '#EDE8DF', color: TEXT_SEC },
-    archived: { bg: '#EEEEEE', color: '#999' },
-    'out-of-stock': { bg: '#FDF3EC', color: '#A06030' },
+function RichTextEditor({ value, onChange, placeholder }: { value: string; onChange: (value: string) => void; placeholder: string }) {
+  const command = (name: string, commandValue?: string) => {
+    document.execCommand(name, false, commandValue)
   }
-
-  const palette = map[status]
-
-  return (
-    <span style={{ fontSize: 11, fontWeight: 500, padding: '3px 9px', borderRadius: 999, background: palette.bg, color: palette.color, textTransform: 'uppercase' }}>
-      {status}
-    </span>
-  )
-}
-
-function mapProductToForm(product: Product): ProductForm {
-  return {
-    sku: product.sku,
-    name: product.name,
-    universe: product.universe,
-    status: product.status,
-    releaseNumber: product.releaseNumber ?? '01',
-    quantity: String(product.quantity ?? 150),
-    launchDate: product.launchDate ? product.launchDate.slice(0, 10) : '',
-    releaseStatus: product.releaseStatus ?? 'draft',
-    qrExperienceUrl: product.qrExperienceUrl ?? '',
-    productPassportId: product.productPassportId ?? '',
-    archiveTitle: product.archiveTitle ?? '',
-    storyTitle: product.storyTitle ?? '',
-    price: String(product.price ?? 0),
-    currency: product.currency,
-    description: product.description ?? '',
-    coverImageUrl: product.coverImageUrl ?? '',
-    imagesText: (product.images ?? []).join('\n'),
-    sizesText: (product.sizes ?? []).map(size => `${size.size}, ${size.stock}, ${size.availability}`).join('\n'),
-    colorwaysText: (product.colorways ?? []).map(colorway => `${colorway.name} | ${colorway.hex} | ${colorway.images.join(', ')} | ${Object.entries(colorway.sizeStocks ?? {}).map(([size, qty]) => `${size}:${qty}`).join(', ')}`).join('\n'),
-    materialsText: (product.materials ?? []).join('\n'),
-    fitText: (product.fit ?? []).join('\n'),
-    careInstructionsText: (product.careInstructions ?? []).join('\n'),
-    productionNotes: product.productionNotes ?? '',
-    categoryIds: product.categoryIds ?? [],
-    collectionIds: product.collectionIds ?? [],
-    sizeGuideIncluded: Boolean(product.sizeGuideIncluded),
-  }
-}
-
-function splitLines(text: string) {
-  return text
-    .split('\n')
-    .map(line => line.trim())
-    .filter(Boolean)
-}
-
-function parseSizes(text: string) {
-  return splitLines(text).map(line => {
-    const [sizeRaw, stockRaw, availabilityRaw] = line.split(',').map(part => part.trim())
-    const availability = (availabilityRaw as SizeAvailability) || 'available'
-    return {
-      size: sizeRaw || 'M',
-      stock: Number(stockRaw || 0),
-      availability,
-    }
-  })
-}
-
-function parseColorways(text: string): ProductColorway[] {
-  return splitLines(text).map(line => {
-    const [name, hex, mediaText, sizeInventoryText] = line.split('|').map(part => part.trim())
-    const images = splitLines(mediaText ?? '').map(url => url.replace(/,$/, ''))
-    const sizeStocks: Record<string, number> = {}
-
-    for (const entry of splitLines(sizeInventoryText ?? '')) {
-      const [size, qty] = entry.split(':').map(part => part.trim())
-      if (!size) continue
-      sizeStocks[size] = Number(qty || 0)
-    }
-
-    return {
-      id: `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'color'}-${Math.random().toString(36).slice(2, 8)}`,
-      name: name || 'Color',
-      hex: hex || '#D8D0C4',
-      images,
-      sizeStocks,
-    }
-  })
-}
-
-function parseSizeRows(text: string): SizeRow[] {
-  const entries = splitLines(text).map(line => {
-    const [sizeRaw, stockRaw, availabilityRaw] = line.split(',').map(part => part.trim())
-    const size = sizeRaw || 'M'
-    const stock = Number(stockRaw || 0)
-    const availability = (availabilityRaw as SizeAvailability) || 'available'
-    return { size, stock, availability, colorQuantities: {} }
-  })
-
-  if (entries.length === 0) {
-    return SIZE_OPTIONS.map(size => ({ size, stock: 0, availability: 'available', colorQuantities: {} }))
-  }
-
-  const seen = new Set<string>()
-  const normalized = entries.filter(item => {
-    if (seen.has(item.size)) return false
-    seen.add(item.size)
-    return true
-  })
-
-  const bySize = Object.fromEntries(normalized.map(item => [item.size, item]))
-  const result: SizeRow[] = []
-
-  for (const size of SIZE_OPTIONS) {
-    if (bySize[size]) {
-      result.push(bySize[size])
-    } else if (normalized.some(item => item.size === size)) {
-      continue
-    } else {
-      result.push({ size, stock: 0, availability: 'available', colorQuantities: {} })
-    }
-  }
-
-  for (const item of normalized) {
-    if (!SIZE_OPTIONS.includes(item.size)) {
-      result.push(item)
-    }
-  }
-
-  return result
-}
-
-function serializeSizeRows(rows: SizeRow[]) {
-  return rows
-    .filter(row => row?.size)
-    .map(row => `${row.size}, ${row.stock}, ${row.availability}`)
-    .join('\n')
-}
-
-function parseColorRows(text: string): ColorRow[] {
-  const parsed = splitLines(text).map(line => {
-    const [name, hex, mediaText, sizeInventoryText] = line.split('|').map(part => part.trim())
-    const sizeQuantities: Record<string, number> = {}
-    for (const entry of splitLines(sizeInventoryText ?? '')) {
-      const [size, qty] = entry.split(':').map(part => part.trim())
-      if (!size) continue
-      sizeQuantities[size] = Number(qty || 0)
-    }
-
-    return {
-      id: `${(name || 'color').toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'color'}-${Math.random().toString(36).slice(2, 8)}`,
-      name: name || 'Color',
-      hex: hex || '#D8D0C4',
-      sizeQuantities,
-    }
-  })
-
-  if (parsed.length === 0) {
-    return DEFAULT_COLOR_SWATCHES.map(color => ({
-      id: `${color.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-default`,
-      name: color.name,
-      hex: color.hex,
-      sizeQuantities: Object.fromEntries(SIZE_OPTIONS.map(size => [size, 0])),
-    }))
-  }
-
-  return parsed
-}
-
-function serializeColorRows(rows: ColorRow[]) {
-  return rows
-    .filter(color => color?.name)
-    .map(color => {
-      const sizeEntries = Object.entries(color.sizeQuantities ?? {})
-        .filter(([, qty]) => qty > 0)
-        .map(([size, qty]) => `${size}:${qty}`)
-      return `${color.name} | ${color.hex} | ${color.name} | ${sizeEntries.join(', ')}`
-    })
-    .join('\n')
+  return <div style={{ border: `1px solid ${BORDER}`, borderRadius: 10, overflow: 'hidden', background: '#FBF9F5' }}><div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: 10, borderBottom: `1px solid ${BORDER}`, background: '#F1ECE4' }}>{[['bold', 'B'], ['italic', 'I'], ['insertUnorderedList', '• List'], ['formatBlock', 'H2']].map(([action, label]) => <button key={action} type="button" onMouseDown={event => { event.preventDefault(); command(action, action === 'formatBlock' ? 'h2' : undefined) }} style={{ padding: '6px 9px', border: `1px solid ${BORDER}`, borderRadius: 6, background: '#FBF9F5', color: INDIGO, cursor: 'pointer', fontSize: 12, fontWeight: action === 'bold' ? 700 : 500 }}>{label}</button>)}<button type="button" onMouseDown={event => { event.preventDefault(); const url = window.prompt('Link URL'); if (url) command('createLink', url) }} style={{ padding: '6px 9px', border: `1px solid ${BORDER}`, borderRadius: 6, background: '#FBF9F5', color: INDIGO, cursor: 'pointer', fontSize: 12 }}>Link</button></div><div contentEditable suppressContentEditableWarning dangerouslySetInnerHTML={{ __html: value }} onInput={event => onChange(event.currentTarget.innerHTML)} data-placeholder={placeholder} style={{ minHeight: 180, padding: 14, color: TEXT, fontSize: 14, lineHeight: 1.65, outline: 'none' }} /></div>
 }
 
 export default function ProductEditor({ onNavigate, productId, onDone }: Props) {
   const { product, loading } = useProduct(productId ?? '')
   const { categories } = useCategories()
   const { collections } = useCollections()
-  const [form, setForm] = useState<ProductForm>(EMPTY_FORM)
-  const [sizeRows, setSizeRows] = useState<SizeRow[]>(() => parseSizeRows(EMPTY_FORM.sizesText))
-  const [colorRows, setColorRows] = useState<ColorRow[]>(() => parseColorRows(EMPTY_FORM.colorwaysText))
+  const [activeTab, setActiveTab] = useState<ProductTab>('Product Information')
+  const [form, setForm] = useState<ProductInformationForm>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
+  const [message, setMessage] = useState('')
+  const [skuError, setSkuError] = useState('')
+  const [inventoryPieces, setInventoryPieces] = useState<InventoryPiece[]>([])
+  const [adjustmentOpen, setAdjustmentOpen] = useState(false)
+  const [adjustmentVariantId, setAdjustmentVariantId] = useState('')
+  const [adjustmentType, setAdjustmentType] = useState<InventoryPieceStatus>('damaged')
+  const [adjustmentQuantity, setAdjustmentQuantity] = useState('1')
+  const [adjustmentReason, setAdjustmentReason] = useState('')
+  const [adjustmentNotes, setAdjustmentNotes] = useState('')
+  const [media, setMedia] = useState<ProductMedia>(EMPTY_MEDIA)
+  const [uploadingMedia, setUploadingMedia] = useState<string | null>(null)
+  const [story, setStory] = useState<ProductStory>(EMPTY_STORY)
+  const [seo, setSeo] = useState<ProductSeo>(EMPTY_SEO)
+  const [seoSlugEdited, setSeoSlugEdited] = useState(false)
+  const [uploadingOgImage, setUploadingOgImage] = useState(false)
+  const [activity, setActivity] = useState<ProductActivity[]>([])
+  const [activityLoading, setActivityLoading] = useState(false)
 
   useEffect(() => {
-    setSizeRows(parseSizeRows(form.sizesText))
-    setColorRows(parseColorRows(form.colorwaysText))
-  }, [form.sizesText, form.colorwaysText])
+    if (!product) return
+    setInventoryPieces(product.inventoryPieces ?? [])
+    setMedia({ ...EMPTY_MEDIA, mainImage: product.media?.mainImage || product.coverImageUrl || '', ...product.media })
+    setStory({ ...EMPTY_STORY, ...product.story })
+    setSeo({ ...EMPTY_SEO, ...product.seo })
+    setSeoSlugEdited(Boolean(product.seo?.slug))
+    setForm({ name: product.name ?? '', sku: product.sku ?? '', categoryId: product.categoryIds?.[0] ?? '', collectionId: product.collectionIds?.[0] ?? '', legacy: product.legacy ?? '', universe: product.universe ?? '', gender: product.gender ?? '', productType: product.productType ?? '', shortDescription: product.shortDescription ?? '', fullDescription: product.fullDescription ?? product.description ?? '', status: product.status === 'out-of-stock' ? 'draft' : product.status, characteristics: { ...EMPTY_FORM.characteristics, ...product.characteristics }, design: { ...EMPTY_FORM.design, ...product.design }, colors: (product.colorways ?? []).map(color => ({ id: color.id, name: color.name, colorCode: color.colorCode ?? '', hex: color.hex, image: color.images?.[0] ?? '' })), sizes: product.sizes?.map(size => size.size) ?? [], pricing: { ...EMPTY_FORM.pricing, sellingPrice: product.price !== undefined ? String(product.price) : '', currency: product.currency ?? 'TND', ...(product.pricing ? Object.fromEntries(Object.entries(product.pricing).map(([key, value]) => [key === 'compareAtPrice' ? 'compareAtPrice' : key.replace(/Cost$/, 'Cost'), value === undefined ? '' : String(value)])) : {}) } as ProductInformationForm['pricing'], release: { ...EMPTY_FORM.release, number: product.releaseNumber ?? '01', date: product.launchDate ? product.launchDate.slice(0, 10) : '', quantity: product.quantity !== undefined ? String(product.quantity) : '', price: product.releaseSettings?.price !== undefined ? String(product.releaseSettings.price) : product.price !== undefined ? String(product.price) : '', ...(product.releaseSettings ? { name: product.releaseSettings.name ?? '', status: product.releaseSettings.status ?? 'draft', earlyAccess: Boolean(product.releaseSettings.earlyAccess), earlyAccessDuration: product.releaseSettings.earlyAccessDuration ? String(product.releaseSettings.earlyAccessDuration) : '', earlyAccessUnit: product.releaseSettings.earlyAccessUnit ?? 'hours', keeperPoints: product.releaseSettings.keeperPoints ? String(product.releaseSettings.keeperPoints) : '', keeperExclusive: Boolean(product.releaseSettings.keeperExclusive) } : {}) } })
+    setForm(current => ({ ...current, collectionId: product.collectionId ?? product.collectionIds?.[0] ?? '' }))
+  }, [product])
 
   useEffect(() => {
-    if (productId) {
-      if (product) {
-        setForm(mapProductToForm(product))
-      }
-      return
-    }
+    if (!seoSlugEdited) setSeo(current => ({ ...current, slug: slugify(form.name) }))
+  }, [form.name, seoSlugEdited])
 
-    setForm(EMPTY_FORM)
-  }, [product, productId])
+  useEffect(() => {
+    if (!productId || activeTab !== 'Activity') return
+    setActivityLoading(true)
+    getProductActivity(productId).then(setActivity).catch(() => setActivity([])).finally(() => setActivityLoading(false))
+  }, [activeTab, productId])
 
+  const update = <K extends keyof ProductInformationForm>(field: K, value: ProductInformationForm[K]) => setForm(current => ({ ...current, [field]: value }))
   const isEditing = Boolean(productId)
-  const pageTitle = form.name || (isEditing ? 'Edit Product Release' : 'Create Product Release')
-  const subtitle = isEditing
-    ? 'Update the Legacy Release data and save the changes directly into MongoDB.'
-    : 'Create a new finite release with product passport, QR, and production details.'
+  const missingFields = useMemo(() => [['Product Name', form.name.trim().length >= 2], ['SKU', /^[A-Z0-9-]+$/.test(form.sku)], ['Category', Boolean(form.categoryId)], ['Collection', Boolean(form.collectionId)], ['Gender', Boolean(form.gender)], ['Product Type', Boolean(form.productType)]].filter(([, ready]) => !ready).map(([label]) => label), [form])
+  const variants = useMemo(() => form.colors.flatMap(color => form.sizes.map(size => ({ id: `${color.colorCode}-${size}`, sku: `${form.sku.trim().toUpperCase()}-${color.colorCode}-${size}`, colorName: color.name, colorCode: color.colorCode, size, hex: color.hex, image: color.image }))), [form.colors, form.sizes, form.sku])
+  const pricingNumbers = Object.fromEntries(Object.entries(form.pricing).map(([key, value]) => [key, typeof value === 'string' ? Number(value || 0) : value])) as Record<string, number>
+  const totalCost = ['fabricCost', 'sewingCost', 'embroideryCost', 'washingCost', 'packagingCost', 'otherCost'].reduce((total, key) => total + (pricingNumbers[key] ?? 0), 0)
+  const grossProfit = pricingNumbers.sellingPrice - totalCost
+  const margin = pricingNumbers.sellingPrice > 0 ? (grossProfit / pricingNumbers.sellingPrice) * 100 : 0
+  const inventoryRows = variants.map(variant => {
+    const pieces = inventoryPieces.filter(piece => piece.variantId === variant.id)
+    return { variant, counts: Object.fromEntries(INVENTORY_STATUSES.map(status => [status, pieces.filter(piece => piece.status === status).length])) as Record<InventoryPieceStatus, number> }
+  })
 
-  const updateField = <K extends keyof ProductForm>(key: K, value: ProductForm[K]) => {
-    setForm(current => ({ ...current, [key]: value }))
+  const applyAdjustment = () => {
+    const quantity = Number(adjustmentQuantity)
+    if (!adjustmentVariantId || !Number.isInteger(quantity) || quantity < 1) return
+    const now = new Date().toISOString()
+    const additions = Array.from({ length: quantity }, (_, index) => ({ id: `piece-${Date.now()}-${index}`, variantId: adjustmentVariantId, status: adjustmentType, reason: adjustmentReason.trim(), notes: adjustmentNotes.trim(), updatedAt: now }))
+    setInventoryPieces(current => [...current, ...additions])
+    setAdjustmentOpen(false)
+    setAdjustmentQuantity('1')
+    setAdjustmentReason('')
+    setAdjustmentNotes('')
+  }
+
+  const uploadMediaFiles = async (field: keyof ProductMedia, files: FileList | File[]) => {
+    const selectedFiles = Array.from(files)
+    if (selectedFiles.length === 0) return
+    setUploadingMedia(field)
+    try {
+      const uploaded = [] as string[]
+      for (const file of selectedFiles) {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('folder', 'products')
+        const result = await api.upload<{ url: string }>('/uploads/images', formData)
+        uploaded.push(result.url)
+      }
+      setMedia(current => field === 'mainImage' || field === 'campaignVideo' ? { ...current, [field]: uploaded[0] } : { ...current, [field]: [...current[field], ...uploaded] })
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Media upload failed.')
+    } finally {
+      setUploadingMedia(null)
+    }
+  }
+
+  const uploadOgImage = async (file: File) => {
+    setUploadingOgImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'products')
+      const result = await api.upload<{ url: string }>('/uploads/images', formData)
+      setSeo(current => ({ ...current, ogImage: result.url }))
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'OG image upload failed.')
+    } finally {
+      setUploadingOgImage(false)
+    }
+  }
+
+  const reorderMedia = (field: keyof ProductMedia, fromIndex: number, toIndex: number) => {
+    if (field === 'mainImage' || field === 'campaignVideo') return
+    setMedia(current => {
+      const next = [...current[field]]
+      const [item] = next.splice(fromIndex, 1)
+      next.splice(toIndex, 0, item)
+      return { ...current, [field]: next }
+    })
+  }
+
+  const removeMedia = (field: keyof ProductMedia, index?: number) => {
+    setMedia(current => {
+      if (field === 'mainImage' || field === 'campaignVideo') return { ...current, [field]: '' }
+      return { ...current, [field]: current[field].filter((_, itemIndex) => itemIndex !== index) }
+    })
   }
 
   const save = async () => {
-    setSaving(true)
-    setMessage(null)
-
-    const payload: Partial<Product> = {
-      sku: form.sku.trim(),
-      name: form.name.trim(),
-      universe: 'Heritage',
-      status: 'draft',
-      releaseNumber: form.releaseNumber.trim(),
-      quantity: Number(form.quantity || 0),
-      launchDate: form.launchDate ? new Date(form.launchDate).toISOString() : undefined,
-      releaseStatus: form.releaseStatus,
-      qrExperienceUrl: form.qrExperienceUrl.trim(),
-      productPassportId: form.productPassportId.trim(),
-      archiveTitle: form.archiveTitle.trim(),
-      storyTitle: form.storyTitle.trim(),
-      price: Number(form.price || 0),
-      currency: form.currency,
-      description: form.description.trim(),
-      coverImageUrl: form.coverImageUrl.trim(),
-      images: splitLines(form.imagesText),
-      sizes: parseSizes(form.sizesText),
-      materials: splitLines(form.materialsText),
-      fit: splitLines(form.fitText),
-      colorways: parseColorways(form.colorwaysText),
-      careInstructions: splitLines(form.careInstructionsText),
-      productionNotes: form.productionNotes.trim(),
-      categoryIds: form.categoryIds,
-      collectionIds: form.collectionIds,
-      sizeGuideIncluded: form.sizeGuideIncluded,
-    }
-
+    setMessage(''); setSkuError('')
+    const normalizedSku = form.sku.trim().toUpperCase()
+    if (form.name.trim().length < 2 || !/^[A-Z0-9-]+$/.test(normalizedSku) || !form.categoryId || !form.collectionId || !form.gender || !form.productType) { setMessage('Complete all required Product Information fields.'); return }
     try {
-      const saved = isEditing && productId
-        ? await updateProduct(productId, payload)
-        : await createProduct(payload)
-
-      if (!saved) {
-        throw new Error('Unable to save product release')
-      }
-
-      setMessage(isEditing ? 'Release updated successfully.' : 'Release created successfully.')
-      onDone()
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Unable to save product release')
-    } finally {
-      setSaving(false)
-    }
+      const products = await getProducts()
+      if (products.some(existing => existing.sku.toUpperCase() === normalizedSku && existing.id !== productId)) { setSkuError('This SKU already exists. Choose a unique SKU.'); return }
+      setSaving(true)
+      const payload: Partial<Product> = { name: form.name.trim(), sku: normalizedSku, categoryIds: [form.categoryId], collectionIds: [form.collectionId], legacy: form.legacy.trim(), universe: form.universe || 'Heritage', gender: form.gender, productType: form.productType as ProductType, shortDescription: form.shortDescription.trim(), fullDescription: form.fullDescription.trim(), description: form.fullDescription.trim(), status: form.status, price: pricingNumbers.sellingPrice, currency: form.pricing.currency, coverImageUrl: media.mainImage, images: media.gallery, media, story, seo, pricing: { compareAtPrice: pricingNumbers.compareAtPrice, fabricCost: pricingNumbers.fabricCost, sewingCost: pricingNumbers.sewingCost, embroideryCost: pricingNumbers.embroideryCost, washingCost: pricingNumbers.washingCost, packagingCost: pricingNumbers.packagingCost, otherCost: pricingNumbers.otherCost }, releaseNumber: form.release.number.padStart(2, '0'), launchDate: form.release.date ? new Date(form.release.date).toISOString() : undefined, quantity: Number(form.release.quantity || 0), releaseSettings: { name: form.release.name.trim(), date: form.release.date ? new Date(form.release.date).toISOString() : undefined, price: Number(form.release.price || 0), status: form.release.status, earlyAccess: form.release.earlyAccess, earlyAccessDuration: Number(form.release.earlyAccessDuration || 0), earlyAccessUnit: form.release.earlyAccessUnit, keeperPoints: Number(form.release.keeperPoints || 0), keeperExclusive: form.release.keeperExclusive }, characteristics: form.characteristics, design: form.design, colorways: form.colors.map(color => ({ id: color.id, name: color.name, colorCode: color.colorCode, hex: color.hex, images: color.image ? [color.image] : [], sizeStocks: Object.fromEntries(form.sizes.map(size => [size, 0])) })), sizes: form.sizes.map(size => ({ size, availability: 'available', stock: 0 })), variants, inventoryPieces }
+      payload.collectionId = form.collectionId
+      payload.collectionIds = []
+      const saved = isEditing && productId ? await updateProduct(productId, payload) : await createProduct(payload)
+      if (!saved) throw new Error('Product could not be saved.')
+      setMessage(isEditing ? 'Product information updated.' : 'Product created.'); onDone()
+    } catch (error) { setMessage(error instanceof Error ? error.message : 'Product could not be saved.') } finally { setSaving(false) }
   }
 
-  if (isEditing && loading) {
-    return <div style={{ padding: '40px 48px', maxWidth: 1360, margin: '0 auto', color: TEXT_SEC }}>Loading product release...</div>
-  }
+  if (isEditing && loading) return <div style={{ padding: 48, color: TEXT_SEC }}>Loading product...</div>
 
-  return (
-    <div style={{ padding: '40px 48px 80px', maxWidth: 1440, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32, gap: 20, paddingBottom: 22, borderBottom: `1px solid ${BORDER}` }}>
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: CLAY, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>{isEditing ? 'Product release / Edit' : 'Product release / New'}</div>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 32, fontWeight: 500, color: INDIGO, letterSpacing: '-0.01em' }}>{pageTitle}</div>
-          <div style={{ fontSize: 13, color: TEXT_SEC, marginTop: 6, maxWidth: 620, lineHeight: 1.5 }}>{subtitle}</div>
+  return <div style={{ maxWidth: 1440, margin: '0 auto', padding: '40px 48px 80px', color: TEXT }}>
+    <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 24, paddingBottom: 24, borderBottom: `1px solid ${BORDER}` }}>
+      <div><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase' }}>Product Management</div><h1 style={{ margin: '8px 0 0', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 32, fontWeight: 500 }}>{form.name || 'New Product'}</h1><div style={{ marginTop: 6, color: TEXT_SEC, fontSize: 12 }}>{form.sku || 'SKU not defined'} · {form.status}</div></div>
+      <div style={{ display: 'flex', gap: 8 }}><button type="button" onClick={() => onNavigate('products')} style={{ padding: '10px 16px', border: `1px solid ${BORDER}`, borderRadius: 9, background: 'transparent', color: TEXT_SEC, cursor: 'pointer' }}>Cancel</button><button type="button" onClick={() => void save()} disabled={saving} style={{ padding: '10px 18px', border: 0, borderRadius: 9, background: INDIGO, color: '#E7DFD2', fontWeight: 600, cursor: saving ? 'wait' : 'pointer' }}>{saving ? 'Saving...' : 'Save Draft'}</button></div>
+    </header>
+    {message && <div style={{ marginTop: 18, padding: 12, borderRadius: 9, background: message.includes('Complete') || message.includes('could') ? '#F9EDEA' : '#E6EDE8', color: message.includes('Complete') || message.includes('could') ? '#A63D2F' : '#4A7A5A', fontSize: 13 }}>{message}</div>}
+    <nav style={{ display: 'flex', gap: 2, overflowX: 'auto', marginTop: 24, borderBottom: `1px solid ${BORDER}` }}>{PRODUCT_TABS.map(tab => <button key={tab} type="button" onClick={() => setActiveTab(tab)} style={{ flex: '0 0 auto', padding: '13px 12px', border: 0, borderBottom: `2px solid ${activeTab === tab ? CLAY : 'transparent'}`, background: 'transparent', color: activeTab === tab ? INDIGO : TEXT_SEC, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>{tab}</button>)}</nav>
+    <main style={{ marginTop: 26, maxWidth: 920 }}>
+      {activeTab === 'Product Information' && <section style={{ padding: 26, border: `1px solid ${BORDER}`, borderRadius: 14, background: '#F7F3EC' }}>
+        <div style={{ marginBottom: 24 }}><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em' }}>PRODUCT INFORMATION</div><p style={{ margin: '8px 0 0', color: TEXT_SEC, fontSize: 13 }}>This tab contains the core product information.</p></div>
+        <h2 style={{ margin: '0 0 16px', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Basic Information</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+          <Field label="Product Name" required><input value={form.name} minLength={2} maxLength={100} onChange={event => update('name', event.target.value)} style={inputStyle} /></Field>
+          <Field label="SKU" required><input value={form.sku} onChange={event => update('sku', event.target.value.toUpperCase().replace(/\s/g, '-'))} style={{ ...inputStyle, fontFamily: 'monospace' }} />{skuError && <span style={{ color: '#A63D2F', fontSize: 11, textTransform: 'none', letterSpacing: 0 }}>{skuError}</span>}</Field>
+          <Field label="Category" required><select value={form.categoryId} onChange={event => update('categoryId', event.target.value)} style={inputStyle}><option value="">Select category</option>{categories.map(category => <option key={category.id} value={category.id}>{category.label}</option>)}</select></Field>
+          <Field label="Collection" required><select value={form.collectionId} onChange={event => update('collectionId', event.target.value)} style={inputStyle}><option value="">Select collection</option>{collections.map(collection => <option key={collection.id} value={collection.id}>{collection.name}</option>)}</select></Field>
+          <Field label="Legacy"><input value={form.legacy} onChange={event => update('legacy', event.target.value)} style={inputStyle} /></Field>
+          <Field label="Universe"><select value={form.universe} onChange={event => update('universe', event.target.value as ProductUniverse)} style={inputStyle}><option value="">Select universe</option>{UNIVERSES.map(universe => <option key={universe}>{universe}</option>)}</select></Field>
+          <Field label="Gender" required><select value={form.gender} onChange={event => update('gender', event.target.value)} style={inputStyle}><option value="">Select gender</option>{GENDERS.map(gender => <option key={gender}>{gender}</option>)}</select></Field>
+          <Field label="Product Type" required><select value={form.productType} onChange={event => update('productType', event.target.value)} style={inputStyle}><option value="">Select product type</option>{PRODUCT_TYPES.map(type => <option key={type}>{type}</option>)}</select></Field>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <button onClick={() => onNavigate('products')} style={{ padding: '9px 18px', border: `1px solid ${BORDER}`, borderRadius: 10, background: 'transparent', fontSize: 13, color: TEXT_SEC, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
-            ← Back
-          </button>
-          <button onClick={save} disabled={saving} style={{ padding: '9px 20px', border: 'none', borderRadius: 10, background: INDIGO, color: '#E7DFD2', fontSize: 13, fontWeight: 500, cursor: saving ? 'wait' : 'pointer', fontFamily: 'Inter, sans-serif', opacity: saving ? 0.85 : 1 }}>
-            {saving ? 'Saving…' : isEditing ? 'Save Changes' : 'Create Release'}
-          </button>
+        <div style={{ display: 'grid', gap: 18, marginTop: 18 }}><Field label="Short Description" required><textarea value={form.shortDescription} maxLength={500} onChange={event => update('shortDescription', event.target.value)} style={{ ...inputStyle, minHeight: 82, resize: 'vertical' }} /></Field><Field label="Full Description"><textarea value={form.fullDescription} onChange={event => update('fullDescription', event.target.value)} style={{ ...inputStyle, minHeight: 150, resize: 'vertical' }} /></Field></div>
+        <div style={{ marginTop: 22, paddingTop: 22, borderTop: `1px solid ${BORDER}` }}><h2 style={{ margin: '0 0 16px', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Product Status</h2><Field label="Status"><select value={form.status} onChange={event => update('status', event.target.value as ProductStatus)} style={inputStyle}>{PRODUCT_STATUSES.map(status => <option key={status} value={status}>{status[0].toUpperCase() + status.slice(1)}</option>)}</select></Field></div>
+        {missingFields.length > 0 && <div style={{ marginTop: 20, color: '#A06030', fontSize: 12 }}>Missing required fields: {missingFields.join(', ')}</div>}
+      </section>}
+      {activeTab === 'Caractéristiques produit' && <section style={{ padding: 26, border: `1px solid ${BORDER}`, borderRadius: 14, background: '#F7F3EC' }}>
+        <div style={{ marginBottom: 24 }}><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em' }}>CARACTÉRISTIQUES PRODUIT</div><p style={{ margin: '8px 0 0', color: TEXT_SEC, fontSize: 13 }}>Configure the product fit, materials and construction details.</p></div>
+        <h2 style={{ margin: '0 0 16px', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Produit</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+          {([['fit', 'Fit'], ['gender', 'Gender'], ['fabric', 'Fabric'], ['composition', 'Composition'], ['weight', 'Weight'], ['finish', 'Finish']] as const).map(([field, label]) => <Field key={field} label={label}><input value={field === 'gender' ? form.gender : form.characteristics[field]} onChange={event => field === 'gender' ? update('gender', event.target.value) : update('characteristics', { ...form.characteristics, [field]: event.target.value })} style={inputStyle} /></Field>)}
         </div>
-      </div>
-
-      {message && (
-        <div style={{ marginBottom: 18, padding: '12px 16px', borderRadius: 12, background: '#E6EDE8', color: '#4A7A5A', border: '1px solid #C8D9CC', fontSize: 13 }}>
-          {message}
+        <div style={{ marginTop: 24, paddingTop: 24, borderTop: `1px solid ${BORDER}` }}><h2 style={{ margin: '0 0 16px', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Construction</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>{([['collar', 'Collar'], ['sleeve', 'Sleeve'], ['bottomHem', 'Bottom Hem'], ['sleeveHem', 'Sleeve Hem']] as const).map(([field, label]) => <Field key={field} label={label}><input value={form.characteristics[field]} onChange={event => update('characteristics', { ...form.characteristics, [field]: event.target.value })} style={inputStyle} /></Field>)}</div>
         </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' }}>
-        <div>
-          <SectionCard title="Release Core">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <Field label="Product Name">
-                <input value={form.name} onChange={e => updateField('name', e.target.value)} style={inputStyle} />
-              </Field>
-              <Field label="SKU" hint="Use the release identifier convention from the protocol">
-                <input value={form.sku} onChange={e => updateField('sku', e.target.value)} style={{ ...inputStyle, fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }} />
-              </Field>
-              <Field label="Release Number">
-                <input value={form.releaseNumber} onChange={e => updateField('releaseNumber', e.target.value)} style={{ ...inputStyle, fontFamily: 'JetBrains Mono, monospace' }} />
-              </Field>
-              <Field label="Release Status">
-                <select value={form.releaseStatus} onChange={e => updateField('releaseStatus', e.target.value as ProductReleaseStatus)} style={{ ...inputStyle, cursor: 'pointer' }}>
-                  {UPPER_RELEASE_STATUSES.map(status => <option key={status}>{status}</option>)}
-                </select>
-              </Field>
-              <Field label="Quantity" hint="Finite quantity is mandatory for every Legacy Release">
-                <input type="number" min="0" value={form.quantity} onChange={e => updateField('quantity', e.target.value)} style={{ ...inputStyle, fontFamily: 'JetBrains Mono, monospace' }} />
-              </Field>
-              <Field label="Launch Date">
-                <input type="date" value={form.launchDate} onChange={e => updateField('launchDate', e.target.value)} style={inputStyle} />
-              </Field>
-              <Field label="Price">
-                <input type="number" min="0" step="0.01" value={form.price} onChange={e => updateField('price', e.target.value)} style={inputStyle} />
-              </Field>
-              <Field label="Currency">
-                <select value={form.currency} onChange={e => updateField('currency', e.target.value as Currency)} style={{ ...inputStyle, cursor: 'pointer' }}>
-                  {CURRENCIES.map(currency => <option key={currency}>{currency}</option>)}
-                </select>
-              </Field>
-            </div>
-            <Field label="Description" hint="Shown in the public product page and the admin preview">
-              <textarea value={form.description} onChange={e => updateField('description', e.target.value)} style={{ ...inputStyle, height: 96, resize: 'vertical' }} />
-            </Field>
-              <Field label="Collection" hint="Link this release to a website collection">
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {collections.map(collection => {
-                    const selected = form.collectionIds.includes(collection.id)
-                    return <label key={collection.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 10px', border: `1px solid ${selected ? INDIGO : BORDER}`, borderRadius: 9, background: selected ? '#E8EDF3' : '#EDE8DF', color: selected ? INDIGO : TEXT_SEC, fontSize: 12, cursor: 'pointer' }}>
-                      <input type="checkbox" checked={selected} onChange={() => updateField('collectionIds', selected ? form.collectionIds.filter(id => id !== collection.id) : [...form.collectionIds, collection.id])} />
-                      {collection.name}
-                    </label>
-                  })}
-                  {collections.length === 0 && <span style={{ fontSize: 12, color: TEXT_SEC }}>No collections available yet.</span>}
-                </div>
-              </Field>
-              <Field label="Categories" hint="Select the persisted website categories for this product">
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {categories.map(category => {
-                    const selected = form.categoryIds.includes(category.id)
-                    return <label key={category.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 10px', border: `1px solid ${selected ? INDIGO : BORDER}`, borderRadius: 9, background: selected ? '#E8EDF3' : '#EDE8DF', color: selected ? INDIGO : TEXT_SEC, fontSize: 12, cursor: 'pointer' }}>
-                      <input type="checkbox" checked={selected} onChange={() => updateField('categoryIds', selected ? form.categoryIds.filter(id => id !== category.id) : [...form.categoryIds, category.id])} />
-                      {category.label}
-                    </label>
-                  })}
-                  {categories.length === 0 && <span style={{ fontSize: 12, color: TEXT_SEC }}>Create categories from the dedicated category page first.</span>}
-                </div>
-              </Field>
-          </SectionCard>
-
-          <SectionCard title="Release Context">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <Field label="Archive Title">
-                <input value={form.archiveTitle} onChange={e => updateField('archiveTitle', e.target.value)} style={inputStyle} />
-              </Field>
-              <Field label="Story Title">
-                <input value={form.storyTitle} onChange={e => updateField('storyTitle', e.target.value)} style={inputStyle} />
-              </Field>
-              <Field label="QR Experience URL">
-                <input value={form.qrExperienceUrl} onChange={e => updateField('qrExperienceUrl', e.target.value)} style={inputStyle} />
-              </Field>
-              <Field label="Product Passport ID">
-                <input value={form.productPassportId} onChange={e => updateField('productPassportId', e.target.value)} style={{ ...inputStyle, fontFamily: 'JetBrains Mono, monospace' }} />
-              </Field>
-            </div>
-            <Field label="Cover Image URL">
-              <input value={form.coverImageUrl} onChange={e => updateField('coverImageUrl', e.target.value)} style={inputStyle} />
-            </Field>
-            <Field label="Production Notes">
-              <textarea value={form.productionNotes} onChange={e => updateField('productionNotes', e.target.value)} style={{ ...inputStyle, height: 92, resize: 'vertical' }} />
-            </Field>
-          </SectionCard>
-
-          <SectionCard title="Size / Color / Gallery Setup">
-            <Field label="Size availability" hint="Choose the standard garment sizes, then define the stock and the colors available for each size.">
-              <div style={{ display: 'grid', gap: 12 }}>
-                {sizeRows.map((row, index) => (
-                  <div key={row.size + index} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 1.2fr 1.3fr', gap: 10, alignItems: 'center', padding: 12, border: `1px solid ${BORDER}`, borderRadius: 10, background: '#FBF9F5' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 28, height: 28, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, background: INDIGO, color: '#F5F1EA', fontSize: 10, fontWeight: 700 }}>{row.size}</span><span style={{ fontSize: 10, color: TEXT_SEC, textTransform: 'uppercase' }}>Size</span></div>
-                    <input type="number" min="0" value={row.stock} onChange={e => {
-                      const next = [...sizeRows]
-                      next[index] = { ...next[index], stock: Number(e.target.value || 0) }
-                      setSizeRows(next)
-                      updateField('sizesText', serializeSizeRows(next))
-                    }} style={{ ...inputStyle, maxWidth: 120 }} />
-                    <select value={row.availability} onChange={e => {
-                      const next = [...sizeRows]
-                      next[index] = { ...next[index], availability: e.target.value as SizeAvailability }
-                      setSizeRows(next)
-                      updateField('sizesText', serializeSizeRows(next))
-                    }} style={{ ...inputStyle, cursor: 'pointer' }}>
-                      <option value="available">Available</option>
-                      <option value="low">Low</option>
-                      <option value="sold-out">Sold out</option>
-                    </select>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {colorRows.map((color, colorIndex) => (
-                        <label key={color.id || colorIndex} title={`${color.name} stock for ${row.size}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderRadius: 999, background: '#EDE8DF', border: `1px solid ${BORDER}` }}>
-                          <span style={{ width: 12, height: 12, borderRadius: '50%', background: color.hex, border: '1px solid rgba(0,0,0,0.12)', display: 'inline-block' }} />
-                          <input type="number" min="0" value={color.sizeQuantities?.[row.size] ?? 0} onChange={e => {
-                            const nextColors = [...colorRows]
-                            const currentQty = nextColors[colorIndex].sizeQuantities ?? {}
-                            nextColors[colorIndex] = { ...nextColors[colorIndex], sizeQuantities: { ...currentQty, [row.size]: Number(e.target.value || 0) } }
-                            setColorRows(nextColors)
-                            updateField('colorwaysText', serializeColorRows(nextColors))
-                          }} style={{ width: 52, border: 'none', background: 'transparent', color: TEXT, fontSize: 11, outline: 'none' }} />
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Field>
-            <Field label="Available colors" hint="Add the color variants and specify the stock available for each size in that color.">
-              <div style={{ display: 'grid', gap: 10 }}>
-                {colorRows.map((color, colorIndex) => (
-                  <div key={color.id || colorIndex} style={{ display: 'grid', gridTemplateColumns: '1fr 140px 1fr', gap: 10, alignItems: 'center', padding: 12, border: `1px solid ${BORDER}`, borderRadius: 10, background: '#FBF9F5' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <input type="color" value={color.hex} onChange={e => {
-                        const next = [...colorRows]
-                        next[colorIndex] = { ...next[colorIndex], hex: e.target.value }
-                        setColorRows(next)
-                        updateField('colorwaysText', serializeColorRows(next))
-                      }} style={{ width: 36, height: 36, border: 'none', background: 'transparent', borderRadius: 999, cursor: 'pointer' }} />
-                      <input value={color.name} onChange={e => {
-                        const next = [...colorRows]
-                        next[colorIndex] = { ...next[colorIndex], name: e.target.value }
-                        setColorRows(next)
-                        updateField('colorwaysText', serializeColorRows(next))
-                      }} style={{ ...inputStyle }} />
-                    </div>
-                    <div style={{ fontSize: 12, color: TEXT_SEC, fontWeight: 600 }}>Qty by size</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {SIZE_OPTIONS.map(size => (
-                        <label key={size} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#EDE8DF', border: `1px solid ${BORDER}`, borderRadius: 999, padding: '4px 8px' }}>
-                          <span style={{ fontSize: 10, color: TEXT_SEC, fontWeight: 700 }}>{size}</span>
-                          <input type="number" min="0" value={color.sizeQuantities?.[size] ?? 0} onChange={e => {
-                            const next = [...colorRows]
-                            const current = next[colorIndex].sizeQuantities ?? {}
-                            next[colorIndex] = { ...next[colorIndex], sizeQuantities: { ...current, [size]: Number(e.target.value || 0) } }
-                            setColorRows(next)
-                            updateField('colorwaysText', serializeColorRows(next))
-                          }} style={{ width: 40, border: 'none', background: 'transparent', color: TEXT, fontSize: 11, outline: 'none' }} />
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                <button type="button" onClick={() => {
-                  const next = [...colorRows]
-                  next.push({
-                    id: `color-${Math.random().toString(36).slice(2, 8)}`,
-                    name: `Color ${next.length + 1}`,
-                    hex: DEFAULT_COLOR_SWATCHES[next.length % DEFAULT_COLOR_SWATCHES.length].hex,
-                    sizeQuantities: Object.fromEntries(SIZE_OPTIONS.map(size => [size, 0])),
-                  })
-                  setColorRows(next)
-                  updateField('colorwaysText', serializeColorRows(next))
-                }} style={{ padding: '10px 14px', border: `1px dashed ${BORDER}`, borderRadius: 10, background: '#F5F1EA', color: TEXT_SEC, cursor: 'pointer', fontSize: 12, width: 'fit-content' }}>
-                  + Add color variant
-                </button>
-              </div>
-            </Field>
-            <Field label="Image URLs" hint="All product media; color-specific images can be listed in the colorway block above">
-              <textarea value={form.imagesText} onChange={e => updateField('imagesText', e.target.value)} style={{ ...inputStyle, height: 96, resize: 'vertical' }} />
-            </Field>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
-              <input type="checkbox" checked={form.sizeGuideIncluded} onChange={e => updateField('sizeGuideIncluded', e.target.checked)} />
-              <label style={{ fontSize: 12, color: TEXT_SEC }}>Include size guide</label>
-            </div>
-          </SectionCard>
-
-          <SectionCard title="Materials / Fit / Care">
-            <Field label="Materials" hint="One material per line">
-              <textarea value={form.materialsText} onChange={e => updateField('materialsText', e.target.value)} style={{ ...inputStyle, height: 84, resize: 'vertical' }} />
-            </Field>
-            <Field label="Fit" hint="One fit point per line">
-              <textarea value={form.fitText} onChange={e => updateField('fitText', e.target.value)} style={{ ...inputStyle, height: 84, resize: 'vertical' }} />
-            </Field>
-            <Field label="Care Instructions" hint="One instruction per line">
-              <textarea value={form.careInstructionsText} onChange={e => updateField('careInstructionsText', e.target.value)} style={{ ...inputStyle, height: 84, resize: 'vertical' }} />
-            </Field>
-          </SectionCard>
+      </section>}
+      {activeTab === 'Design & Heritage' && <section style={{ padding: 26, border: `1px solid ${BORDER}`, borderRadius: 14, background: '#F7F3EC' }}>
+        <div style={{ marginBottom: 24 }}><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em' }}>DESIGN &amp; HERITAGE</div><p style={{ margin: '8px 0 0', color: TEXT_SEC, fontSize: 13 }}>This tab contains the cultural and design information.</p></div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+          <Field label="Design Name"><input value={form.design.designName} onChange={event => update('design', { ...form.design, designName: event.target.value })} style={inputStyle} /></Field>
+          <Field label="Tifinagh Text"><input value={form.design.tifinaghText} onChange={event => update('design', { ...form.design, tifinaghText: event.target.value })} style={inputStyle} /></Field>
+          <Field label="Meaning"><input value={form.design.meaning} onChange={event => update('design', { ...form.design, meaning: event.target.value })} style={inputStyle} /></Field>
+          <Field label="Heritage Theme"><select value={form.design.heritageTheme} onChange={event => update('design', { ...form.design, heritageTheme: event.target.value })} style={inputStyle}><option value="">Select heritage theme</option><option>Symbols &amp; Scripts</option><option>Textile Heritage</option><option>Landscape &amp; Territory</option><option>Community Memory</option></select></Field>
+          <Field label="Motif"><input list="product-motifs" value={form.design.motif} onChange={event => update('design', { ...form.design, motif: event.target.value })} style={inputStyle} /><datalist id="product-motifs"><option value="Diamond" /><option value="Eye" /><option value="Mountain" /><option value="Tifinagh Letter" /><option value="Zellij" /></datalist></Field>
+          <Field label="Decoration Technique"><select value={form.design.decorationTechnique} onChange={event => update('design', { ...form.design, decorationTechnique: event.target.value })} style={inputStyle}><option value="">Select technique</option>{['Embroidery', 'Screen Printing', 'DTF', 'Woven', 'Embossing', 'None'].map(value => <option key={value}>{value}</option>)}</select></Field>
+          <Field label="Decoration Position"><select value={form.design.decorationPosition} onChange={event => update('design', { ...form.design, decorationPosition: event.target.value })} style={inputStyle}><option value="">Select position</option>{['Front Center', 'Back Center', 'Left Chest', 'Right Chest', 'Sleeve', 'Collar', 'Hem', 'Custom'].map(value => <option key={value}>{value}</option>)}</select></Field>
+          <Field label="Design Version"><input value={form.design.version} onChange={event => update('design', { ...form.design, version: event.target.value })} style={inputStyle} /></Field>
         </div>
-
-        <div style={{ position: 'sticky', top: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ background: '#F5F1EA', border: `1px solid ${BORDER}`, borderRadius: 20, overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: `1px solid ${BORDER}`, background: '#EFE8DD' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>Release Summary</div>
-            </div>
-            <div style={{ padding: 20 }}>
-              <div style={{ fontSize: 20, fontWeight: 500, color: INDIGO, fontFamily: "'Playfair Display', serif", marginBottom: 8 }}>{form.name || 'Unnamed Release'}</div>
-              <div style={{ fontSize: 12, color: TEXT_SEC, marginBottom: 16, fontFamily: 'JetBrains Mono, monospace' }}>{form.sku || 'No SKU yet'}</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-                <Chip label={form.universe} active />
-                <StatusPill label={form.releaseStatus} active={form.releaseStatus === 'live'} />
-                <CatalogChip status={form.status} />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <span style={{ fontSize: 12, color: TEXT_SEC }}>Quantity</span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: TEXT }}>{form.quantity || '0'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <span style={{ fontSize: 12, color: TEXT_SEC }}>Launch</span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: TEXT }}>{form.launchDate || 'Not set'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <span style={{ fontSize: 12, color: TEXT_SEC }}>Passport</span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: TEXT }}>{form.productPassportId || 'Not linked'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <span style={{ fontSize: 12, color: TEXT_SEC }}>QR</span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: TEXT, wordBreak: 'break-all', textAlign: 'right' }}>{form.qrExperienceUrl || 'Not linked'}</span>
-              </div>
-              <button onClick={save} disabled={saving} style={{ width: '100%', padding: '10px', background: INDIGO, color: '#E7DFD2', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 500, cursor: saving ? 'wait' : 'pointer', fontFamily: 'Inter, sans-serif', marginBottom: 8 }}>
-                {saving ? 'Saving…' : isEditing ? 'Save Changes' : 'Create Release'}
-              </button>
-              <button onClick={() => onNavigate('products')} style={{ width: '100%', padding: '10px', background: 'transparent', color: TEXT_SEC, border: `1px solid ${BORDER}`, borderRadius: 10, fontSize: 13, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
-                Cancel →
-              </button>
-            </div>
-          </div>
-
-          <div style={{ background: '#F5F1EA', border: `1px solid ${BORDER}`, borderRadius: 16, padding: '16px 18px' }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, marginBottom: 10 }}>Protocol Checks</div>
-            {[
-              { label: 'Finite quantity', ok: Number(form.quantity || 0) > 0 },
-              { label: 'Passport linked', ok: Boolean(form.productPassportId.trim()) },
-              { label: 'QR linked', ok: Boolean(form.qrExperienceUrl.trim()) },
-              { label: 'Story linked', ok: Boolean(form.storyTitle.trim()) },
-            ].map(item => (
-              <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <span style={{ fontSize: 12, color: TEXT_SEC }}>{item.label}</span>
-                <span style={{ fontSize: 11, fontWeight: 600, color: item.ok ? '#4A7A5A' : '#A06030' }}>{item.ok ? 'OK' : 'Missing'}</span>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ background: '#F5F1EA', border: `1px solid ${BORDER}`, borderRadius: 16, padding: '16px 18px' }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, marginBottom: 10 }}>Release Preview</div>
-            <div style={{ aspectRatio: '4/5', borderRadius: 14, overflow: 'hidden', border: `1px solid ${BORDER}`, background: '#EDE8DF', marginBottom: 12 }}>
-              {form.coverImageUrl ? (
-                <img src={form.coverImageUrl} alt={form.name || 'product preview'} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              ) : (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXT_SEC, fontSize: 12 }}>Cover image preview</div>
-              )}
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: TEXT, marginBottom: 4 }}>{form.name || 'Unnamed Release'}</div>
-            <div style={{ fontSize: 12, color: TEXT_SEC, lineHeight: 1.5 }}>{form.description || 'Add the release description and story context to preview the public product page.'}</div>
-          </div>
+        {form.design.decorationPosition === 'Custom' && <div style={{ marginTop: 18 }}><Field label="Custom Position"><textarea value={form.design.customPosition} onChange={event => update('design', { ...form.design, customPosition: event.target.value })} style={{ ...inputStyle, minHeight: 76, resize: 'vertical' }} /></Field></div>}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginTop: 18 }}><Field label="Inspiration"><textarea value={form.design.inspiration} onChange={event => update('design', { ...form.design, inspiration: event.target.value })} style={{ ...inputStyle, minHeight: 90, resize: 'vertical' }} /></Field><Field label="Motif Meaning"><textarea value={form.design.motifMeaning} onChange={event => update('design', { ...form.design, motifMeaning: event.target.value })} style={{ ...inputStyle, minHeight: 90, resize: 'vertical' }} /></Field></div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginTop: 18 }}><Field label="Design Story"><textarea value={form.design.designStory} onChange={event => update('design', { ...form.design, designStory: event.target.value })} style={{ ...inputStyle, minHeight: 120, resize: 'vertical' }} /></Field><Field label="Heritage Story"><textarea value={form.design.heritageStory} onChange={event => update('design', { ...form.design, heritageStory: event.target.value })} style={{ ...inputStyle, minHeight: 120, resize: 'vertical' }} /></Field></div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 12, alignItems: 'end', marginTop: 18, maxWidth: 520 }}><Field label="Thread Color"><input type="color" value={form.design.threadColorHex} onChange={event => update('design', { ...form.design, threadColorHex: event.target.value })} style={{ width: 54, height: 42, padding: 3, border: `1px solid ${BORDER}`, borderRadius: 9, background: '#FBF9F5' }} /></Field><Field label="Thread Color Name"><input value={form.design.threadColor} onChange={event => update('design', { ...form.design, threadColor: event.target.value })} style={inputStyle} placeholder="Beige" /></Field></div>
+      </section>}
+      {activeTab === 'Variants' && <section style={{ padding: 26, border: `1px solid ${BORDER}`, borderRadius: 14, background: '#F7F3EC' }}>
+        <div style={{ marginBottom: 24 }}><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em' }}>VARIANTS</div><p style={{ margin: '8px 0 0', color: TEXT_SEC, fontSize: 13 }}>Manage colors and sizes. Variants are generated automatically.</p></div>
+        <h2 style={{ margin: '0 0 16px', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Colors</h2>
+        <div style={{ display: 'grid', gap: 12 }}>{form.colors.map((color, index) => <div key={color.id} style={{ display: 'grid', gridTemplateColumns: '1fr 120px 72px 1fr auto', gap: 10, alignItems: 'end', padding: 14, border: `1px solid ${BORDER}`, borderRadius: 10, background: '#FBF9F5' }}><Field label="Color Name"><input value={color.name} onChange={event => { const next = [...form.colors]; next[index] = { ...color, name: event.target.value }; update('colors', next) }} style={inputStyle} /></Field><Field label="Color Code"><input value={color.colorCode} maxLength={5} onChange={event => { const next = [...form.colors]; next[index] = { ...color, colorCode: event.target.value.toUpperCase().replace(/\s/g, '') }; update('colors', next) }} style={{ ...inputStyle, fontFamily: 'monospace' }} /></Field><Field label="Hex"><input type="color" value={color.hex} onChange={event => { const next = [...form.colors]; next[index] = { ...color, hex: event.target.value }; update('colors', next) }} style={{ width: '100%', height: 42, padding: 3, border: `1px solid ${BORDER}`, borderRadius: 9 }} /></Field><Field label="Color Image URL"><input value={color.image} onChange={event => { const next = [...form.colors]; next[index] = { ...color, image: event.target.value }; update('colors', next) }} placeholder="Cloudinary URL" style={inputStyle} /></Field><button type="button" onClick={() => update('colors', form.colors.filter(item => item.id !== color.id))} style={{ height: 42, border: 0, background: 'transparent', color: '#A63D2F', cursor: 'pointer' }}>Remove</button></div>)}</div>
+        <button type="button" onClick={() => update('colors', [...form.colors, { id: `color-${Date.now()}`, name: '', colorCode: '', hex: '#111111', image: '' }])} style={{ marginTop: 14, padding: '10px 14px', border: `1px dashed ${BORDER}`, borderRadius: 9, background: 'transparent', color: INDIGO, cursor: 'pointer' }}>+ Add Color</button>
+        <div style={{ marginTop: 30, paddingTop: 24, borderTop: `1px solid ${BORDER}` }}><h2 style={{ margin: '0 0 16px', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Sizes</h2><div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>{SIZE_OPTIONS.map(size => <label key={size} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 12px', border: `1px solid ${form.sizes.includes(size) ? INDIGO : BORDER}`, borderRadius: 9, background: form.sizes.includes(size) ? '#E8EDF3' : '#FBF9F5', color: form.sizes.includes(size) ? INDIGO : TEXT_SEC, cursor: 'pointer', fontSize: 13 }}><input type="checkbox" checked={form.sizes.includes(size)} onChange={event => update('sizes', event.target.checked ? [...form.sizes, size] : form.sizes.filter(item => item !== size))} />{size}</label>)}</div></div>
+        <div style={{ marginTop: 30, paddingTop: 24, borderTop: `1px solid ${BORDER}` }}><h2 style={{ margin: '0 0 8px', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Variant Matrix</h2><p style={{ margin: '0 0 16px', color: TEXT_SEC, fontSize: 13 }}>{variants.length} variant{variants.length === 1 ? '' : 's'} generated from colors x sizes.</p>{variants.length === 0 ? <div style={{ color: TEXT_SEC, fontSize: 13 }}>Add at least one color and one size.</div> : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>{variants.map(variant => <div key={variant.id} style={{ padding: 12, border: `1px solid ${BORDER}`, borderRadius: 9, background: '#FBF9F5' }}><div style={{ fontFamily: 'monospace', fontSize: 12, color: INDIGO }}>{variant.sku}</div><div style={{ marginTop: 6, color: TEXT_SEC, fontSize: 12 }}>{variant.colorName} · {variant.size}</div></div>)}</div>}</div>
+      </section>}
+      {activeTab === 'Pricing' && <section style={{ padding: 26, border: `1px solid ${BORDER}`, borderRadius: 14, background: '#F7F3EC' }}>
+        <div style={{ marginBottom: 24 }}><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em' }}>PRICING</div><p style={{ margin: '8px 0 0', color: TEXT_SEC, fontSize: 13 }}>Display commercial information.</p></div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+          {([['sellingPrice', 'Selling Price'], ['compareAtPrice', 'Compare-at Price'], ['fabricCost', 'Fabric Cost'], ['sewingCost', 'Sewing Cost'], ['embroideryCost', 'Embroidery Cost'], ['washingCost', 'Washing Cost'], ['packagingCost', 'Packaging Cost'], ['otherCost', 'Other Production Cost']] as const).map(([field, label]) => <Field key={field} label={label}><input type="number" min="0" step="0.001" value={form.pricing[field]} onChange={event => update('pricing', { ...form.pricing, [field]: event.target.value })} style={inputStyle} /></Field>)}
+          <Field label="Currency"><select value={form.pricing.currency} onChange={event => update('pricing', { ...form.pricing, currency: event.target.value as Currency })} style={inputStyle}><option value="TND">TND</option><option value="EUR">EUR</option><option value="USD">USD</option><option value="MAD">MAD</option><option value="DZD">DZD</option></select></Field>
         </div>
-      </div>
-    </div>
-  )
-}
-
-const inputStyle = {
-  width: '100%',
-  padding: '10px 14px',
-  border: `1px solid ${BORDER}`,
-  borderRadius: 10,
-  background: '#EDE8DF',
-  fontSize: 13,
-  color: TEXT,
-  outline: 'none',
-  fontFamily: 'Inter, sans-serif',
+        <div style={{ marginTop: 24, paddingTop: 24, borderTop: `1px solid ${BORDER}` }}><h2 style={{ margin: '0 0 16px', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Calculated Values</h2><div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>{[['Total Cost', totalCost], ['Gross Profit', grossProfit], ['Margin %', margin]].map(([label, value]) => <div key={label as string} style={{ padding: 16, border: `1px solid ${BORDER}`, borderRadius: 9, background: '#EDE8DF' }}><div style={{ color: TEXT_SEC, fontSize: 11, textTransform: 'uppercase', letterSpacing: '.08em' }}>{label}</div><div style={{ marginTop: 8, color: INDIGO, fontSize: 20, fontWeight: 700 }}>{label === 'Margin %' ? `${Number(value).toFixed(1)}%` : `${Number(value).toFixed(3)} ${form.pricing.currency}`}</div></div>)}</div></div>
+      </section>}
+      {activeTab === 'Release' && <section style={{ padding: 26, border: `1px solid ${BORDER}`, borderRadius: 14, background: '#F7F3EC' }}>
+        <div style={{ marginBottom: 24 }}><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em' }}>RELEASE</div><p style={{ margin: '8px 0 0', color: TEXT_SEC, fontSize: 13 }}>This tab manages the product release.</p></div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+          <Field label="Release Number"><input type="number" min="1" value={Number(form.release.number || 1)} onChange={event => update('release', { ...form.release, number: String(Math.max(1, Number(event.target.value || 1))).padStart(2, '0') })} style={{ ...inputStyle, fontFamily: 'monospace' }} /><span style={{ color: TEXT_SEC, fontSize: 11, textTransform: 'none', letterSpacing: 0 }}>Displayed as {form.release.number.padStart(2, '0')}</span></Field>
+          <Field label="Release Name"><input value={form.release.name} onChange={event => update('release', { ...form.release, name: event.target.value })} style={inputStyle} placeholder="First Release" /></Field>
+          <Field label="Release Date"><input type="date" value={form.release.date} onChange={event => update('release', { ...form.release, date: event.target.value })} style={inputStyle} /></Field>
+          <Field label="Release Quantity"><input type="number" min="1" step="1" value={form.release.quantity} onChange={event => update('release', { ...form.release, quantity: event.target.value })} style={inputStyle} placeholder="30" /></Field>
+          <Field label="Release Price"><input type="number" min="0" step="0.001" value={form.release.price} onChange={event => update('release', { ...form.release, price: event.target.value })} style={inputStyle} placeholder="179.000" /></Field>
+          <Field label="Release Status"><select value={form.release.status} onChange={event => update('release', { ...form.release, status: event.target.value as ProductInformationForm['release']['status'] })} style={inputStyle}>{[['draft', 'Draft'], ['upcoming', 'Upcoming'], ['early-access', 'Early Access'], ['live', 'Live'], ['sold-out', 'Sold Out'], ['closed', 'Closed']].map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
+        </div>
+        <div style={{ marginTop: 28, paddingTop: 24, borderTop: `1px solid ${BORDER}` }}><h2 style={{ margin: '0 0 16px', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Keeper settings</h2>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, color: TEXT, fontSize: 13, cursor: 'pointer' }}><input type="checkbox" checked={form.release.earlyAccess} onChange={event => update('release', { ...form.release, earlyAccess: event.target.checked })} />Early Access</label>
+          {form.release.earlyAccess && <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginTop: 18 }}><Field label="Early Access Duration"><input type="number" min="1" step="1" value={form.release.earlyAccessDuration} onChange={event => update('release', { ...form.release, earlyAccessDuration: event.target.value })} style={inputStyle} placeholder="48" /></Field><Field label="Duration Unit"><select value={form.release.earlyAccessUnit} onChange={event => update('release', { ...form.release, earlyAccessUnit: event.target.value as 'hours' | 'days' })} style={inputStyle}><option value="hours">Hours</option><option value="days">Days</option></select></Field></div>}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginTop: 18 }}><Field label="Keeper Points"><input type="number" min="0" step="1" value={form.release.keeperPoints} onChange={event => update('release', { ...form.release, keeperPoints: event.target.value })} style={inputStyle} placeholder="100" /></Field><label style={{ display: 'flex', alignItems: 'center', gap: 10, alignSelf: 'end', minHeight: 42, color: TEXT, fontSize: 13, cursor: 'pointer' }}><input type="checkbox" checked={form.release.keeperExclusive} onChange={event => update('release', { ...form.release, keeperExclusive: event.target.checked })} />Keeper Exclusive</label></div>
+        </div>
+      </section>}
+      {activeTab === 'Inventory' && <section style={{ padding: 26, border: `1px solid ${BORDER}`, borderRadius: 14, background: '#F7F3EC' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 18, marginBottom: 24 }}><div><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em' }}>INVENTORY</div><p style={{ margin: '8px 0 0', color: TEXT_SEC, fontSize: 13 }}>Stock is calculated from individual physical pieces. No global stock number is entered here.</p></div><button type="button" onClick={() => setAdjustmentOpen(true)} disabled={variants.length === 0} style={{ padding: '10px 14px', border: 0, borderRadius: 9, background: INDIGO, color: '#E7DFD2', fontWeight: 600, cursor: variants.length === 0 ? 'not-allowed' : 'pointer', opacity: variants.length === 0 ? .5 : 1 }}>Adjust Inventory</button></div>
+        {variants.length === 0 ? <div style={{ padding: 18, border: `1px dashed ${BORDER}`, borderRadius: 10, color: TEXT_SEC, fontSize: 13 }}>Add colors and sizes in Variants before registering physical pieces.</div> : <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}><thead><tr>{['Size', 'Color', 'Total', 'Available', 'Reserved', 'Sold', 'Returned', 'Damaged', 'Lost'].map(label => <th key={label} style={{ padding: '11px 10px', textAlign: label === 'Size' || label === 'Color' ? 'left' : 'right', borderBottom: `1px solid ${BORDER}`, color: TEXT_SEC, fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase' }}>{label}</th>)}</tr></thead><tbody>{inventoryRows.map(({ variant, counts }) => <tr key={variant.id}>{[variant.size, variant.colorName, INVENTORY_STATUSES.reduce((total, status) => total + counts[status], 0), ...INVENTORY_STATUSES.map(status => counts[status])].map((value, index) => <td key={`${variant.id}-${index}`} style={{ padding: '13px 10px', borderBottom: `1px solid ${BORDER}`, textAlign: index < 2 ? 'left' : 'right', color: index === 0 ? INDIGO : TEXT, fontFamily: index > 1 ? 'monospace' : 'inherit', fontSize: 13 }}>{value}</td>)}</tr>)}</tbody></table></div>}
+        <div style={{ marginTop: 18, color: TEXT_SEC, fontSize: 12 }}>All values are read-only and derived from the registered pieces.</div>
+      </section>}
+      {activeTab === 'Media' && <section style={{ padding: 26, border: `1px solid ${BORDER}`, borderRadius: 14, background: '#F7F3EC' }}>
+        <div style={{ marginBottom: 24 }}><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em' }}>MEDIA</div><p style={{ margin: '8px 0 0', color: TEXT_SEC, fontSize: 13 }}>Manage product media. Drop files into a slot and drag thumbnails to reorder them.</p></div>
+        <div style={{ display: 'grid', gap: 14 }}>
+          <h2 style={{ margin: '4px 0 0', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Main Image</h2>
+          <MediaSlot label="Main Product Image" field="mainImage" media={media} uploading={uploadingMedia === 'mainImage'} onFiles={uploadMediaFiles} onReorder={reorderMedia} onRemove={removeMedia} />
+          <h2 style={{ margin: '18px 0 0', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Gallery</h2>
+          {([['gallery', 'Product Images'], ['detailImages', 'Detail Images'], ['front', 'Front'], ['back', 'Back'], ['sleeve', 'Sleeve'], ['embroidery', 'Embroidery']] as const).map(([field, label]) => <MediaSlot key={field} label={label} field={field} media={media} uploading={uploadingMedia === field} onFiles={uploadMediaFiles} onReorder={reorderMedia} onRemove={removeMedia} />)}
+          <h2 style={{ margin: '18px 0 0', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Campaign</h2>
+          {([['modelImages', 'Model Images'], ['campaignVideo', 'Campaign Video'], ['lifestyleImages', 'Lifestyle Images']] as const).map(([field, label]) => <MediaSlot key={field} label={label} field={field} media={media} uploading={uploadingMedia === field} onFiles={uploadMediaFiles} onReorder={reorderMedia} onRemove={removeMedia} />)}
+        </div>
+      </section>}
+      {activeTab === 'Story' && <section style={{ padding: 26, border: `1px solid ${BORDER}`, borderRadius: 14, background: '#F7F3EC' }}>
+        <div style={{ marginBottom: 24 }}><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em' }}>STORY</div><p style={{ margin: '8px 0 0', color: TEXT_SEC, fontSize: 13 }}>Create the product storytelling with rich text.</p></div>
+        <div style={{ display: 'grid', gap: 24 }}><div><div style={{ marginBottom: 8, color: INDIGO, fontSize: 14, fontWeight: 600 }}>Full Story</div><RichTextEditor value={story.fullStory} onChange={value => setStory(current => ({ ...current, fullStory: value }))} placeholder="Tell the complete story of this product..." /></div><div><div style={{ marginBottom: 8, color: INDIGO, fontSize: 14, fontWeight: 600 }}>Design Story</div><RichTextEditor value={story.designStory} onChange={value => setStory(current => ({ ...current, designStory: value }))} placeholder="Explain the design, references and intention..." /></div></div>
+      </section>}
+      {activeTab === 'SEO' && <section style={{ padding: 26, border: `1px solid ${BORDER}`, borderRadius: 14, background: '#F7F3EC' }}>
+        <div style={{ marginBottom: 24 }}><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em' }}>SEO</div><p style={{ margin: '8px 0 0', color: TEXT_SEC, fontSize: 13 }}>Define how this product appears in search results and social sharing.</p></div>
+        <div style={{ display: 'grid', gap: 18 }}>
+          <Field label="URL Slug"><input value={seo.slug} onChange={event => { setSeoSlugEdited(true); setSeo(current => ({ ...current, slug: slugify(event.target.value) })) }} style={{ ...inputStyle, fontFamily: 'monospace' }} /><span style={{ color: TEXT_SEC, fontSize: 11, textTransform: 'none', letterSpacing: 0 }}>Automatically generated from the product name until edited.</span></Field>
+          <Field label="Meta Title"><input value={seo.metaTitle} maxLength={60} onChange={event => setSeo(current => ({ ...current, metaTitle: event.target.value }))} style={inputStyle} /><span style={{ color: TEXT_SEC, fontSize: 11, textTransform: 'none', letterSpacing: 0 }}>{seo.metaTitle.length}/60 characters</span></Field>
+          <Field label="Meta Description"><textarea value={seo.metaDescription} maxLength={160} onChange={event => setSeo(current => ({ ...current, metaDescription: event.target.value }))} style={{ ...inputStyle, minHeight: 100, resize: 'vertical' }} /><span style={{ color: TEXT_SEC, fontSize: 11, textTransform: 'none', letterSpacing: 0 }}>{seo.metaDescription.length}/160 characters</span></Field>
+          <Field label="Keywords"><input placeholder="Type a keyword and press Enter" style={inputStyle} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); const keyword = event.currentTarget.value.trim(); if (keyword && !seo.keywords.includes(keyword)) setSeo(current => ({ ...current, keywords: [...current.keywords, keyword] })); event.currentTarget.value = '' } }} /><div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 2 }}>{seo.keywords.map(keyword => <span key={keyword} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 9px', borderRadius: 999, background: '#E8EDF3', color: INDIGO, fontSize: 12 }}>{keyword}<button type="button" onClick={() => setSeo(current => ({ ...current, keywords: current.keywords.filter(item => item !== keyword) }))} aria-label={`Remove ${keyword}`} style={{ border: 0, background: 'transparent', color: TEXT_SEC, cursor: 'pointer', padding: 0 }}>×</button></span>)}</div></Field>
+          <Field label="OG Image"><label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 150, border: `1px dashed ${BORDER}`, borderRadius: 10, background: '#FBF9F5', color: TEXT_SEC, cursor: 'pointer', overflow: 'hidden' }}>{seo.ogImage ? <img src={seo.ogImage} alt="Open Graph preview" style={{ width: '100%', height: 180, objectFit: 'cover' }} /> : <span>{uploadingOgImage ? 'Uploading...' : 'Upload image'}</span>}<input type="file" accept="image/*" disabled={uploadingOgImage} onChange={event => { const file = event.target.files?.[0]; if (file) void uploadOgImage(file); event.currentTarget.value = '' }} style={{ display: 'none' }} /></label>{seo.ogImage && <button type="button" onClick={() => setSeo(current => ({ ...current, ogImage: '' }))} style={{ marginTop: 8, padding: 0, border: 0, background: 'transparent', color: '#A63D2F', cursor: 'pointer' }}>Remove OG image</button>}</Field>
+        </div>
+      </section>}
+      {activeTab === 'Activity' && <section style={{ padding: 26, border: `1px solid ${BORDER}`, borderRadius: 14, background: '#F7F3EC' }}>
+        <div style={{ marginBottom: 24 }}><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em' }}>ACTIVITY</div><p style={{ margin: '8px 0 0', color: TEXT_SEC, fontSize: 13 }}>Chronological audit log for this product.</p></div>
+        {!productId ? <div style={{ padding: 18, border: `1px dashed ${BORDER}`, borderRadius: 10, color: TEXT_SEC, fontSize: 13 }}>Save the product first to create an activity history.</div> : activityLoading ? <div style={{ color: TEXT_SEC, fontSize: 13 }}>Loading activity...</div> : activity.length === 0 ? <div style={{ padding: 18, border: `1px dashed ${BORDER}`, borderRadius: 10, color: TEXT_SEC, fontSize: 13 }}>No activity recorded yet.</div> : <div style={{ display: 'grid', gap: 0 }}>{activity.map(item => { const date = new Date(item.createdAt); return <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '150px 90px minmax(150px, 1fr) minmax(180px, 1.5fr) minmax(140px, 1fr)', gap: 14, alignItems: 'center', padding: '14px 0', borderBottom: `1px solid ${BORDER}`, fontSize: 12 }}><div style={{ color: TEXT, fontWeight: 600 }}>{date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div><div style={{ color: TEXT_SEC, fontFamily: 'monospace' }}>{date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</div><div style={{ color: TEXT_SEC }}>{item.actorEmail}</div><div style={{ color: INDIGO, fontWeight: 600 }}>{item.action}</div><div style={{ color: TEXT_SEC }}>{item.diff?.object || `${item.entityType} ${item.entityId}`}</div></div> })}</div>}
+      </section>}
+      {adjustmentOpen && <div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, zIndex: 20, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(30, 47, 68, .32)' }}><div style={{ width: 'min(520px, 100%)', padding: 26, borderRadius: 14, background: '#F7F3EC', border: `1px solid ${BORDER}`, boxShadow: '0 20px 60px rgba(30, 47, 68, .2)' }}><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}><h2 style={{ margin: 0, color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 23, fontWeight: 500 }}>Adjust Inventory</h2><button type="button" onClick={() => setAdjustmentOpen(false)} aria-label="Close" style={{ border: 0, background: 'transparent', color: TEXT_SEC, fontSize: 22, cursor: 'pointer' }}>×</button></div><div style={{ display: 'grid', gap: 16 }}><Field label="Variant"><select value={adjustmentVariantId} onChange={event => setAdjustmentVariantId(event.target.value)} style={inputStyle}><option value="">Select variant</option>{variants.map(variant => <option key={variant.id} value={variant.id}>{variant.size} / {variant.colorName} ({variant.sku})</option>)}</select></Field><Field label="Adjustment Type"><select value={adjustmentType} onChange={event => setAdjustmentType(event.target.value as InventoryPieceStatus)} style={inputStyle}>{INVENTORY_STATUSES.filter(status => status !== 'lost').map(status => <option key={status} value={status}>{status[0].toUpperCase() + status.slice(1)}</option>)}</select></Field><Field label="Quantity"><input type="number" min="1" step="1" value={adjustmentQuantity} onChange={event => setAdjustmentQuantity(event.target.value)} style={inputStyle} /></Field><Field label="Reason"><input value={adjustmentReason} onChange={event => setAdjustmentReason(event.target.value)} style={inputStyle} placeholder="Production defect" /></Field><Field label="Notes"><textarea value={adjustmentNotes} onChange={event => setAdjustmentNotes(event.target.value)} style={{ ...inputStyle, minHeight: 78, resize: 'vertical' }} placeholder="Optional" /></Field></div><div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 24 }}><button type="button" onClick={() => setAdjustmentOpen(false)} style={{ padding: '10px 14px', border: `1px solid ${BORDER}`, borderRadius: 9, background: 'transparent', color: TEXT_SEC, cursor: 'pointer' }}>Cancel</button><button type="button" onClick={applyAdjustment} disabled={!adjustmentVariantId} style={{ padding: '10px 14px', border: 0, borderRadius: 9, background: INDIGO, color: '#E7DFD2', cursor: adjustmentVariantId ? 'pointer' : 'not-allowed', opacity: adjustmentVariantId ? 1 : .5 }}>Apply Adjustment</button></div></div></div>}
+      {!['Product Information', 'Caractéristiques produit', 'Design & Heritage', 'Variants', 'Pricing', 'Release', 'Inventory', 'Media', 'Story', 'SEO', 'Activity'].includes(activeTab) && <section style={{ minHeight: 260, display: 'grid', placeItems: 'center', border: `1px dashed ${BORDER}`, borderRadius: 14, color: TEXT_SEC, background: '#FBF9F5' }}><div style={{ textAlign: 'center' }}><div style={{ color: INDIGO, fontWeight: 700 }}>{activeTab}</div><div style={{ marginTop: 8, fontSize: 13 }}>This tab is intentionally empty and ready for the next product module.</div></div></section>}
+    </main>
+  </div>
 }

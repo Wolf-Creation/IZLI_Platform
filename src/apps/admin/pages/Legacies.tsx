@@ -683,7 +683,8 @@ export default function Legacies({ onNavigate }: Props) {
     try {
       const formData = new FormData()
       formData.append('file', file)
-      const result = await api.upload<{ url: string; name: string }>('/uploads/legacy', formData)
+      formData.append('folder', 'banners')
+      const result = await api.upload<{ url: string; publicId: string; width: number; height: number; format: string }>('/uploads/images', formData)
       const imageUrl = result.url
       updateDraft('coverImageUrl', imageUrl)
       updateDraft('heroImageUrl', imageUrl)

@@ -1,3 +1,49 @@
 .keeper-circle-page {
   min-height: 100vh;
 }
+
+.website-app .keeper-circle-page {
+  background: #000 !important;
+  color: #f5f1ea;
+}
+
+.website-app .keeper-circle-page > section:first-child {
+  background: #0d0d0d !important;
+  border-bottom: 1px solid rgba(245, 241, 234, .14);
+}
+
+.website-app .keeper-circle-page > section:last-child {
+  background: #000 !important;
+}
+
+.website-app .keeper-circle-page > section > div {
+  width: auto !important;
+  max-width: none !important;
+  margin-inline: 64px !important;
+  padding-inline: 0 !important;
+}
+
+.website-app .keeper-circle-page h1,
+.website-app .keeper-circle-page h2,
+.website-app .keeper-circle-page h3,
+.website-app .keeper-circle-page p,
+.website-app .keeper-circle-page span,
+.website-app .keeper-circle-page div {
+  border-color: rgba(245, 241, 234, .2);
+}
+
+.website-app .keeper-circle-page h1,
+.website-app .keeper-circle-page h2,
+.website-app .keeper-circle-page h3 {
+  color: #f5f1ea !important;
+}
+
+.website-app .keeper-circle-page button {
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+@media (max-width: 760px) {
+  .website-app .keeper-circle-page > section > div { margin-inline: 20px !important; }
+  .website-app .keeper-circle-page > section:last-child > div { display: block !important; }
+  .website-app .keeper-circle-page > section:last-child > div > div + div { margin-top: 32px; }
+}

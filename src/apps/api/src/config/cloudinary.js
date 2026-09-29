@@ -14,3 +14,7 @@ export const configureCloudinary = () => {
 
   return cloudinary;
 };
+
+export const isCloudinaryConfigured = () => Boolean(
+  env.cloudinaryCloudName && env.cloudinaryApiKey && env.cloudinaryApiSecret,
+);

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Screen } from '../types'
+import type { User } from '../entities'
 
 const BORDER = '#D8D0C4'
 const TEXT = '#2E2E2E'
@@ -8,7 +9,9 @@ const INDIGO = '#1E2F44'
 
 const BREADCRUMBS: Partial<Record<Screen, string[]>> = {
   dashboard: ['Overview'],
+  'admin-profile': ['Account', 'Admin Profile'],
   products: ['Commerce', 'Products'],
+  stock: ['Commerce', 'Stock'],
   'product-editor': ['Commerce', 'Products', 'Product Editor'],
   collections: ['Commerce', 'Collections'],
   'collection-editor': ['Commerce', 'Collections', 'Echoes of Stone'],
@@ -32,6 +35,7 @@ const BREADCRUMBS: Partial<Record<Screen, string[]>> = {
   'lab-project-editor': ['Community Lab', 'Lab Projects', 'Mountain Memory Atlas'],
   'calls-for-contribution': ['Community Lab', 'Open Calls'],
   'commerce-analytics': ['Analytics', 'Commerce'],
+  'visitor-analytics': ['Analytics', 'Visitors'],
   'community-analytics': ['Analytics', 'Community'],
   'content-analytics': ['Analytics', 'Content'],
   'team-roles': ['System', 'Team & Roles'],
@@ -72,10 +76,12 @@ const BREADCRUMBS: Partial<Record<Screen, string[]>> = {
 interface Props {
   screen: Screen
   onNavigate: (s: Screen) => void
+  onProfile: () => void
   onLogout: () => void | Promise<void>
+  user: User
 }
 
-export default function Topbar({ screen, onNavigate, onLogout }: Props) {
+export default function Topbar({ screen, onNavigate, onProfile, onLogout, user }: Props) {
   const crumbs = BREADCRUMBS[screen] ?? ['Overview']
   const [profileOpen, setProfileOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement | null>(null)
@@ -134,19 +140,20 @@ export default function Topbar({ screen, onNavigate, onLogout }: Props) {
           onClick={() => setProfileOpen(value => !value)}
           style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
         >
-          <div style={{ width: 34, height: 34, borderRadius: 999, background: INDIGO, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: '#E7DFD2', flexShrink: 0 }}>AK</div>
+          <div style={{ width: 34, height: 34, borderRadius: 999, background: INDIGO, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: '#E7DFD2', flexShrink: 0 }}>{user.displayName.slice(0, 2).toUpperCase()}</div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>Amine Kherrab</span>
-            <span style={{ fontSize: 10, color: TEXT_SEC }}>Super Admin</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{user.displayName}</span>
+            <span style={{ fontSize: 10, color: TEXT_SEC }}>{user.role}</span>
           </div>
         </button>
 
         {profileOpen && (
           <div style={{ position: 'absolute', top: 'calc(100% + 10px)', right: 0, minWidth: 180, background: '#F5F1EA', border: `1px solid ${BORDER}`, borderRadius: 12, boxShadow: '0 16px 40px rgba(30,47,68,0.12)', overflow: 'hidden', zIndex: 1000 }}>
             <div style={{ padding: '12px 14px', borderBottom: `1px solid ${BORDER}` }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>Amine Kherrab</div>
-              <div style={{ fontSize: 11, color: TEXT_SEC, marginTop: 2 }}>amine@izli.co</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>Admin account</div>
+              <div style={{ fontSize: 11, color: TEXT_SEC, marginTop: 2 }}>Manage profile</div>
             </div>
+            <button onClick={() => { setProfileOpen(false); onProfile() }} style={{ width: '100%', padding: '11px 14px', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer', fontSize: 13, color: TEXT, fontFamily: 'Inter, sans-serif' }}>Profile</button>
             <button
               onClick={async () => {
                 setProfileOpen(false)

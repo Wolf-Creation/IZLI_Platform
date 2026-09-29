@@ -9,8 +9,11 @@ import { connectDatabase } from './config/database.js';
 import { registerModels } from './db/registerModels.js';
 import { notFoundMiddleware, errorMiddleware } from './middlewares/error.middleware.js';
 import { apiRouter } from './routes/index.js';
+import { configureCloudinary } from './config/cloudinary.js';
 
 const app = express();
+
+configureCloudinary();
 
 app.use(helmet());
 app.use(corsMiddleware);

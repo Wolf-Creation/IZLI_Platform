@@ -1,7 +1,9 @@
 export type Screen =
   | 'not-found'
   | 'dashboard'
+  | 'admin-profile'
   | 'products'
+  | 'stock'
   | 'product-editor'
   | 'categories'
   | 'collections'
@@ -26,6 +28,7 @@ export type Screen =
   | 'lab-project-editor'
   | 'calls-for-contribution'
   | 'commerce-analytics'
+  | 'visitor-analytics'
   | 'community-analytics'
   | 'content-analytics'
   | 'team-roles'

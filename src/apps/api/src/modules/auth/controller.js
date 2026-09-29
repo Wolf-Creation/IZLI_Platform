@@ -12,6 +12,37 @@ export const authController = {
     return response.status(200).json(successResponse('Login successful', result));
   },
 
+  getAdminProfile: async (request, response) => {
+    const result = await authService.getAdminProfile(request.user);
+    if (!result) throw new AppError('Admin account not found', 404);
+    return response.status(200).json(successResponse('Admin profile retrieved', result));
+  },
+
+  getKeeperProfile: async (request, response) => {
+    const result = await authService.getKeeperProfile(request.user);
+    if (!result) throw new AppError('Keeper profile not found', 404);
+    return response.status(200).json(successResponse('Keeper profile retrieved', result));
+  },
+
+  updateKeeperProfile: async (request, response) => {
+    const result = await authService.updateKeeperProfile(request.user, request.body);
+    if (!result) throw new AppError('Keeper profile not found', 404);
+    return response.status(200).json(successResponse('Keeper profile updated', result));
+  },
+
+  updateKeeperSecurity: async (request, response) => {
+    const result = await authService.updateKeeperSecurity(request.user, request.body);
+    if (!result) throw new AppError('Keeper profile not found', 404);
+    if (result.invalidCurrentPassword) throw new AppError('Current password is incorrect', 400);
+    return response.status(200).json(successResponse('Keeper security updated', result));
+  },
+
+  updateAdminProfile: async (request, response) => {
+    const result = await authService.updateAdminProfile(request.user, request.body);
+    if (!result) throw new AppError('Admin account not found', 404);
+    return response.status(200).json(successResponse('Admin profile updated', result));
+  },
+
   register: async (request, response) => {
     const result = await authService.register(request.body);
     if (!result) {
@@ -37,6 +68,12 @@ export const authController = {
     }
 
     return response.status(200).json(successResponse('Keeper login successful', result));
+  },
+
+  verifyKeeperLogin: async (request, response) => {
+    const result = await authService.verifyKeeperLogin(request.body);
+    if (!result) throw new AppError('Invalid or expired security code', 400);
+    return response.status(200).json(successResponse('Keeper login verified', result));
   },
 
   verifyKeeperEmail: async (request, response) => {

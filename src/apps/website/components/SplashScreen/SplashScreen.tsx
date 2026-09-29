@@ -11,9 +11,9 @@ export function SplashScreen({ onComplete }: Props) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsExiting(true)
-      const exitTimer = setTimeout(onComplete, 800)
+      const exitTimer = setTimeout(onComplete, 600)
       return () => clearTimeout(exitTimer)
-    }, 1000)
+    }, 500)
 
     return () => clearTimeout(timer)
   }, [onComplete])

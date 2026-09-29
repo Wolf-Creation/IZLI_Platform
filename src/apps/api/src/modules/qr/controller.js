@@ -1,6 +1,23 @@
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { successResponse } from '../../utils/apiResponse.js';
 import { assignQr, deleteSeries, generateSeries, getPublicQr, listQrs, listSeries } from './service.js';
+import mongoose from 'mongoose';
+
+const writeQrAudit = async (request, productId, action, object) => {
+  if (!productId) return;
+  const AuditLog = mongoose.models.AuditLog;
+  if (!AuditLog) return;
+  await AuditLog.create({
+    actorId: request.user?.userId,
+    actorEmail: request.user?.email || request.body?.changedBy || 'system',
+    action,
+    entityType: 'Product',
+    entityId: productId,
+    diff: { object },
+    ip: request.ip,
+    userAgent: request.get('user-agent'),
+  });
+};
 
 export const qrController = {
   listSeries: asyncHandler(async (request, response) => {
@@ -15,6 +32,7 @@ export const qrController = {
 
   generate: asyncHandler(async (request, response) => {
     const result = await generateSeries(request.body);
+    await writeQrAudit(request, request.body.productId, `${result.codes.length} QR codes generated`, request.body.productId);
     return response.status(201).json(successResponse('QR series generated successfully', result));
   }),
 
@@ -25,11 +43,13 @@ export const qrController = {
 
   assign: asyncHandler(async (request, response) => {
     const qr = await assignQr({ ...request.body, changedBy: request.body.changedBy || 'admin' });
+    await writeQrAudit(request, qr.productId, `QR ${qr.qrNumber} assigned`, qr.qrNumber);
     return response.status(200).json(successResponse('QR code assigned successfully', qr));
   }),
 
   updateAssignment: asyncHandler(async (request, response) => {
     const qr = await assignQr({ ...request.body, qrNumber: request.params.qrNumber, allowUpdate: true, changedBy: request.body.changedBy || 'admin' });
+    await writeQrAudit(request, qr.productId, `QR ${qr.qrNumber} assignment updated`, qr.qrNumber);
     return response.status(200).json(successResponse('QR assignment updated successfully', qr));
   }),
 

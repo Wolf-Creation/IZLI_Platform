@@ -4,6 +4,7 @@ import legacyVerticalImage from '../../../assets/Website_img/Legacy_section/lega
 import legacyMarronImage from '../../../assets/Website_img/Legacy_section/legacy_nature_marron.png'
 import legacyBeigeLinenImage from '../../../assets/Website_img/Legacy_section/legacy_nature_beige linen.png'
 import legacyNoirImage from '../../../assets/Website_img/Legacy_section/legacy_nature_noir.png'
+import izliLogoText from '../../../assets/logo/IZLI_logo_text.svg'
 import type { WebPage } from '../types'
 import './Footer.scss'
 
@@ -58,34 +59,14 @@ export default function Footer({ onNavigate, showHomeAbout = false }: Props) {
 
   return (
     <footer className={`site-footer ${showHomeAbout ? 'site-footer--home' : ''}`}>
-      {showHomeAbout && (
-        <section className="site-footer__about home-section--about">
-          <div className="home-legacy-editorial">
-            <aside className="home-legacy-editorial__copy">
-              <div className="home-about-copy">
-                <div className="home-legacy-editorial__logo">IZLI.TN</div>
-                <p className="home-legacy-editorial__intro">IZLI is more than a clothing brand — it is a contemporary universe inspired by Amazigh heritage, carrying stories, identity, and culture from one generation to the next.</p>
-              </div>
-              <div className="home-about-socials" aria-label="IZLI social media links">
-                <a href="https://www.instagram.com/izli.tn/" target="_blank" rel="noreferrer" aria-label="Instagram @izli.tn"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" /></svg></a>
-                <a href="https://www.facebook.com/izli.tn/" target="_blank" rel="noreferrer" aria-label="Facebook @izli.tn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 21v-8h3l.5-3H14V8.2c0-.9.3-1.5 1.6-1.5H18V4.1c-.4-.1-1.4-.2-2.5-.2-2.5 0-4.2 1.5-4.2 4.3V10H8.5v3h2.8v8z" /></svg></a>
-                <a href="https://wa.me/21690577555" target="_blank" rel="noreferrer" aria-label="WhatsApp +216 90 577 555"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z" /><path d="M9 9.3c.2-.4.4-.4.7-.4h.5c.2 0 .4.1.5.4l.6 1.4c.1.2 0 .4-.1.6l-.5.6c.5 1 1.2 1.7 2.2 2.2l.6-.5c.2-.2.4-.2.6-.1l1.4.6c.3.1.4.3.4.5v.5c0 .3 0 .5-.4.7-.3.2-.8.3-1.2.2-2.5-.6-4.8-2.9-5.4-5.4-.1-.4 0-.9.2-1.2Z" /></svg></a>
-              </div>
-            </aside>
-            <div className="home-legacy-editorial__collage" aria-label="IZLI textile archive">
-              <img src={legacyProductsImage} alt="IZLI legacy products" />
-            </div>
-            <div className="home-legacy-editorial__model" aria-label="IZLI legacy archive">
-              <img
-                key={LEGACY_NATURE_IMAGES[legacyNatureIndex].src}
-                src={LEGACY_NATURE_IMAGES[legacyNatureIndex].src}
-                alt={LEGACY_NATURE_IMAGES[legacyNatureIndex].alt}
-              />
-            </div>
-          </div>
-        </section>
-      )}
       <div className="site-footer__grid">
+        <div className="site-footer__column site-footer__column--about">
+          <div className="home-about-copy">
+            <img className="site-footer__logo" src={izliLogoText} alt="IZLI" />
+            <p className="home-legacy-editorial__intro">IZLI is more than a clothing brand — it is a contemporary universe inspired by Amazigh heritage, carrying stories, identity, and culture from one generation to the next.</p>
+          </div>
+            <a href="https://wa.me/21690577555" target="_blank" rel="noreferrer" aria-label="WhatsApp +216 90 577 555"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z" /><path d="M9 9.3c.2-.4.4-.4.7-.4h.5c.2 0 .4.1.5.4l.6 1.4c.1.2 0 .4-.1.6l-.5.6c.5 1 1.2 1.7 2.2 2.2l.6-.5c.2-.2.4-.2.6-.1l1.4.6c.3.1.4.3.4.5v.5c0 .3 0 .5-.4.7-.3.2-.8.3-1.2.2-2.5-.6-4.8-2.9-5.4-5.4-.1-.4 0-.9.2-1.2Z" /></svg></a>
+        </div>
         <div className="site-footer__column site-footer__column--pages">
           <FooterGroup title="Pages" links={PAGE_LINKS} onNavigate={onNavigate} />
           <FooterGroup title="Legal" links={[{ label: 'Privacy policy', page: 'about' }, { label: 'Cookie policy', page: 'about' }]} onNavigate={onNavigate} />
@@ -95,20 +76,8 @@ export default function Footer({ onNavigate, showHomeAbout = false }: Props) {
           <FooterGroup title="Collections" links={COLLECTION_LINKS.slice(2)} onNavigate={onNavigate} />
           <FooterGroup title="Categories" links={COLLECTION_LINKS.slice(0, 2)} onNavigate={onNavigate} />
         </div>
-        <div className="site-footer__column site-footer__column--keeper">
-          <FooterGroup title="Keeper Circle" links={KEEPER_CIRCLE_LINKS} onNavigate={onNavigate} />
-        </div>
-        {/* <div className="site-footer__column site-footer__column--newsletter">
-          <h2>Join IZLI. Get 15% off your first order.</h2>
-          <p>Subscribe and get 15% discount on your next purchase.</p>
-          <label htmlFor="footer-email">Email</label>
-          <div className="site-footer__newsletter">
-            <input id="footer-email" type="email" placeholder="you@example.com" />
-            <button type="button">Submit</button>
-          </div>
-        </div> */}
       </div>
-      
+
     </footer>
   )
 }

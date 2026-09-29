@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { Collection } from '../../entities'
-import { getCollections, getCollection } from '../services/collections'
+import type { Collection, Product } from '../../entities'
+import { getCollections, getCollectionBySlug } from '../services/collections'
 
 interface UseCollectionsResult {
   collections: Collection[]
@@ -11,6 +11,7 @@ interface UseCollectionsResult {
 
 interface UseCollectionResult {
   collection: Collection | null
+  products: Product[]
   loading: boolean
   error: string | null
 }
@@ -35,20 +36,24 @@ export function useCollections(): UseCollectionsResult {
   return { collections, loading, error, refetch }
 }
 
-export function useCollection(id: string): UseCollectionResult {
+export function useCollection(slug: string): UseCollectionResult {
   const [collection, setCollection] = useState<Collection | null>(null)
+  const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!id) return
+    if (!slug) return
     setLoading(true)
     setError(null)
-    getCollection(id)
-      .then(setCollection)
+    getCollectionBySlug(slug)
+      .then(result => {
+        setCollection(result.collection)
+        setProducts(result.products)
+      })
       .catch(err => setError(err?.message ?? 'Failed to load collection'))
       .finally(() => setLoading(false))
-  }, [id])
+  }, [slug])
 
-  return { collection, loading, error }
+  return { collection, products, loading, error }
 }

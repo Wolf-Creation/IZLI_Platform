@@ -1,62 +1,87 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { WebPage } from '../../types'
 import { motion } from 'framer-motion'
 import { ProductCard } from '../../components/ProductCard/ProductCard'
+import { TopBarPage } from '../../components/TopBarPage/TopBarPage'
 import { useProducts } from '../../../../shared/hooks/useProducts'
 import { useCategories } from '../../../../shared/hooks/useCategories'
+import { useCollections } from '../../../../shared/hooks/useCollections'
+import type { CartItemInput } from '../../cart'
 import './Shop.scss'
 
-interface Props { onNavigate: (p: WebPage) => void }
+interface Props { onNavigate: (p: WebPage, productId?: string) => void; onAddToCart: (item: CartItemInput) => void; onToggleWishlist: (item: CartItemInput) => void; isWishlisted: (id: string) => boolean }
 
 type FilterState = {
   productType: string
   collection: string
   color: string
   clothingSize: string
-  shoeSize: string
 }
 
-export default function Shop({ onNavigate }: Props) {
+export default function Shop({ onNavigate, onAddToCart, onToggleWishlist, isWishlisted }: Props) {
   const { products, loading, error } = useProducts({ status: 'published' })
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories()
+  const { collections, loading: collectionsLoading, error: collectionsError } = useCollections()
   const [activeCategory, setActiveCategory] = useState('All')
   const [query, setQuery] = useState('')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [filters, setFilters] = useState<FilterState>({ productType: '', collection: '', color: '', clothingSize: '', shoeSize: '' })
+  const [filters, setFilters] = useState<FilterState>({ productType: '', collection: '', color: '', clothingSize: '' })
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length
+
+  const productCategories = useMemo(
+    () => categories.filter(category => products.some(product => (product.categoryIds ?? []).includes(category.id))),
+    [categories, products],
+  )
+
+  const productTypes = useMemo(() => [...new Set(products.map(product => product.productType).filter(Boolean))] as string[], [products])
+  const productCollections = useMemo(
+    () => collections.filter(collection => products.some(product => product.collectionId === collection.id || (product.collectionIds ?? []).includes(collection.id))),
+    [collections, products],
+  )
+
+  useEffect(() => {
+    if (activeCategory !== 'All' && !productCategories.some(category => category.id === activeCategory)) {
+      setActiveCategory('All')
+    }
+  }, [activeCategory, productCategories])
 
   const visibleProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
     const filtered = products.filter(product => {
       const matchesCategory = activeCategory === 'All' || (product.categoryIds ?? []).includes(activeCategory)
+      const matchesType = !filters.productType || product.productType === filters.productType
+      const matchesCollection = !filters.collection || product.collectionId === filters.collection || (product.collectionIds ?? []).includes(filters.collection)
       const matchesQuery = !normalizedQuery || product.name.toLowerCase().includes(normalizedQuery)
-      return matchesCategory && matchesQuery
+      const matchesSize = !filters.clothingSize || (product.sizes ?? []).some(size => size.size === filters.clothingSize)
+      return matchesCategory && matchesType && matchesCollection && matchesSize && matchesQuery
     })
 
     return [...filtered].sort((a, b) => a.id.localeCompare(b.id))
-  }, [activeCategory, products, query])
+  }, [activeCategory, filters, products, query])
+
+  useEffect(() => {
+    if (filters.collection && !productCollections.some(collection => collection.id === filters.collection)) {
+      setFilters(current => ({ ...current, collection: '' }))
+    }
+    if (filters.productType && !productTypes.includes(filters.productType)) {
+      setFilters(current => ({ ...current, productType: '' }))
+    }
+  }, [filters.collection, filters.productType, productCollections, productTypes])
 
   const selectCategory = (categoryId: string) => setActiveCategory(categoryId)
 
   return (
     <div className="shop-page">
-      <header className="shop-page__topbar">
-        <div className="shop-page__topbar-inner">
-          <div className="shop-page__brand-block">
-            <span className="shop-page__label">Shop</span>
-            <div className="flex flex-col gap-4">
-              <small >Discover all products.</small>
-              <small >Timeless essentials built for everyday wear.</small>
-            </div>
-          </div>
-        </div>
-      </header>
+      <TopBarPage
+        label="Shop"
+        descriptions={['Discover all products.', 'Timeless essentials built for everyday wear.']}
+      />
 
       <div className="shop-shell shop-shell--category-bar">
         <div className="shop-category-strip" aria-label="Shop categories">
           <div className="shop-category-strip__categories">
-            {[{ id: 'All', label: 'All' }, ...categories].map(category => (
+            {[{ id: 'All', label: 'All' }, ...productCategories].map(category => (
               <button
                 key={category.id}
                 type="button"
@@ -82,21 +107,23 @@ export default function Shop({ onNavigate }: Props) {
           </div>
           <div className="shop-filter-drawer__body">
             {([
-              ['productType', 'Product type', ['Tops', 'Bottoms', 'Outerwear', 'Footwear']],
-              ['collection', 'Collection', ['Basics', 'Classics', 'Essentials']],
+              ['productType', 'Product type', productTypes],
+              ['collection', 'Collection', productCollections.map(collection => collection.name)],
               ['color', 'Color', ['Beige', 'Black', 'White', 'Olive', 'Grey']],
-              ['clothingSize', 'Clothe', ['S', 'M', 'L', 'XL']],
-              ['shoeSize', 'Shoes', ['38', '40', '42', '44']],
+              ['clothingSize', 'Size', ['S', 'M', 'L', 'XL', 'XXL']],
             ] as const).map(([key, label, options]) => (
               <section className="shop-filter-group" key={key}>
                 <h3>{label}</h3>
                 <div className="shop-filter-options">
-                  {options.map(option => <button key={option} type="button" className={filters[key] === option ? 'is-active' : ''} onClick={() => setFilters(current => ({ ...current, [key]: current[key] === option ? '' : option }))}>{option}</button>)}
+                  {options.map(option => {
+                    const value = key === 'collection' ? productCollections.find(collection => collection.name === option)?.id ?? option : option
+                    return <button key={option} type="button" className={filters[key] === value ? 'is-active' : ''} onClick={() => setFilters(current => ({ ...current, [key]: current[key] === value ? '' : value }))}>{option}</button>
+                  })}
                 </div>
               </section>
             ))}
           </div>
-          <button type="button" className="shop-filter-clear" onClick={() => setFilters({ productType: '', collection: '', color: '', clothingSize: '', shoeSize: '' })}>Clear filters</button>
+          <button type="button" className="shop-filter-clear" onClick={() => setFilters({ productType: '', collection: '', color: '', clothingSize: '' })}>Clear filters</button>
         </aside>
       </>}
 
@@ -104,7 +131,7 @@ export default function Shop({ onNavigate }: Props) {
         <div className="shop-shell">
           
 
-          {loading || categoriesLoading ? <div className="shop-empty"><h3>Loading catalogue...</h3></div> : error || categoriesError ? <div className="shop-empty"><h3>Catalogue unavailable.</h3><p>{error ?? categoriesError}</p></div> : visibleProducts.length > 0 ? <div className="shop-product-grid">
+          {loading || categoriesLoading || collectionsLoading ? <div className="shop-empty"><h3>Loading catalogue...</h3></div> : error || categoriesError || collectionsError ? <div className="shop-empty"><h3>Catalogue unavailable.</h3><p>{error ?? categoriesError ?? collectionsError}</p></div> : visibleProducts.length > 0 ? <div className="shop-product-grid">
             {visibleProducts.map((product, index) => {
               const remainingStock = (product.sizes ?? []).reduce((total, size) => total + size.stock, 0) || product.quantity || 0
               const categoryLabel = categories.find(category => (product.categoryIds ?? []).includes(category.id))?.label ?? product.universe
@@ -112,10 +139,13 @@ export default function Shop({ onNavigate }: Props) {
                 <ProductCard
                   name={product.name}
                   subtitle={`${categoryLabel} / ${product.sku}`}
-                  price={`${product.price} ${product.currency}`}
+                  price={product.price === undefined ? 'Price TBA' : `${product.price} ${product.currency}`}
                   image={product.coverImageUrl || product.images?.[0] || ''}
                   badge={`Only ${remainingStock} left`}
-                  onClick={() => onNavigate('product-detail')}
+                  onClick={() => onNavigate('product-detail', product.id)}
+                  onAddToCart={() => onAddToCart({ id: product.id, name: product.name, universe: product.universe, price: product.price, currency: product.currency, size: product.sizes?.find(size => size.stock > 0)?.size ?? 'M', img: product.coverImageUrl || product.images?.[0] || '' })}
+                  onToggleWishlist={() => onToggleWishlist({ id: product.id, name: product.name, universe: product.universe, price: product.price, currency: product.currency, size: product.sizes?.find(size => size.stock > 0)?.size ?? 'M', img: product.coverImageUrl || product.images?.[0] || '' })}
+                  isWishlisted={isWishlisted(product.id)}
                   className="shop-product-card"
                 />
               </motion.div>

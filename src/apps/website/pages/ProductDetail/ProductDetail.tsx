@@ -1,109 +1,124 @@
-import { useState } from 'react'
-import { INDIGO, TEXT, TEXT_SEC, BORDER, CLAY, BG, SURFACE, SURFACE_2, CREAM, SAND, FONT_SERIF, FONT_SANS, FONT_MONO } from '../../../../tokens'
+import { useEffect, useState } from 'react'
 import type { WebPage } from '../../types'
+import type { Product } from '../../../../entities'
+import type { CartItemInput } from '../../cart'
+import { useProduct } from '../../../../shared/hooks/useProducts'
 import './ProductDetail.scss'
 
-interface Props { onNavigate: (p: WebPage) => void }
+interface Props { productId: string | null; onNavigate: (p: WebPage) => void; onAddToCart: (item: CartItemInput) => void; onToggleWishlist: (item: CartItemInput) => void; isWishlisted: (id: string) => boolean }
 
-const IMAGES = [
-  'photo-1523381210434-271e8be1f52b',
-  'photo-1490481651871-ab68de25d43d',
-  'photo-1516762689617-e1cffcef479d',
-  'photo-1469334031218-e382a71b716b',
-]
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1200&h=1500&fit=crop&auto=format'
 
-const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
-const SIZE_AVAIL: Record<string, boolean> = { XS: true, S: true, M: true, L: false, XL: true, XXL: false }
+function productImages(product: Product) {
+    const media = product.media
+    const images = [media?.mainImage, product.coverImageUrl, ...(media?.gallery ?? []), ...(media?.detailImages ?? []), ...(media?.front ?? []), ...(media?.back ?? []), ...(product.images ?? [])].filter((image, index, list): image is string => Boolean(image) && list.indexOf(image) === index)
+    return images.length ? images : [FALLBACK_IMAGE]
+}
 
-export default function ProductDetail({ onNavigate }: Props) {
-  const [selectedImg, setSelectedImg] = useState(0)
-  const [selectedSize, setSelectedSize] = useState('M')
-  const [qty, setQty] = useState(1)
+export default function ProductDetail({ productId, onNavigate, onAddToCart, onToggleWishlist, isWishlisted }: Props) {
+    const { product, loading, error } = useProduct(productId ?? '')
+    const [mobileImageIndex, setMobileImageIndex] = useState(0)
+    const [selectedSize, setSelectedSize] = useState('')
+    const [qty, setQty] = useState(1)
+    const [specsTab, setSpecsTab] = useState<'details' | 'returns'>('details')
+    const images = product ? productImages(product) : [FALLBACK_IMAGE]
 
-  return (
-    <div style={{ background: BG, minHeight: '100vh' }}>
-      <div style={{ background: SURFACE, borderBottom: `1px solid ${BORDER}`, padding: '14px 40px' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', gap: 6, alignItems: 'center' }}>
-          {['Shop', 'Heritage', 'Tifinagh Frame Tee'].map((c, i) => (
-            <span key={c} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {i > 0 && <span style={{ color: SAND, fontSize: 12 }}>›</span>}
-              <button onClick={() => i < 2 && onNavigate('shop')} style={{ fontSize: 13, color: i === 2 ? TEXT : TEXT_SEC, fontWeight: i === 2 ? 500 : 400, background: 'none', border: 'none', cursor: i < 2 ? 'pointer' : 'default', fontFamily: FONT_SANS, padding: 0 }}>{c}</button>
-            </span>
-          ))}
-        </div>
-      </div>
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '48px 40px 80px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'start' }}>
-          <div>
-            <div style={{ borderRadius: 16, overflow: 'hidden', marginBottom: 12, aspectRatio: '4/5', background: SURFACE }}>
-              <img src={`https://images.unsplash.com/${IMAGES[selectedImg]}?w=900&h=1125&fit=crop&auto=format`} alt="Product" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-              {IMAGES.map((img, i) => (
-                <button key={img} onClick={() => setSelectedImg(i)} style={{ border: `2px solid ${selectedImg === i ? INDIGO : 'transparent'}`, borderRadius: 10, overflow: 'hidden', cursor: 'pointer', padding: 0, aspectRatio: '1', background: 'none' }}>
-                  <img src={`https://images.unsplash.com/${img}?w=200&h=200&fit=crop&auto=format`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                </button>
-              ))}
-            </div>
-          </div>
-          <div style={{ position: 'sticky', top: 88 }}>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-              <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 999, background: '#E8EDF3', color: INDIGO, fontWeight: 500 }}>Heritage</span>
-              <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 999, background: SURFACE_2, color: CLAY, fontWeight: 500 }}>New</span>
-            </div>
-            <h1 style={{ fontFamily: FONT_SERIF, fontSize: 38, fontWeight: 500, color: INDIGO, margin: 0, lineHeight: 1.15, marginBottom: 8 }}>Tifinagh Frame Tee</h1>
-            <div style={{ fontFamily: FONT_MONO, fontSize: 11, color: SAND, marginBottom: 20, letterSpacing: '0.04em' }}>PRD-0014</div>
-            <div style={{ fontFamily: FONT_SERIF, fontSize: 28, fontWeight: 500, color: TEXT, marginBottom: 24 }}>€95</div>
-            <p style={{ fontSize: 14, color: TEXT_SEC, lineHeight: 1.75, margin: 0, marginBottom: 28 }}>A precision-cut tee in heavyweight 220gsm organic cotton. The Tifinagh frame embroidery at the chest is hand-stitched in our atelier in Casablanca. Designed to be worn for a decade.</p>
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: TEXT_SEC, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Size</span>
-                <button style={{ fontSize: 12, color: TEXT_SEC, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontFamily: FONT_SANS }}>Size guide</button>
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {SIZES.map(size => (
-                  <button key={size} onClick={() => SIZE_AVAIL[size] && setSelectedSize(size)} style={{ width: 44, height: 44, borderRadius: 9, border: `1.5px solid ${selectedSize === size ? INDIGO : BORDER}`, background: selectedSize === size ? INDIGO : SIZE_AVAIL[size] ? 'transparent' : SURFACE_2, color: selectedSize === size ? CREAM : SIZE_AVAIL[size] ? TEXT : SAND, fontSize: 12, fontWeight: selectedSize === size ? 600 : 400, cursor: SIZE_AVAIL[size] ? 'pointer' : 'not-allowed', fontFamily: FONT_SANS, textDecoration: !SIZE_AVAIL[size] ? 'line-through' : 'none' }}>{size}</button>
-                ))}
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'center', border: `1px solid ${BORDER}`, borderRadius: 10, overflow: 'hidden' }}>
-                <button onClick={() => setQty(q => Math.max(1, q - 1))} style={{ width: 40, height: 48, background: 'transparent', border: 'none', fontSize: 18, color: TEXT_SEC, cursor: 'pointer' }}>−</button>
-                <span style={{ width: 32, textAlign: 'center', fontSize: 14, fontWeight: 500, color: TEXT }}>{qty}</span>
-                <button onClick={() => setQty(q => q + 1)} style={{ width: 40, height: 48, background: 'transparent', border: 'none', fontSize: 18, color: TEXT_SEC, cursor: 'pointer' }}>+</button>
-              </div>
-              <button onClick={() => onNavigate('cart')} style={{ flex: 1, padding: '0 24px', background: INDIGO, color: CREAM, border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: FONT_SANS }}>Add to Cart — €{95 * qty}</button>
-            </div>
-            <button style={{ width: '100%', padding: '12px', background: 'transparent', color: TEXT_SEC, border: `1px solid ${BORDER}`, borderRadius: 10, fontSize: 13, cursor: 'pointer', fontFamily: FONT_SANS, marginBottom: 28 }}>♡ Save to Wishlist</button>
-            <div style={{ borderTop: `1px solid ${BORDER}` }}>
-              {[
-                { label: 'Material', val: '100% Organic Cotton, 220gsm. GOTS certified. Woven in Portugal.' },
-                { label: 'Fit', val: 'Relaxed, boxy fit. Model is 187cm wearing size M.' },
-                { label: 'Care', val: 'Cold wash, lay flat to dry. Do not tumble dry.' },
-                { label: 'Shipping', val: 'Free shipping on orders over €150. Delivered in 3–5 days.' },
-              ].map((d) => (
-                <div key={d.label} style={{ borderBottom: `1px solid ${BORDER}`, padding: '14px 0' }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, marginBottom: 4, letterSpacing: '0.02em' }}>{d.label}</div>
-                  <div style={{ fontSize: 13, color: TEXT_SEC, lineHeight: 1.6 }}>{d.val}</div>
+    useEffect(() => {
+        setMobileImageIndex(0)
+    }, [productId])
+
+    useEffect(() => {
+        if (images.length < 2 || loading || error) return
+
+        const intervalId = window.setInterval(() => {
+            setMobileImageIndex(currentIndex => (currentIndex + 1) % images.length)
+        }, 2000)
+
+        return () => window.clearInterval(intervalId)
+    }, [error, images.length, loading])
+
+    if (loading) return <div className="product-detail-state"><p>Loading product...</p></div>
+    if (error || !product) return <div className="product-detail-state"><p className="product-detail-eyebrow">Product unavailable</p><h1>This piece could not be found.</h1><button type="button" onClick={() => onNavigate('shop')}>Back to Shop</button></div>
+
+    const sizes = product.sizes ?? []
+    const availablePieceIds = new Set((product.inventoryPieces ?? []).filter(piece => piece.status === 'available').map(piece => piece.variantId))
+    const isSizeAvailable = (size: string, stock: number) => stock > 0 || (product.variants ?? []).some(variant => variant.size === size && availablePieceIds.has(variant.id))
+    const activeSize = selectedSize || sizes.find(size => isSizeAvailable(size.size, size.stock))?.size || sizes[0]?.size || ''
+    const priceLabel = product.price === undefined ? 'Price TBA' : `${product.price} ${product.currency}`
+    const totalLabel = product.price === undefined ? 'Price TBA' : `${product.price * qty} ${product.currency}`
+    const remainingPieces = product.inventoryPieces
+        ? product.inventoryPieces.filter(piece => piece.status === 'available').length
+        : product.quantity ?? 0
+    const releaseLabel = product.releaseNumber ? `Release ${product.releaseNumber}` : 'Active release'
+    const color = product.colorways?.[0]
+    const productIsWishlisted = isWishlisted(product.id)
+    const wishlistItem = { id: product.id, name: product.name, universe: product.universe, price: product.price, currency: product.currency, size: activeSize || 'M', img: images[0] }
+    const addToCart = () => {
+        onAddToCart({ id: product.id, name: product.name, universe: product.universe, price: product.price, currency: product.currency, size: activeSize || 'M', img: images[0], qty })
+        onNavigate('cart')
+    }
+
+    return <div className="product-detail-page">
+        <div className="product-detail-breadcrumbs"><div className="product-detail-shell"><button type="button" onClick={() => onNavigate('shop')}>Shop</button><span>/</span><span>{product.universe}</span><span>/</span><strong>{product.name}</strong></div></div>
+        <main className="product-detail-shell product-detail-main">
+            <section className="product-detail-hero">
+                <div className="product-detail-gallery" aria-label={`${product.name} image gallery`}>
+                    <div className="product-detail-gallery__feature-grid">{images.map((image, index) => <div key={`${image}-${index}`}><img src={image} alt={`${product.name} view ${index + 1}`} /></div>)}</div>
+                    <div className="product-detail-gallery__mobile-slider">
+                        <div className="product-detail-gallery__mobile-track" style={{ transform: `translateX(-${mobileImageIndex * 100}%)` }}>
+                            {images.map((image, index) => <img key={`${image}-mobile-${index}`} src={image} alt={`${product.name} view ${index + 1}`} />)}
+                        </div>
+                        {images.length > 1 && <>
+                            <button type="button" className="product-detail-gallery__mobile-arrow product-detail-gallery__mobile-arrow--prev" onClick={() => setMobileImageIndex(index => (index - 1 + images.length) % images.length)} aria-label="Previous product image">‹</button>
+                            <button type="button" className="product-detail-gallery__mobile-arrow product-detail-gallery__mobile-arrow--next" onClick={() => setMobileImageIndex(index => (index + 1) % images.length)} aria-label="Next product image">›</button>
+                            <div className="product-detail-gallery__mobile-dots" aria-label="Product image slides">{images.map((image, index) => <button type="button" key={`${image}-dot`} className={index === mobileImageIndex ? 'is-active' : ''} onClick={() => setMobileImageIndex(index)} aria-label={`Show product image ${index + 1}`} />)}</div>
+                        </>}
+                    </div>
                 </div>
-              ))}
-            </div>
-            <div style={{ marginTop: 28, padding: 16, background: SURFACE, borderRadius: 12, border: `1px solid ${BORDER}` }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_SEC, marginBottom: 12 }}>Also connected to</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <button onClick={() => onNavigate('stories')} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: SURFACE_2, borderRadius: 8, border: `1px solid ${BORDER}`, cursor: 'pointer', textAlign: 'left', fontFamily: FONT_SANS }}>
-                  <span style={{ fontSize: 16, color: CLAY }}>◫</span>
-                  <div><div style={{ fontSize: 12, fontWeight: 500, color: TEXT }}>Indigo as Memory</div><div style={{ fontSize: 11, color: TEXT_SEC }}>Editorial story</div></div>
-                </button>
-                <button onClick={() => onNavigate('community')} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: '#E8EDF3', borderRadius: 8, border: `1px solid ${BORDER}`, cursor: 'pointer', textAlign: 'left', fontFamily: FONT_SANS }}>
-                  <span style={{ fontSize: 16, color: INDIGO }}>◇</span>
-                  <div><div style={{ fontSize: 12, fontWeight: 500, color: TEXT }}>Atlas Pattern Remix</div><div style={{ fontSize: 11, color: TEXT_SEC }}>Community challenge</div></div>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+                <div className="product-detail-purchase">
+                    <div className="product-detail-release-meta">
+                        <div className="product-detail-release-meta__info">
+                            <span className="product-detail-release-number">{releaseLabel}</span>
+                            <span className="product-detail-release-stock">{remainingPieces} pieces remaining</span>
+                        </div>
+                        <div className="product-detail-price">{priceLabel}</div>
+                    </div>
+                    <div className="product-detail-kicker"></div>
+                    <div className="product-detail-title-row">
+                        <h1>{product.name}</h1>
+                        <button type="button" className={`product-detail-wishlist${productIsWishlisted ? ' is-active' : ''}`} onClick={() => onToggleWishlist(wishlistItem)} aria-label={productIsWishlisted ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`} aria-pressed={productIsWishlisted}>
+                            <svg viewBox="0 0 24 24" fill={productIsWishlisted ? 'currentColor' : 'none'} aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                        </button>
+                    </div>
+                    <p className="product-detail-sku">{product.sku}</p>
+                    <p className="product-detail-description">{product.shortDescription || product.description}</p>
+                    {product.colorways?.length ? <div className="product-detail-color"><span>Color</span><div className="product-detail-color__swatches">{product.colorways.map(colorway => <button type="button" key={colorway.id} aria-label={colorway.name}>{colorway.images?.[0] ? <img src={colorway.images[0]} alt={colorway.name} /> : <i style={{ background: colorway.hex }} />}</button>)}</div></div> : color && <div className="product-detail-color"><span>Color</span><strong><i style={{ background: color.hex }} />{color.name}</strong></div>}
+                    {sizes.length > 0 && <div className="product-detail-size"><div className="product-detail-field-label"><span>Size</span><span>Choose your fit</span></div><div className="product-detail-size__options">{sizes.map(size => { const available = isSizeAvailable(size.size, size.stock); return <button type="button" key={size.size} className={activeSize === size.size ? 'is-selected' : ''} disabled={!available} onClick={() => setSelectedSize(size.size)}>{size.size}</button> })}</div></div>}
+                    <div className="product-detail-buy"><div className="product-detail-quantity"><button type="button" onClick={() => setQty(value => Math.max(1, value - 1))} aria-label="Decrease quantity">−</button><span>{qty}</span><button type="button" onClick={() => setQty(value => value + 1)} aria-label="Increase quantity">+</button></div><button type="button" className="product-detail-add" onClick={addToCart}>Add to Cart <span>{totalLabel}</span></button></div><p className="product-detail-shipping">Complimentary delivery on orders over 250 {product.currency}. Secure checkout.</p>
+                    <div className="product-detail-tabs">
+                        <nav className="product-detail-specs__nav" aria-label="Product information categories">
+                            <button type="button" className={specsTab === 'details' ? 'is-active' : ''} onClick={() => setSpecsTab('details')}>Details</button>
+                            <button type="button" className={specsTab === 'returns' ? 'is-active' : ''} onClick={() => setSpecsTab('returns')}>Returns and deliveries</button>
+                        </nav>
+                        {specsTab === 'details' ? <div className="product-detail-specs__grid">
+                            {[
+                                ['Fit', product.characteristics?.fit || product.fit?.join(', ') || 'Not specified'],
+                                ['Fabric', product.characteristics?.fabric || product.materials?.join(', ') || 'Not specified'],
+                                ['Weight', product.characteristics?.weight || 'Not specified'],
+                                ['Composition', product.characteristics?.composition || 'Not specified'],
+                            ].map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}
+                        </div> : <div className="product-detail-specs__grid product-detail-specs__returns">
+                            {[
+                                ['Returns', '15-day returns on unworn pieces.'],
+                                ['Shipping', 'Delivery in 2–3 business days.'],
+                                ['Support', 'Pre-paid labels available for domestic returns.'],
+                            ].map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}
+                        </div>}
+
+                    </div>
+                </div>
+            </section>
+            {product.media?.modelImages?.length ? <section className="product-detail-campaign"><div><p className="product-detail-eyebrow">Campaign</p><h2>Seen in the world.</h2></div><div className="product-detail-campaign__images">{product.media.modelImages.slice(0, 3).map((image, index) => <img key={`${image}-${index}`} src={image} alt={`${product.name} campaign ${index + 1}`} />)}</div></section> : null}
+        </main>
     </div>
-  )
 }

@@ -3,9 +3,11 @@ import type { Screen } from '../types'
 export const ADMIN_ROUTES = {
   ROOT: '/',
   DASHBOARD: '/dashboard',
+  PROFILE: '/system/profile',
 
   // Commerce
   PRODUCTS: '/products',
+  STOCK: '/products/stock',
   PRODUCT_NEW: '/products/new',
   PRODUCT_EDIT: '/products/:id',
   CATEGORIES: '/products/categories',
@@ -52,6 +54,7 @@ export const ADMIN_ROUTES = {
 
   // Analytics
   COMMERCE_ANALYTICS: '/analytics/commerce',
+  VISITOR_ANALYTICS: '/analytics/visitors',
   COMMUNITY_ANALYTICS: '/analytics/community',
   CONTENT_ANALYTICS: '/analytics/content',
   LEGACY: '/legacy',
@@ -70,11 +73,13 @@ export type AdminRoutePath = (typeof ADMIN_ROUTES)[keyof typeof ADMIN_ROUTES]
 export function adminPathForScreen(screen: Screen, productId?: string | null) {
   switch (screen) {
     case 'dashboard': return ADMIN_ROUTES.DASHBOARD
+    case 'admin-profile': return ADMIN_ROUTES.PROFILE
     case 'products': return ADMIN_ROUTES.PRODUCTS
+    case 'stock': return ADMIN_ROUTES.STOCK
     case 'product-editor': return productId ? adminProductPath(productId) : ADMIN_ROUTES.PRODUCT_NEW
     case 'categories': return ADMIN_ROUTES.CATEGORIES
     case 'collections': return ADMIN_ROUTES.COLLECTIONS
-    case 'collection-editor': return ADMIN_ROUTES.COLLECTION_NEW
+    case 'collection-editor': return productId ? adminCollectionPath(productId) : ADMIN_ROUTES.COLLECTION_NEW
     case 'orders': return ADMIN_ROUTES.ORDERS
     case 'customer': return ADMIN_ROUTES.CUSTOMERS
     case 'home-builder': return ADMIN_ROUTES.HOME_BUILDER
@@ -95,6 +100,7 @@ export function adminPathForScreen(screen: Screen, productId?: string | null) {
     case 'lab-project-editor': return ADMIN_ROUTES.LAB_PROJECT_NEW
     case 'calls-for-contribution': return ADMIN_ROUTES.OPEN_CALLS
     case 'commerce-analytics': return ADMIN_ROUTES.COMMERCE_ANALYTICS
+    case 'visitor-analytics': return ADMIN_ROUTES.VISITOR_ANALYTICS
     case 'community-analytics': return ADMIN_ROUTES.COMMUNITY_ANALYTICS
     case 'content-analytics': return ADMIN_ROUTES.CONTENT_ANALYTICS
     case 'team-roles': return ADMIN_ROUTES.TEAM_ROLES
@@ -139,6 +145,7 @@ export function adminStateFromPath(pathname: string): { screen: Screen; productE
   if (pathname === '/' || pathname === ADMIN_ROUTES.DASHBOARD) {
     return { screen: 'dashboard', productEditorId: null }
   }
+  if (pathname === ADMIN_ROUTES.PROFILE) return { screen: 'admin-profile', productEditorId: null }
 
   if (pathname === '/commerce/style-guides') return { screen: 'style-guides', productEditorId: null }
   if (pathname === '/commerce/style-guides/editor') return { screen: 'style-guide-editor', productEditorId: null }
@@ -148,10 +155,15 @@ export function adminStateFromPath(pathname: string): { screen: Screen; productE
   if (pathname === '/commerce/product-passports/editor') return { screen: 'product-passport-editor', productEditorId: null }
   if (pathname === '/content/qr-code-generator') return { screen: 'qr-code-generator', productEditorId: null }
   if (pathname === ADMIN_ROUTES.LEGACY) return { screen: 'legacies', productEditorId: null }
+  if (pathname === ADMIN_ROUTES.VISITOR_ANALYTICS) return { screen: 'visitor-analytics', productEditorId: null }
   if (pathname === `${ADMIN_ROUTES.LEGACY}/`) return { screen: 'legacies', productEditorId: null }
 
   if (pathname === ADMIN_ROUTES.PRODUCTS || pathname === `${ADMIN_ROUTES.PRODUCTS}/`) {
     return { screen: 'products', productEditorId: null }
+  }
+
+  if (pathname === ADMIN_ROUTES.STOCK || pathname === `${ADMIN_ROUTES.STOCK}/`) {
+    return { screen: 'stock', productEditorId: null }
   }
 
   if (pathname === ADMIN_ROUTES.PRODUCT_NEW) {

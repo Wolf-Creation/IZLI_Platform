@@ -10,6 +10,7 @@ import crypto from 'node:crypto';
 import nodemailer from 'nodemailer';
 
 const accessTokenOptions = { expiresIn: '15m' };
+const adminAccessTokenOptions = { expiresIn: '1h' };
 const refreshTokenOptions = { expiresIn: '30d' };
 
 export const authService = {
@@ -37,6 +38,21 @@ export const authService = {
           role: 'viewer',
         };
 
+    if (!user && account.twoFactorEnabled) {
+      const code = String(crypto.randomInt(100000, 1000000));
+      account.twoFactorCode = code;
+      account.twoFactorExpires = new Date(Date.now() + 15 * 60 * 1000);
+      await account.save();
+      try {
+        await sendKeeperLoginCodeEmail(account.email, account.firstName, code);
+      } catch (error) {
+        console.error('[Customer 2FA] Email delivery failed:', error.message);
+      }
+      const result = { email: account.email, twoFactorRequired: true };
+      if (process.env.NODE_ENV !== 'production' && !process.env.SMTP_HOST) result.devCode = code;
+      return result;
+    }
+
     const { accessToken, refreshToken } = await authService.issueTokens(account);
 
     return {
@@ -54,6 +70,74 @@ export const authService = {
       refreshToken,
       accountType: user ? 'user' : 'customer',
     };
+  },
+
+  getAdminProfile: async (sessionUser) => {
+    const user = await usersRepository.findById(sessionUser.sub);
+    if (!user || !['admin', 'owner'].includes(user.role)) return null;
+    return { id: String(user._id), email: user.email, displayName: user.displayName, role: user.role, status: user.status };
+  },
+
+  getKeeperProfile: async (sessionUser) => {
+    const customer = await customersRepository.findById(sessionUser.sub);
+    if (!customer) return null;
+    return {
+      id: String(customer._id),
+      email: customer.email,
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      gender: customer.gender,
+      phone: customer.phone,
+      governorate: customer.governorate,
+      age: customer.age,
+      twoFactorEnabled: customer.twoFactorEnabled,
+      avatarUrl: customer.avatarUrl,
+      createdAt: customer.createdAt,
+    };
+  },
+
+  updateKeeperProfile: async (sessionUser, data) => {
+    const customer = await customersRepository.findById(sessionUser.sub);
+    if (!customer) return null;
+
+    const fields = ['firstName', 'lastName', 'gender', 'phone', 'governorate', 'age'];
+    for (const field of fields) {
+      if (data[field] !== undefined) customer[field] = field === 'age' ? Number(data[field]) : String(data[field]).trim();
+    }
+    await customer.save();
+    return authService.getKeeperProfile(sessionUser);
+  },
+
+  updateKeeperSecurity: async (sessionUser, { twoFactorEnabled, currentPassword, newPassword }) => {
+    const customer = await customersRepository.findById(sessionUser.sub).select('+password');
+    if (!customer) return null;
+
+    if (newPassword) {
+      const matches = await bcrypt.compare(String(currentPassword || ''), customer.password);
+      if (!matches) return { invalidCurrentPassword: true };
+      customer.password = String(newPassword);
+    }
+
+    if (twoFactorEnabled !== undefined) {
+      customer.twoFactorEnabled = Boolean(twoFactorEnabled);
+      if (!customer.twoFactorEnabled) {
+        customer.twoFactorCode = undefined;
+        customer.twoFactorExpires = undefined;
+      }
+    }
+
+    await customer.save();
+    return authService.getKeeperProfile(sessionUser);
+  },
+
+  updateAdminProfile: async (sessionUser, { email, password, displayName }) => {
+    const user = await usersRepository.findById(sessionUser.sub).select('+password');
+    if (!user || !['admin', 'owner'].includes(user.role)) return null;
+    if (email) user.email = String(email).trim().toLowerCase();
+    if (displayName) user.displayName = String(displayName).trim();
+    if (password) user.password = String(password);
+    await user.save();
+    return { id: String(user._id), email: user.email, displayName: user.displayName, role: user.role, status: user.status };
   },
 
   register: async ({ email, password, name }) => {
@@ -126,10 +210,41 @@ export const authService = {
   },
 
   loginKeeper: async ({ email, password }) => {
-    const customer = await customersRepository.findByEmail(email);
+    const customer = await customersRepository.findByEmailWithTwoFactor(email);
     if (!customer || !customer.emailVerified) return null;
     const matches = await bcrypt.compare(password, customer.password);
     if (!matches) return null;
+
+    if (customer.twoFactorEnabled) {
+      const code = String(crypto.randomInt(100000, 1000000));
+      customer.twoFactorCode = code;
+      customer.twoFactorExpires = new Date(Date.now() + 15 * 60 * 1000);
+      await customer.save();
+      try {
+        await sendKeeperLoginCodeEmail(customer.email, customer.firstName, code);
+      } catch (error) {
+        console.error('[Keeper 2FA] Email delivery failed:', error.message);
+      }
+      const result = { email: customer.email, twoFactorRequired: true };
+      if (process.env.NODE_ENV !== 'production' && !process.env.SMTP_HOST) result.devCode = code;
+      return result;
+    }
+
+    const { accessToken, refreshToken } = await authService.issueTokens(customer);
+    return {
+      user: { id: String(customer._id), email: customer.email, displayName: `${customer.firstName} ${customer.lastName}`, role: 'viewer', status: 'active', createdAt: customer.createdAt, lastActiveAt: new Date().toISOString() },
+      accessToken,
+      refreshToken,
+    };
+  },
+
+  verifyKeeperLogin: async ({ email, code }) => {
+    const customer = await customersRepository.findByEmailWithTwoFactor(email);
+    if (!customer || !customer.emailVerified || !customer.twoFactorEnabled || customer.twoFactorCode !== String(code) || !customer.twoFactorExpires || customer.twoFactorExpires < new Date()) return null;
+
+    customer.twoFactorCode = undefined;
+    customer.twoFactorExpires = undefined;
+    await customer.save();
     const { accessToken, refreshToken } = await authService.issueTokens(customer);
     return {
       user: { id: String(customer._id), email: customer.email, displayName: `${customer.firstName} ${customer.lastName}`, role: 'viewer', status: 'active', createdAt: customer.createdAt, lastActiveAt: new Date().toISOString() },
@@ -212,7 +327,8 @@ export const authService = {
       email: user.email,
     };
 
-    const accessToken = jwt.sign(tokenPayload, env.jwtSecret, accessTokenOptions);
+    const tokenOptions = ['admin', 'owner'].includes(tokenPayload.role) ? adminAccessTokenOptions : accessTokenOptions;
+    const accessToken = jwt.sign(tokenPayload, env.jwtSecret, tokenOptions);
     const refreshToken = jwt.sign(tokenPayload, env.jwtRefreshSecret, refreshTokenOptions);
 
     await authRepository.createSession({
@@ -243,4 +359,14 @@ async function sendKeeperPasswordResetEmail(email, firstName, code) {
 
   const transporter = nodemailer.createTransport({ host: process.env.SMTP_HOST, port: Number(process.env.SMTP_PORT || 587), secure: process.env.SMTP_SECURE === 'true', auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD } });
   await transporter.sendMail({ from: process.env.SMTP_FROM || process.env.SMTP_USER, to: email, subject: 'Reset your IZLI Keeper password', text: `Hello ${firstName}, your IZLI Keeper password recovery code is ${code}. It expires in 15 minutes.` });
+}
+
+async function sendKeeperLoginCodeEmail(email, firstName, code) {
+  if (!process.env.SMTP_HOST) {
+    console.info(`[Keeper 2FA] ${email}: ${code}`);
+    return;
+  }
+
+  const transporter = nodemailer.createTransport({ host: process.env.SMTP_HOST, port: Number(process.env.SMTP_PORT || 587), secure: process.env.SMTP_SECURE === 'true', auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD } });
+  await transporter.sendMail({ from: process.env.SMTP_FROM || process.env.SMTP_USER, to: email, subject: 'Your IZLI Keeper security code', text: `Hello ${firstName}, your IZLI Keeper login code is ${code}. It expires in 15 minutes.` });
 }

@@ -3,6 +3,7 @@ import { INDIGO, TEXT, TEXT_SEC, BORDER, BG, SURFACE, SURFACE_2, CREAM, FONT_SER
 import type { WebPage } from '../../types'
 import type { User } from '../../../../entities'
 import { useAuthentication } from '../../../../shared/hooks/useAuthentication'
+import { loginWithChallenge, verifyLogin } from '../../../../shared/services/auth'
 import izliLogo from '../../../../assets/logo/IZLI_logo.svg'
 import './Login.scss'
 
@@ -12,12 +13,15 @@ interface Props {
 }
 
 export default function Login({ onNavigate, onAuthenticated }: Props) {
-  const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [mode, setMode] = useState<'login' | 'register' | 'verify'>('login')
   const [fullName, setFullName] = useState('Youcef Benali')
   const [email, setEmail] = useState('you@example.com')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const { login, register } = useAuthentication()
+  const [code, setCode] = useState('')
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  const { register } = useAuthentication()
 
   const inp: React.CSSProperties = {
     width: '100%', padding: '11px 14px',
@@ -49,14 +53,17 @@ export default function Login({ onNavigate, onAuthenticated }: Props) {
               </button>
             ))}
           </div>
-          <h2 style={{ fontFamily: FONT_SERIF, fontSize: 32, fontWeight: 500, color: INDIGO, margin: 0, marginBottom: 8 }}>{mode === 'login' ? 'Welcome back.' : 'Join the community.'}</h2>
-          <p style={{ fontSize: 14, color: TEXT_SEC, lineHeight: 1.6, margin: 0, marginBottom: 28 }}>{mode === 'login' ? 'Sign in to access your orders, contributions, and community profile.' : 'Create an account to submit contributions, participate in challenges, and explore the Community Lab.'}</p>
+          <h2 style={{ fontFamily: FONT_SERIF, fontSize: 32, fontWeight: 500, color: INDIGO, margin: 0, marginBottom: 8 }}>{mode === 'verify' ? 'Verify your sign in.' : mode === 'login' ? 'Welcome back.' : 'Join the community.'}</h2>
+          <p style={{ fontSize: 14, color: TEXT_SEC, lineHeight: 1.6, margin: 0, marginBottom: 28 }}>{mode === 'verify' ? 'Enter the security code sent to your email before continuing.' : mode === 'login' ? 'Sign in to access your orders, contributions, and community profile.' : 'Create an account to submit contributions, participate in challenges, and explore the Community Lab.'}</p>
+          {message && <div style={{ marginBottom: 16, padding: '10px 12px', border: `1px solid ${BORDER}`, borderRadius: 9, color: TEXT_SEC, fontSize: 12 }}>{message}</div>}
+          {error && <div style={{ marginBottom: 16, padding: '10px 12px', border: '1px solid #9c5a52', borderRadius: 9, color: '#e5a39a', fontSize: 12 }}>{error}</div>}
           <form onSubmit={async e => {
             e.preventDefault()
             setSubmitting(true)
+            setError('')
             try {
-              if (mode === 'login') {
-                const user = await login(email, password)
+              if (mode === 'verify') {
+                const user = await verifyLogin(email, code)
                 if (user.role === 'admin') {
                   onAuthenticated(user)
                 } else {
@@ -64,12 +71,35 @@ export default function Login({ onNavigate, onAuthenticated }: Props) {
                 }
                 return
               }
+              if (mode === 'login') {
+                const result = await loginWithChallenge(email, password)
+                if (result.twoFactorRequired) {
+                  setMode('verify')
+                  setMessage(result.devCode ? `Code de test: ${result.devCode}` : `A security code was sent to ${email}.`)
+                  return
+                }
+                if (!result.user) throw new Error('Unable to sign in.')
+                if (result.user.role === 'admin') {
+                  onAuthenticated(result.user)
+                } else {
+                  onNavigate('profile')
+                }
+                return
+              }
               await register(email, password, fullName)
               onNavigate('profile')
+            } catch (submitError) {
+              setError(submitError instanceof Error ? submitError.message : 'Unable to sign in.')
             } finally {
               setSubmitting(false)
             }
           }}>
+            {mode === 'verify' ? (
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT_SEC, marginBottom: 6, letterSpacing: '0.02em' }}>Security code</label>
+                <input value={code} onChange={e => setCode(e.target.value)} style={inp} type="text" inputMode="numeric" autoComplete="one-time-code" autoFocus maxLength={6} placeholder="000000" required />
+              </div>
+            ) : <>
             {mode === 'register' && (
               <div style={{ marginBottom: 16 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: TEXT_SEC, marginBottom: 6, letterSpacing: '0.02em' }}>Full Name</label>
@@ -95,12 +125,14 @@ export default function Login({ onNavigate, onAuthenticated }: Props) {
                 <label htmlFor="terms" style={{ fontSize: 12, color: TEXT_SEC, lineHeight: 1.5, cursor: 'pointer' }}>I agree to the Terms of Service and understand that my contributions may be used in IZLI research and products.</label>
               </div>
             )}
-            <button className="login-page__submit" type="submit" disabled={submitting} style={{ width: '100%', padding: '13px', background: INDIGO, color: CREAM, border: 'none', borderRadius: 11, fontSize: 14, fontWeight: 600, cursor: submitting ? 'wait' : 'pointer', fontFamily: FONT_SANS, marginBottom: 16, opacity: submitting ? 0.8 : 1 }}>{submitting ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}</button>
+            </>}
+            <button className="login-page__submit" type="submit" disabled={submitting} style={{ width: '100%', padding: '13px', background: INDIGO, color: CREAM, border: 'none', borderRadius: 11, fontSize: 14, fontWeight: 600, cursor: submitting ? 'wait' : 'pointer', fontFamily: FONT_SANS, marginBottom: 16, opacity: submitting ? 0.8 : 1 }}>{submitting ? 'Please wait…' : mode === 'verify' ? 'Verify and continue' : mode === 'login' ? 'Sign In' : 'Create Account'}</button>
           </form>
-          <div style={{ textAlign: 'center', fontSize: 13, color: TEXT_SEC }}>
+          {mode === 'verify' && <button type="button" onClick={() => { setMode('login'); setCode(''); setMessage(''); setError('') }} style={{ display: 'block', margin: '0 auto 16px', fontSize: 12, color: TEXT_SEC, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontFamily: FONT_SANS }}>Back to sign in</button>}
+          {mode !== 'verify' && <div style={{ textAlign: 'center', fontSize: 13, color: TEXT_SEC }}>
             {mode === 'login' ? 'New to IZLI? ' : 'Already a member? '}
             <button className="login-page__switch-button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')} style={{ color: INDIGO, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, textDecoration: 'underline', fontFamily: FONT_SANS }}>{mode === 'login' ? 'Join the community →' : 'Sign in →'}</button>
-          </div>
+          </div>}
           {mode === 'register' && (
             <div style={{ marginTop: 32, padding: '20px', background: SURFACE_2, borderRadius: 14, border: `1px solid ${BORDER}` }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: INDIGO, marginBottom: 10 }}>Community members get</div>

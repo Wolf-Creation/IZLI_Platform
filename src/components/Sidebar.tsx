@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Screen } from '../types'
+import type { User } from '../entities'
 import izliLogo from '../assets/logo/IZLI_logo.svg'
 
 const INDIGO = '#1E2F44'
@@ -96,6 +97,7 @@ const NAV: NavItem[] = [
     icon: 'mdi:shopping-outline',
     children: [
       { label: 'Products', screen: 'products', icon: 'mdi:tshirt-crew-outline' },
+      { label: 'Stock', screen: 'stock', icon: 'mdi:package-variant-closed-outline' },
       { label: 'Categories', screen: 'categories', icon: 'mdi:layers-outline' },
       { label: 'Collections', screen: 'collections', icon: 'mdi:folder-multiple-outline' },
       { label: 'Orders', screen: 'orders', icon: 'mdi:package-variant-closed-outline' },
@@ -167,6 +169,7 @@ const NAV: NavItem[] = [
     icon: 'mdi:chart-box-outline',
     children: [
       { label: 'Commerce', screen: 'commerce-analytics', icon: 'mdi:chart-line' },
+      { label: 'Visitors', screen: 'visitor-analytics', icon: 'mdi:account-multiple-outline' },
       { label: 'Legacy', screen: 'legacy-analytics', icon: 'mdi:chart-timeline-variant' },
       { label: 'Community', screen: 'community-analytics', icon: 'mdi:account-chart-outline' },
       { label: 'Production', screen: 'production-analytics', icon: 'mdi:chart-box-outline' },
@@ -193,9 +196,10 @@ interface Props {
   hovered: boolean
   onToggleCollapse: () => void
   onHoverChange: (hovered: boolean) => void
+  user: User
 }
 
-export default function Sidebar({ active, onNavigate, collapsed, hovered, onToggleCollapse, onHoverChange }: Props) {
+export default function Sidebar({ active, onNavigate, collapsed, hovered, onToggleCollapse, onHoverChange, user }: Props) {
   const expanded = !collapsed || hovered
   const [openSection, setOpenSection] = useState<string | null>(null)
 
@@ -249,11 +253,11 @@ export default function Sidebar({ active, onNavigate, collapsed, hovered, onTogg
 
       <div style={{ padding: expanded ? '14px 20px' : '14px 0', borderTop: `1px solid ${BORDER}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: expanded ? 10 : 0, justifyContent: expanded ? 'flex-start' : 'center' }}>
-          <div style={{ width: 32, height: 32, borderRadius: 999, background: INDIGO, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: '#E7DFD2' }}>AK</div>
+          <div style={{ width: 32, height: 32, borderRadius: 999, background: INDIGO, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: '#E7DFD2' }}>{user.displayName.slice(0, 2).toUpperCase()}</div>
           {expanded && (
             <div>
-              <div style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>Amine Kherrab</div>
-              <div style={{ fontSize: 11, color: TEXT_SEC }}>Super Admin</div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>{user.displayName}</div>
+              <div style={{ fontSize: 11, color: TEXT_SEC }}>{user.role}</div>
             </div>
           )}
         </div>

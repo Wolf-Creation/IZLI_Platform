@@ -11,6 +11,7 @@ export default function HeroButtons({ onNavigate }: Props) {
       <motion.button
         type="button"
         className="hero-action-button hero-action-button--primary"
+        data-analytics-cta="Explore the Collection"
         onClick={() => onNavigate('collections')}
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.99 }}
@@ -21,6 +22,7 @@ export default function HeroButtons({ onNavigate }: Props) {
       <motion.button
         type="button"
         className="hero-action-button hero-action-button--secondary"
+        data-analytics-cta="Discover Our World"
         onClick={() => onNavigate('stories')}
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.99 }}

@@ -13,6 +13,7 @@ export const WEBSITE_ROUTES = {
   EVENT: '/events/:slug',
   ABOUT: '/about',
   CART: '/cart',
+  WISHLIST: '/wishlist',
   LOGIN: '/login',
   PROFILE: '/keeper-circle/profile',
   KEEPER_CIRCLE_LOGIN: '/keeper-circle/login',
@@ -24,6 +25,7 @@ const WEBSITE_ROUTE_BY_PAGE: Record<string, string> = {
   home: WEBSITE_ROUTES.HOME,
   shop: WEBSITE_ROUTES.SHOP,
   collections: WEBSITE_ROUTES.COLLECTIONS,
+  'collection-detail': '/collections/:slug',
   heritage: WEBSITE_ROUTES.HERITAGE,
   stories: WEBSITE_ROUTES.STORIES,
   community: WEBSITE_ROUTES.COMMUNITY,
@@ -31,16 +33,19 @@ const WEBSITE_ROUTE_BY_PAGE: Record<string, string> = {
   events: WEBSITE_ROUTES.EVENTS,
   about: WEBSITE_ROUTES.ABOUT,
   cart: WEBSITE_ROUTES.CART,
+  wishlist: WEBSITE_ROUTES.WISHLIST,
   login: WEBSITE_ROUTES.LOGIN,
   profile: WEBSITE_ROUTES.PROFILE,
   legacy: '/legacy',
   archives: '/archives',
   'keeper-circle': '/keeper-circle',
   'keeper-circle-login': WEBSITE_ROUTES.KEEPER_CIRCLE_LOGIN,
-  'product-detail': '/product/demo',
+  'product-detail': WEBSITE_ROUTES.PRODUCT.replace(':id', 'demo'),
 }
 
-export function websitePathForPage(page: string) {
+export function websitePathForPage(page: string, productId?: string) {
+  if (page === 'product-detail' && productId) return productPath(productId)
+  if (page === 'collection-detail' && productId) return collectionPath(productId)
   return WEBSITE_ROUTE_BY_PAGE[page] ?? WEBSITE_ROUTES.HOME
 }
 
@@ -49,7 +54,8 @@ export function websitePageFromPath(pathname: string) {
 
   if (normalizedPath === WEBSITE_ROUTES.HOME) return 'home'
   if (normalizedPath === WEBSITE_ROUTES.SHOP) return 'shop'
-  if (normalizedPath === WEBSITE_ROUTES.COLLECTIONS || normalizedPath.startsWith('/collections/')) return 'collections'
+  if (normalizedPath === WEBSITE_ROUTES.COLLECTIONS) return 'collections'
+  if (normalizedPath.startsWith('/collections/')) return 'collection-detail'
   if (normalizedPath === WEBSITE_ROUTES.STORIES || normalizedPath.startsWith('/stories/')) return 'stories'
   if (normalizedPath === WEBSITE_ROUTES.HERITAGE) return 'heritage'
   if (normalizedPath === WEBSITE_ROUTES.COMMUNITY) return 'community'
@@ -57,6 +63,7 @@ export function websitePageFromPath(pathname: string) {
   if (normalizedPath === WEBSITE_ROUTES.EVENTS || normalizedPath.startsWith('/events/')) return 'events'
   if (normalizedPath === WEBSITE_ROUTES.ABOUT) return 'about'
   if (normalizedPath === WEBSITE_ROUTES.CART) return 'cart'
+  if (normalizedPath === WEBSITE_ROUTES.WISHLIST) return 'wishlist'
   if (normalizedPath === WEBSITE_ROUTES.LOGIN) return 'login'
   if (normalizedPath === WEBSITE_ROUTES.PROFILE || normalizedPath === '/profile') return 'profile'
   if (normalizedPath === '/legacy') return 'legacy'
@@ -70,7 +77,7 @@ export function websitePageFromPath(pathname: string) {
 }
 
 export function productPath(id: string) {
-  return `/product/${id}`
+  return WEBSITE_ROUTES.PRODUCT.replace(':id', encodeURIComponent(id))
 }
 
 export function collectionPath(slug: string) {

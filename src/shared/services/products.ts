@@ -1,4 +1,4 @@
-import type { Product } from '../../entities'
+import type { Product, ProductActivity } from '../../entities'
 import { api } from './api'
 
 const PRODUCTS: Product[] = [
@@ -240,6 +240,10 @@ export async function getProduct(id: string): Promise<Product | null> {
   return api.get<Product>(`/resources/products/${id}`)
 }
 
+export async function getProductActivity(id: string): Promise<ProductActivity[]> {
+  return api.get<ProductActivity[]>(`/resources/auditLogs?entityType=Product&entityId=${encodeURIComponent(id)}`)
+}
+
 export async function createProduct(data: Partial<Product>): Promise<Product> {
   return api.post<Product>('/resources/products', data as Record<string, unknown>)
 }
@@ -251,4 +255,8 @@ export async function updateProduct(id: string, data: Partial<Product>): Promise
 export async function archiveProduct(id: string): Promise<boolean> {
   await api.patch(`/resources/products/${id}`, { status: 'archived' })
   return true
+}
+
+export async function deleteProduct(id: string): Promise<void> {
+  await api.del(`/resources/products/${id}`)
 }

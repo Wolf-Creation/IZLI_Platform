@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { Screen } from '../../types'
 import { adminPathForScreen, adminStateFromPath, ADMIN_ROUTES } from '../../routes/admin'
-import { logout as authLogout } from '../../shared/services/auth'
+import { getAdminSessionExpiresAt, getStoredUser, hasStoredSession, logout as authLogout } from '../../shared/services/auth'
+import type { User } from '../../entities'
 import Sidebar from '../../components/Sidebar'
 import Topbar from '../../components/Topbar'
 import Dashboard from './pages/Dashboard'
 import ProductsList from './pages/ProductsList'
+import StockManagement from './pages/StockManagement'
 import ProductEditor from './pages/ProductEditor'
 import CategoriesList from './pages/CategoriesList'
 import CollectionsList from './pages/CollectionsList'
@@ -30,6 +32,7 @@ import LabProjectsList from './pages/LabProjectsList'
 import LabProjectEditor from './pages/LabProjectEditor'
 import CallsForContribution from './pages/CallsForContribution'
 import CommerceAnalytics from './pages/CommerceAnalytics'
+import VisitorAnalytics from './pages/VisitorAnalytics'
 import CommunityAnalytics from './pages/CommunityAnalytics'
 import ContentAnalytics from './pages/ContentAnalytics'
 import TeamRoles from './pages/TeamRoles'
@@ -67,19 +70,28 @@ import SystemAutomation from './pages/SystemAutomation'
 import ProductionAnalytics from './pages/ProductionAnalytics'
 import RecommendationAnalytics from './pages/RecommendationAnalytics'
 import NotFoundPage from '../../shared/components/NotFoundPage'
+import AdminLogin from './pages/AdminLogin'
+import AdminProfile from './pages/AdminProfile'
 
 export default function AdminApp() {
 	const initialState = adminStateFromPath(window.location.pathname)
 	const [screen, setScreen] = useState<Screen>(initialState.screen)
 	const [productEditorId, setProductEditorId] = useState<string | null>(initialState.productEditorId)
+	const [collectionEditorId, setCollectionEditorId] = useState<string | null>(() => {
+		const match = window.location.pathname.match(/^\/collections\/([^/]+)$/)
+		return match && match[1] !== 'new' ? match[1] : null
+	})
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 	const [sidebarHovered, setSidebarHovered] = useState(false)
+	const [adminUser, setAdminUser] = useState<User | null>(() => hasStoredSession() ? getStoredUser() : null)
 
 	useEffect(() => {
 		const syncFromLocation = () => {
 			const nextState = adminStateFromPath(window.location.pathname)
 			setScreen(nextState.screen)
 			setProductEditorId(nextState.productEditorId)
+			const collectionMatch = window.location.pathname.match(/^\/collections\/([^/]+)$/)
+			setCollectionEditorId(collectionMatch && collectionMatch[1] !== 'new' ? collectionMatch[1] : null)
 		}
 
 		window.addEventListener('popstate', syncFromLocation)
@@ -87,11 +99,66 @@ export default function AdminApp() {
 		return () => window.removeEventListener('popstate', syncFromLocation)
 	}, [])
 
+	useEffect(() => {
+		if (!adminUser) return
+
+		const expiresAt = getAdminSessionExpiresAt()
+		const expireSession = () => {
+			void authLogout()
+			setAdminUser(null)
+			setScreen('dashboard')
+			setProductEditorId(null)
+			setCollectionEditorId(null)
+			window.history.replaceState({}, '', '/')
+		}
+
+		if (!expiresAt || expiresAt <= Date.now()) {
+			expireSession()
+			return
+		}
+
+		const timeoutId = window.setTimeout(expireSession, expiresAt - Date.now())
+		const checkSession = () => {
+			if (Date.now() >= expiresAt || !hasStoredSession()) expireSession()
+		}
+		const checkVisibility = () => {
+			if (document.visibilityState === 'visible') checkSession()
+		}
+		window.addEventListener('focus', checkSession)
+		window.addEventListener('storage', checkSession)
+		document.addEventListener('visibilitychange', checkVisibility)
+
+		return () => {
+			window.clearTimeout(timeoutId)
+			window.removeEventListener('focus', checkSession)
+			window.removeEventListener('storage', checkSession)
+			document.removeEventListener('visibilitychange', checkVisibility)
+		}
+	}, [adminUser])
+
 	const navigate = (nextScreen: Screen) => {
-		const nextPath = adminPathForScreen(nextScreen, productEditorId)
+		const nextPath = adminPathForScreen(nextScreen, nextScreen === 'collection-editor' ? collectionEditorId : productEditorId)
 		window.history.pushState({}, '', nextPath)
 		setScreen(nextScreen)
 		if (nextScreen !== 'product-editor') setProductEditorId(null)
+	}
+
+	const openCollectionCreate = () => {
+		setCollectionEditorId(null)
+		window.history.pushState({}, '', adminPathForScreen('collection-editor'))
+		setScreen('collection-editor')
+	}
+
+	const openCollectionEdit = (id: string) => {
+		setCollectionEditorId(id)
+		window.history.pushState({}, '', adminPathForScreen('collection-editor', id))
+		setScreen('collection-editor')
+	}
+
+	const closeCollectionEditor = () => {
+		setCollectionEditorId(null)
+		window.history.pushState({}, '', adminPathForScreen('collections'))
+		setScreen('collections')
 	}
 
 	const openProductCreate = () => {
@@ -114,20 +181,25 @@ export default function AdminApp() {
 
 	const handleLogout = async () => {
 		await authLogout()
+		setAdminUser(null)
 		window.history.pushState({}, '', '/')
 		setScreen('dashboard')
 		setProductEditorId(null)
 	}
 
+	if (!adminUser) return <AdminLogin onAuthenticated={setAdminUser} />
+
 	function renderScreen() {
 		switch (screen) {
 			case 'not-found': return <NotFoundPage onReturnHome={() => navigate('dashboard')} homeLabel="Return to the dashboard" />
 			case 'dashboard': return <Dashboard onNavigate={navigate} onCreateProduct={openProductCreate} onEditProduct={openProductEdit} />
+			case 'admin-profile': return <AdminProfile onNavigate={navigate} onUpdated={user => setAdminUser(current => current ? { ...current, ...user } : current)} />
 			case 'products': return <ProductsList onNavigate={navigate} onCreateProduct={openProductCreate} onEditProduct={openProductEdit} />
+			case 'stock': return <StockManagement onNavigate={navigate} />
 			case 'product-editor': return <ProductEditor onNavigate={navigate} productId={productEditorId} onDone={closeProductEditor} />
 			case 'categories': return <CategoriesList onNavigate={navigate} />
-			case 'collections': return <CollectionsList onNavigate={navigate} />
-			case 'collection-editor': return <CollectionEditor onNavigate={navigate} />
+			case 'collections': return <CollectionsList onNavigate={navigate} onCreate={openCollectionCreate} onEdit={openCollectionEdit} />
+			case 'collection-editor': return <CollectionEditor collectionId={collectionEditorId} onNavigate={navigate} onDone={closeCollectionEditor} />
 			case 'orders': return <OrdersList onNavigate={navigate} />
 			case 'customer': return <CustomerDetail onNavigate={navigate} />
 			case 'home-builder': return <HomeBuilder onNavigate={navigate} />
@@ -148,6 +220,7 @@ export default function AdminApp() {
 			case 'lab-project-editor': return <LabProjectEditor onNavigate={navigate} />
 			case 'calls-for-contribution': return <CallsForContribution onNavigate={navigate} />
 			case 'commerce-analytics': return <CommerceAnalytics onNavigate={navigate} />
+			case 'visitor-analytics': return <VisitorAnalytics onNavigate={navigate} />
 			case 'community-analytics': return <CommunityAnalytics onNavigate={navigate} />
 			case 'content-analytics': return <ContentAnalytics onNavigate={navigate} />
 			case 'team-roles': return <TeamRoles onNavigate={navigate} />
@@ -192,9 +265,9 @@ export default function AdminApp() {
 
 	return (
 		<div style={{ display: 'flex', height: '100vh', background: '#EDE8DF', fontFamily: 'Inter, sans-serif' }}>
-			<Sidebar active={screen} onNavigate={navigate} collapsed={sidebarCollapsed} hovered={sidebarHovered} onToggleCollapse={() => setSidebarCollapsed(value => !value)} onHoverChange={setSidebarHovered} />
+			<Sidebar active={screen} onNavigate={navigate} collapsed={sidebarCollapsed} hovered={sidebarHovered} onToggleCollapse={() => setSidebarCollapsed(value => !value)} onHoverChange={setSidebarHovered} user={adminUser} />
 			<div style={{ marginLeft: sidebarWidth, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'margin-left 0.18s ease' }}>
-				<Topbar screen={screen} onNavigate={navigate} onLogout={handleLogout} />
+				<Topbar screen={screen} onNavigate={navigate} onProfile={() => navigate('admin-profile')} onLogout={handleLogout} user={adminUser} />
 				<main style={{ flex: 1, overflowY: 'auto' }}>{renderScreen()}</main>
 			</div>
 		</div>

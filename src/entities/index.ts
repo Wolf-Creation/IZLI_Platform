@@ -3,7 +3,7 @@
 export type ID = string
 export type ISODate = string
 export type URL = string
-export type Currency = 'EUR' | 'USD' | 'MAD' | 'DZD'
+export type Currency = 'TND' | 'EUR' | 'USD' | 'MAD' | 'DZD'
 
 // ─── Taxonomy ────────────────────────────────────────────────────────────────
 
@@ -102,6 +102,7 @@ export interface CommunityMember {
 // ─── Product ─────────────────────────────────────────────────────────────────
 
 export type ProductStatus = 'published' | 'draft' | 'archived' | 'out-of-stock'
+export type ProductType = 'Tops' | 'Bottoms'
 export type ProductUniverse = 'Heritage' | 'Essentials' | 'Studio' | 'Community Lab'
 export type SizeAvailability = 'available' | 'low' | 'sold-out'
 export type ProductReleaseStatus = 'draft' | 'ready' | 'production' | 'upcoming' | 'live' | 'sold-out' | 'archived'
@@ -116,15 +117,131 @@ export interface ProductSize {
 export interface ProductColorway {
   id: ID
   name: string
+  colorCode?: string
   hex: string
   images: URL[]
   sizeStocks: Record<string, number>
+}
+
+export interface ProductVariant {
+  id: ID
+  sku: string
+  colorName: string
+  colorCode: string
+  size: string
+  hex: string
+  image?: URL
+}
+
+export interface ProductMedia {
+  mainImage: string
+  gallery: string[]
+  detailImages: string[]
+  front: string[]
+  back: string[]
+  sleeve: string[]
+  embroidery: string[]
+  modelImages: string[]
+  campaignVideo: string
+  lifestyleImages: string[]
+}
+
+export interface ProductStory {
+  fullStory: string
+  designStory: string
+}
+
+export interface ProductSeo {
+  slug: string
+  metaTitle: string
+  metaDescription: string
+  keywords: string[]
+  ogImage: string
+}
+
+export interface ProductActivity {
+  id: ID
+  createdAt: ISODate
+  actorEmail: string
+  action: string
+  entityType: string
+  entityId: ID
+  diff?: { object?: string; fields?: string[]; variantId?: string; status?: string }
+}
+
+export type InventoryPieceStatus = 'available' | 'reserved' | 'sold' | 'returned' | 'damaged' | 'lost'
+
+export interface InventoryPiece {
+  id: ID
+  variantId: ID
+  status: InventoryPieceStatus
+  reason?: string
+  notes?: string
+  updatedAt?: ISODate
 }
 
 export interface Product {
   id: ID
   sku: string
   name: string
+  gender?: string
+  shortDescription?: string
+  fullDescription?: string
+  legacy?: string
+  characteristics?: {
+    fit?: string
+    fabric?: string
+    composition?: string
+    weight?: string
+    finish?: string
+    collar?: string
+    sleeve?: string
+    bottomHem?: string
+    sleeveHem?: string
+  }
+  design?: {
+    designName?: string
+    tifinaghText?: string
+    meaning?: string
+    inspiration?: string
+    heritageTheme?: string
+    motif?: string
+    motifMeaning?: string
+    designStory?: string
+    heritageStory?: string
+    decorationTechnique?: string
+    decorationPosition?: string
+    customPosition?: string
+    threadColor?: string
+    threadColorHex?: string
+    version?: string
+  }
+  variants?: ProductVariant[]
+  inventoryPieces?: InventoryPiece[]
+  media?: ProductMedia
+  story?: ProductStory
+  seo?: ProductSeo
+  pricing?: {
+    compareAtPrice?: number
+    fabricCost?: number
+    sewingCost?: number
+    embroideryCost?: number
+    washingCost?: number
+    packagingCost?: number
+    otherCost?: number
+  }
+  releaseSettings?: {
+    name?: string
+    date?: ISODate
+    price?: number
+    status?: 'draft' | 'upcoming' | 'early-access' | 'live' | 'sold-out' | 'closed'
+    earlyAccess?: boolean
+    earlyAccessDuration?: number
+    earlyAccessUnit?: 'hours' | 'days'
+    keeperPoints?: number
+    keeperExclusive?: boolean
+  }
+  productType?: ProductType
   universe: ProductUniverse
   status: ProductStatus
   releaseNumber?: string
@@ -136,7 +253,7 @@ export interface Product {
   archiveTitle?: string
   storyTitle?: string
   productionNotes?: string
-  price: number
+  price?: number
   currency: Currency
   description: string
   coverImageUrl: URL
@@ -151,6 +268,7 @@ export interface Product {
   relatedChallengeId?: ID
   categoryIds: ID[]
   collectionIds: ID[]
+  collectionId?: ID
   tags: Tag[]
   createdAt: ISODate
   publishedAt?: ISODate
@@ -160,6 +278,7 @@ export interface Product {
 
 export type CollectionStatus = 'active' | 'draft' | 'archived'
 export type CollectionSeason = 'SS25' | 'FW25' | 'SS26' | 'FW26' | 'Permanent'
+export type OfficialCollectionType = 'LEGACY' | 'STUDIO' | 'ESSENTIALS' | 'COMMUNITY_LAB'
 
 export interface Collection {
   id: ID
@@ -168,6 +287,14 @@ export interface Collection {
   universe: ProductUniverse
   season: CollectionSeason
   status: CollectionStatus
+  type?: OfficialCollectionType
+  tagline?: string
+  shortDescription?: string
+  coverImage?: URL | null
+  heroImage?: URL | null
+  displayOrder?: number
+  isFeatured?: boolean
+  isActive?: boolean
   coverImageUrl: URL
   description: string
   productIds: ID[]

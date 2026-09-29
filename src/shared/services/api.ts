@@ -5,11 +5,13 @@ const API_BASE_URL = environment.apiURL.replace(/\/$/, '')
 type JsonValue = Record<string, unknown> | Array<unknown> | string | number | boolean | null
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const accessToken = typeof localStorage !== 'undefined' ? localStorage.getItem('izli.accessToken') : null
   const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
     headers: {
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...(init?.headers ?? {}),
     },
-    ...init,
   })
 
   const contentType = response.headers.get('content-type') ?? ''
@@ -30,6 +32,7 @@ export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body?: JsonValue) => request<T>(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}) }),
   patch: <T>(path: string, body?: JsonValue) => request<T>(path, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}) }),
+  put: <T>(path: string, body?: JsonValue) => request<T>(path, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}) }),
   del: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
   upload: <T>(path: string, formData: FormData) => request<T>(path, { method: 'POST', body: formData }),
 }

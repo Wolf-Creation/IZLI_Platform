@@ -12,6 +12,13 @@
 .website-app main {
   background: var(--website-bg);
   color: var(--website-text);
+  margin-top: 92px;
+}
+
+@media (max-width: 768px) {
+  .website-app main {
+    margin-top: 62px;
+  }
 }
 
 .website-app main > * {
@@ -19,10 +26,6 @@
   color: var(--website-text);
 }
 
-.website-app main > * > section,
-.website-app main > * > div {
-  background-color: var(--website-bg) !important;
-}
 
 .website-app main h1,
 .website-app main h2,
@@ -42,8 +45,7 @@
 
 .website-app main [class*='meta'],
 .website-app main [class*='kicker'],
-.website-app main [class*='eyebrow'],
-.website-app main [class*='label'] {
+.website-app main [class*='eyebrow'] {
   color: var(--website-text-muted) !important;
 }
 
@@ -74,7 +76,7 @@
 }
 
 .website-app main button {
-  color: var(--website-text) !important;
+  color: var(--website-text) ;
 }
 
 .website-app main button.hero-slider__cta,
@@ -239,7 +241,7 @@
   content: '';
   position: absolute;
   right: 0;
-  bottom: -17px;
+  bottom: -10px;
   left: 0;
   height: 2px;
   background: #c9924e !important;

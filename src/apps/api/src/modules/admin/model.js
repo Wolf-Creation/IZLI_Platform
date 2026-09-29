@@ -2,8 +2,8 @@
 
 // AuditLog — tracks sensitive admin actions
 const auditLogSchema = new mongoose.Schema({
-  actorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  actorEmail: { type: String, required: true },
+  actorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  actorEmail: { type: String, required: true, default: 'system' },
   action: { type: String, required: true },
   entityType: { type: String, required: true },
   entityId: { type: mongoose.Schema.Types.ObjectId, required: true },

@@ -1,3 +1,26 @@
+import { api } from './api'
+
+export interface VisitorAnalytics {
+  days: number
+  visitors: number
+  sessions: number
+  pageViews: number
+  topPages: Array<{ page: string; views: number }>
+  topCtas: Array<{ page: string; cta: string; clicks: number }>
+}
+
+export function trackPageView(data: { page: string; visitorId: string; sessionId: string }) {
+  return api.post<null>('/analytics/events', { event: 'page_view', ...data, referrer: document.referrer, device: window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tablet' : 'desktop' }).catch(() => null)
+}
+
+export function trackCtaClick(data: { page: string; cta: string; visitorId: string; sessionId: string }) {
+  return api.post<null>('/analytics/events', { event: 'cta_click', ...data, referrer: document.referrer, device: window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tablet' : 'desktop' }).catch(() => null)
+}
+
+export function getVisitorAnalytics(days = 30) {
+  return api.get<VisitorAnalytics>(`/analytics/overview?days=${days}`)
+}
+
 export interface CommerceMetrics {
   totalRevenue: number
   revenueGrowth: number

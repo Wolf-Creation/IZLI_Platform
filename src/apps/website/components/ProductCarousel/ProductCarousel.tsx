@@ -74,6 +74,12 @@ function getLocalProductImages(product: Product) {
   return entries.map(([, imageUrl]) => imageUrl)
 }
 
+function resolveProductImage(image?: string) {
+  if (!image) return undefined
+  if (/^https?:\/\//i.test(image) || image.startsWith('/')) return image
+  return `https://images.unsplash.com/${image}?w=600&h=900&fit=crop&auto=format`
+}
+
 export function ProductCarousel({ products, autoScrollSpeed = DEFAULT_AUTO_SCROLL_SPEED }: Props) {
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null)
   const [isVisible, setIsVisible] = useState(false)
@@ -176,7 +182,7 @@ export function ProductCarousel({ products, autoScrollSpeed = DEFAULT_AUTO_SCROL
             >
               {products.map((product, productIndex) => {
           const imgIdx = currentImageIndex[product.id] || 0
-          const imgUrl = product.images[imgIdx]
+          const imgUrl = resolveProductImage(product.images[imgIdx])
           const localImages = getLocalProductImages(product)
 
           return (
@@ -188,7 +194,7 @@ export function ProductCarousel({ products, autoScrollSpeed = DEFAULT_AUTO_SCROL
             >
               <div className="product-card__image-wrapper">
                 <img
-                  src={localImages[imgIdx] ?? (imgUrl ? `https://images.unsplash.com/${imgUrl}?w=300&h=450&fit=crop&auto=format` : undefined)}
+                  src={localImages[imgIdx] ?? imgUrl}
                   alt={product.name}
                   className="product-card__image"
                 />

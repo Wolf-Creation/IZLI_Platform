@@ -142,6 +142,17 @@ export async function assignQr({ qrNumber, productId, size, color, colorCode, re
 
   const product = await getProductOrThrow(productId);
   validateAssignment(product, { size, color, colorCode, releaseNumber, releaseProductNumber });
+  const duplicateProductNumber = await QRCode.findOne({
+    releaseId: releaseId || product._id,
+    releaseNumber,
+    releaseProductNumber: String(releaseProductNumber),
+    _id: { $ne: qr._id },
+  });
+  if (duplicateProductNumber) {
+    const error = new Error(`Product number ${releaseProductNumber} is already assigned in release ${releaseNumber}`);
+    error.statusCode = 409;
+    throw error;
+  }
   const productCode = product.sku || product.name;
   const serialNumber = generateSerialNumber({ qrNumber: qr.qrNumber, productId: productCode, releaseNumber, releaseProductNumber, size, colorCode });
   const duplicate = await QRCode.findOne({ serialNumber, _id: { $ne: qr._id } });

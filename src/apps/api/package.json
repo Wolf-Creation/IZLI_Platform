@@ -8,6 +8,8 @@
     "dev": "node --watch start.js",
     "start": "node start.js",
     "seed": "node scripts/seedInitialData.js",
+    "seed:collections": "node scripts/seedCollections.js",
+    "test": "node --test src/modules/collections/validator.test.js src/modules/websiteBuilder/collectionsPageConfig.test.js",
     "lint": "echo \"No lint configured yet\""
   },
   "dependencies": {

@@ -1,7 +1,18 @@
-import { useState } from 'react'
-import { INDIGO, TEXT, TEXT_SEC, BORDER, CLAY, SAGE, BG, SURFACE, SURFACE_2, CREAM, SAND, FONT_SERIF, FONT_SANS, FONT_MONO } from '../../../../tokens'
+import { useEffect, useState } from 'react'
+import { BORDER, CLAY, SAGE, FONT_SERIF, FONT_SANS, FONT_MONO } from '../../../../tokens'
 import type { WebPage } from '../../types'
+import { TopBarPage } from '../../components/TopBarPage/TopBarPage'
+import { getKeeperProfile, hasStoredSession, updateKeeperProfile, updateKeeperSecurity, type KeeperProfile } from '../../../../shared/services/auth'
 import './Profile.scss'
+
+const INDIGO = '#F5F1EA'
+const TEXT = '#F5F1EA'
+const TEXT_SEC = '#C7C0B7'
+const BG = '#000000'
+const SURFACE = '#151515'
+const SURFACE_2 = '#0D0D0D'
+const CREAM = '#F5F1EA'
+const SAND = '#A9A198'
 
 interface Props { onNavigate: (p: WebPage) => void }
 
@@ -21,6 +32,8 @@ const CONTRIBUTIONS = [
 
 const TABS: ProfileTab[] = ['Overview', 'Orders', 'Contributions', 'Challenges', 'Settings']
 
+const formatDisplayName = (value: string) => value.trim().toLowerCase().replace(/(^|\s)\S/g, character => character.toUpperCase())
+
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
   Delivered: { bg: '#E6EDE8', color: '#4A7A5A' },
   Featured: { bg: SURFACE_2, color: CLAY },
@@ -29,60 +42,138 @@ const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
 
 export default function Profile({ onNavigate }: Props) {
   const [tab, setTab] = useState<ProfileTab>('Overview')
+  const [profile, setProfile] = useState<KeeperProfile | null>(null)
+  const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', gender: '', phone: '', governorate: '', age: '' })
+  const [profileMessage, setProfileMessage] = useState('')
+  const [securityForm, setSecurityForm] = useState({ twoFactorEnabled: false, currentPassword: '', newPassword: '', confirmPassword: '' })
+  const [securityMessage, setSecurityMessage] = useState('')
 
-  const handleLogout = () => {
-    localStorage.removeItem('izli.accessToken')
-    localStorage.removeItem('izli.currentUser')
-    onNavigate('keeper-circle')
+  useEffect(() => {
+    if (!hasStoredSession()) {
+      onNavigate('keeper-circle-login')
+      return
+    }
+
+    getKeeperProfile().then(keeperProfile => {
+      setProfile(keeperProfile)
+      setProfileForm({
+        firstName: keeperProfile.firstName,
+        lastName: keeperProfile.lastName,
+        gender: keeperProfile.gender ?? '',
+        phone: keeperProfile.phone ?? '',
+        governorate: keeperProfile.governorate ?? '',
+        age: keeperProfile.age ? String(keeperProfile.age) : '',
+      })
+      setSecurityForm(current => ({ ...current, twoFactorEnabled: Boolean(keeperProfile.twoFactorEnabled) }))
+    }).catch(error => {
+      if (error instanceof Error && ['Unauthorized', 'Invalid token'].includes(error.message)) {
+        localStorage.removeItem('izli.accessToken')
+        localStorage.removeItem('izli.currentUser')
+        onNavigate('keeper-circle-login')
+        return
+      }
+      setProfileMessage('Unable to load your Keeper details.')
+    })
+  }, [onNavigate])
+
+  const updateProfileField = (field: keyof typeof profileForm, value: string) => {
+    setProfileForm(current => ({ ...current, [field]: value }))
   }
 
+  const saveProfile = async () => {
+    try {
+      const updatedProfile = await updateKeeperProfile({
+        firstName: profileForm.firstName.trim(),
+        lastName: profileForm.lastName.trim(),
+        gender: profileForm.gender || undefined,
+        phone: profileForm.phone.trim() || undefined,
+        governorate: profileForm.governorate.trim() || undefined,
+        age: profileForm.age ? Number(profileForm.age) : undefined,
+      })
+      setProfile(updatedProfile)
+      setProfileForm({
+        firstName: updatedProfile.firstName,
+        lastName: updatedProfile.lastName,
+        gender: updatedProfile.gender ?? '',
+        phone: updatedProfile.phone ?? '',
+        governorate: updatedProfile.governorate ?? '',
+        age: updatedProfile.age ? String(updatedProfile.age) : '',
+      })
+      setProfileMessage('Profile updated.')
+    } catch {
+      setProfileMessage('Unable to update your profile.')
+    }
+  }
+
+  const saveTwoFactor = async () => {
+    setSecurityMessage('')
+    try {
+      const updatedProfile = await updateKeeperSecurity({ twoFactorEnabled: securityForm.twoFactorEnabled })
+      setProfile(updatedProfile)
+      setSecurityMessage('Two-factor authentication updated.')
+    } catch (error) {
+      setSecurityMessage(error instanceof Error ? error.message : 'Unable to update two-factor authentication.')
+    }
+  }
+
+  const changePassword = async () => {
+    setSecurityMessage('')
+    if (!securityForm.currentPassword || !securityForm.newPassword || securityForm.newPassword !== securityForm.confirmPassword) {
+      setSecurityMessage('Enter your current password and matching new passwords.')
+      return
+    }
+    if (securityForm.newPassword.length < 8) {
+      setSecurityMessage('The new password must contain at least 8 characters.')
+      return
+    }
+    try {
+      await updateKeeperSecurity({ currentPassword: securityForm.currentPassword, newPassword: securityForm.newPassword })
+      setSecurityForm(current => ({ ...current, currentPassword: '', newPassword: '', confirmPassword: '' }))
+      setSecurityMessage('Password updated.')
+    } catch (error) {
+      setSecurityMessage(error instanceof Error ? error.message : 'Unable to update your password.')
+    }
+  }
+
+  const displayName = profile ? formatDisplayName(`${profile.firstName} ${profile.lastName}`) : 'Keeper Profile'
+  const initials = profile ? `${profile.firstName[0] ?? ''}${profile.lastName[0] ?? ''}`.toUpperCase() : 'KP'
+
   return (
-    <div style={{ background: BG, minHeight: '100vh', marginTop: 100 }}>
-      <div style={{ background: INDIGO, padding: '48px 40px' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 28 }}>
-          <div style={{ width: 72, height: 72, borderRadius: 999, background: 'rgba(231,223,210,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, color: CREAM, fontFamily: FONT_SERIF, flexShrink: 0, border: '2px solid rgba(231,223,210,0.25)' }}>YB</div>
-          <div style={{ flex: 1 }}>
-            <h1 style={{ fontFamily: FONT_SERIF, fontSize: 32, fontWeight: 500, color: CREAM, margin: 0, marginBottom: 4 }}>Youcef Benali</h1>
-            <div style={{ fontSize: 13, color: 'rgba(231,223,210,0.6)', marginBottom: 10 }}>youcef.benali@mail.com · Algiers, DZ</div>
-            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-              <div style={{ width: 26, height: 26, borderRadius: 999, background: CLAY, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: CREAM }}>5</div>
-              <span style={{ fontSize: 13, color: 'rgba(231,223,210,0.6)' }}>Level 5 · ◈ ◇ ⬡ ◫ ⬠</span>
-              <span style={{ fontFamily: FONT_MONO, fontSize: 12, color: 'rgba(231,223,210,0.4)', marginLeft: 8 }}>MBR-0041</span>
+    <div className="profile-page-shell">
+      <TopBarPage
+        className="top-bar-page--profile"
+        leading={
+          <div className="top-bar-page__profile-leading">
+            <div className="top-bar-page__profile-avatar">{initials}</div>
+            <div>
+              <h1 className="top-bar-page__profile-name">{displayName}</h1>
+              <div className="top-bar-page__profile-level">Level 5 · Heritage Keeper</div>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 32 }}>
+        }
+        trailing={
+          <div className="top-bar-page__profile-stats">
             {[
               { label: 'Contributions', value: '34' },
               { label: 'Challenges', value: '12' },
               { label: 'Orders', value: '6' },
-            ].map(s => (
-              <div key={s.label} style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: FONT_SERIF, fontSize: 28, fontWeight: 500, color: CREAM }}>{s.value}</div>
-                <div style={{ fontSize: 10, color: 'rgba(231,223,210,0.45)', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600, marginTop: 4 }}>{s.label}</div>
+            ].map(stat => (
+              <div key={stat.label} className="top-bar-page__profile-stat">
+                <strong>{stat.value}</strong>
+                <span>{stat.label}</span>
               </div>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            title="Log out"
-            aria-label="Log out"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 13px', background: 'transparent', border: '1px solid rgba(231,223,210,0.35)', borderRadius: 8, color: CREAM, cursor: 'pointer', fontSize: 12, fontFamily: FONT_SANS }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-              <path d="M10 17l5-5-5-5" />
-              <path d="M15 12H3" />
-              <path d="M21 3v18" />
-            </svg>
-            Log out
-          </button>
-        </div>
-      </div>
-      <div style={{ background: SURFACE, borderBottom: `1px solid ${BORDER}` }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 40px', display: 'flex', gap: 0 }}>
-          {TABS.map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{ padding: '14px 20px', fontSize: 13, fontWeight: tab === t ? 500 : 400, color: tab === t ? INDIGO : TEXT_SEC, background: 'transparent', border: 'none', borderBottom: tab === t ? `2px solid ${INDIGO}` : '2px solid transparent', cursor: 'pointer', fontFamily: FONT_SANS, marginBottom: -1 }}>{t}</button>
-          ))}
+        }
+      />
+      <div className="profile-page" style={{ background: BG, minHeight: '100vh', marginTop: 0 }}>
+      <div className="profile-tabs">
+        <div className="profile-tabs__inner">
+          <div className="profile-tabs__categories" role="tablist" aria-label="Profile sections">
+            {TABS.map(t => (
+              <button key={t} className={tab === t ? 'is-active' : ''} onClick={() => setTab(t)} role="tab" aria-selected={tab === t}>{t}</button>
+            ))}
+          </div>
         </div>
       </div>
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '48px 40px 80px' }}>
@@ -165,22 +256,42 @@ export default function Profile({ onNavigate }: Props) {
         )}
         {tab === 'Settings' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20, maxWidth: 600 }}>
-            {[
-              { label: 'Profile', fields: [{ l: 'Full Name', v: 'Youcef Benali' }, { l: 'Email', v: 'youcef.benali@mail.com' }, { l: 'Location', v: 'Algiers, Algeria' }] },
-              { label: 'Preferences', fields: [{ l: 'Newsletter', v: 'Subscribed' }, { l: 'Language', v: 'English' }] },
-            ].map(section => (
-              <div key={section.label} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 18, overflow: 'hidden' }}>
-                <div style={{ padding: '16px 22px', background: SURFACE_2, borderBottom: `1px solid ${BORDER}` }}><div style={{ fontFamily: FONT_SERIF, fontSize: 16, fontWeight: 500, color: INDIGO }}>{section.label}</div></div>
-                <div style={{ padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  {section.fields.map(f => (
-                    <div key={f.l}><label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT_SEC, marginBottom: 6, letterSpacing: '0.03em' }}>{f.l}</label><input style={{ width: '100%', padding: '9px 12px', background: BG, border: `1px solid ${BORDER}`, borderRadius: 9, fontSize: 13, color: TEXT, fontFamily: FONT_SANS, outline: 'none', boxSizing: 'border-box' }} defaultValue={f.v} /></div>
-                  ))}
-                  <button style={{ alignSelf: 'flex-end', padding: '8px 18px', background: INDIGO, color: CREAM, border: 'none', borderRadius: 9, fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: FONT_SANS }}>Save Changes</button>
-                </div>
+            <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 18, overflow: 'hidden' }}>
+              <div style={{ padding: '16px 22px', background: SURFACE_2, borderBottom: `1px solid ${BORDER}` }}><div style={{ fontFamily: FONT_SERIF, fontSize: 16, fontWeight: 500, color: INDIGO }}>Keeper details</div></div>
+              <div style={{ padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {[
+                  ['firstName', 'First name'], ['lastName', 'Last name'], ['email', 'Email'],
+                  ['phone', 'Phone'], ['governorate', 'Governorate'], ['age', 'Age'],
+                ].map(([field, label]) => (
+                  <div key={field}><label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT_SEC, marginBottom: 6, letterSpacing: '0.03em' }}>{label}</label><input value={field === 'email' ? profile?.email ?? '' : profileForm[field as keyof typeof profileForm]} onChange={event => field !== 'email' && updateProfileField(field as keyof typeof profileForm, event.target.value)} type={field === 'age' ? 'number' : field === 'email' ? 'email' : 'text'} readOnly={field === 'email'} style={{ width: '100%', padding: '9px 12px', background: BG, border: `1px solid ${BORDER}`, borderRadius: 9, fontSize: 13, color: TEXT, fontFamily: FONT_SANS, outline: 'none', boxSizing: 'border-box' }} /></div>
+                ))}
+                <div><label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT_SEC, marginBottom: 6, letterSpacing: '0.03em' }}>Gender</label><select value={profileForm.gender} onChange={event => updateProfileField('gender', event.target.value)} style={{ width: '100%', padding: '9px 12px', background: BG, border: `1px solid ${BORDER}`, borderRadius: 9, fontSize: 13, color: TEXT, fontFamily: FONT_SANS, outline: 'none', boxSizing: 'border-box' }}><option value="">Select</option><option value="female">Female</option><option value="male">Male</option><option value="non-binary">Non-binary</option><option value="prefer-not-to-say">Prefer not to say</option></select></div>
+                {profileMessage && <div style={{ fontSize: 12, color: TEXT_SEC }}>{profileMessage}</div>}
+                <button onClick={saveProfile} style={{ alignSelf: 'flex-end', padding: '8px 18px', background: INDIGO, color: CREAM, border: 'none', borderRadius: 9, fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: FONT_SANS }}>Save Changes</button>
               </div>
-            ))}
+            </div>
+            <div style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 18, overflow: 'hidden' }}>
+              <div style={{ padding: '16px 22px', background: SURFACE_2, borderBottom: `1px solid ${BORDER}` }}><div style={{ fontFamily: FONT_SERIF, fontSize: 16, fontWeight: 500, color: INDIGO }}>Security</div></div>
+              <div style={{ padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, color: TEXT, fontSize: 13, cursor: 'pointer' }}>
+                  <span><strong style={{ display: 'block', marginBottom: 4 }}>Two-factor authentication</strong><span style={{ color: TEXT_SEC, fontSize: 12 }}>Receive a verification code by email when signing in.</span></span>
+                  <input type="checkbox" checked={securityForm.twoFactorEnabled} onChange={event => setSecurityForm(current => ({ ...current, twoFactorEnabled: event.target.checked }))} style={{ width: 18, height: 18, accentColor: CLAY, flexShrink: 0 }} />
+                </label>
+                <button onClick={saveTwoFactor} style={{ alignSelf: 'flex-end', padding: '8px 18px', background: INDIGO, color: CREAM, border: 'none', borderRadius: 9, fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: FONT_SANS }}>Save 2FA</button>
+                <div style={{ height: 1, background: BORDER }} />
+                <div style={{ fontSize: 13, fontWeight: 500, color: TEXT }}>Change password</div>
+                {[
+                  ['currentPassword', 'Current password'], ['newPassword', 'New password'], ['confirmPassword', 'Confirm new password'],
+                ].map(([field, label]) => (
+                  <div key={field}><label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEXT_SEC, marginBottom: 6, letterSpacing: '0.03em' }}>{label}</label><input type="password" value={securityForm[field as keyof typeof securityForm] as string} onChange={event => setSecurityForm(current => ({ ...current, [field]: event.target.value }))} autoComplete={field === 'currentPassword' ? 'current-password' : 'new-password'} style={{ width: '100%', padding: '9px 12px', background: BG, border: `1px solid ${BORDER}`, borderRadius: 9, fontSize: 13, color: TEXT, fontFamily: FONT_SANS, outline: 'none', boxSizing: 'border-box' }} /></div>
+                ))}
+                {securityMessage && <div style={{ fontSize: 12, color: TEXT_SEC }}>{securityMessage}</div>}
+                <button onClick={changePassword} style={{ alignSelf: 'flex-end', padding: '8px 18px', background: INDIGO, color: CREAM, border: 'none', borderRadius: 9, fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: FONT_SANS }}>Change password</button>
+              </div>
+            </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   )

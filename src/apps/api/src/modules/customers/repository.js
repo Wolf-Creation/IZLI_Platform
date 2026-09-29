@@ -2,6 +2,7 @@ import { Customer } from './model.js';
 
 export const customersRepository = {
   findByEmail: (email) => Customer.findOne({ email }).select('+password'),
+  findByEmailWithTwoFactor: (email) => Customer.findOne({ email }).select('+password +twoFactorCode +twoFactorExpires'),
   findByEmailWithVerification: (email) => Customer.findOne({ email }).select('+password +emailVerificationCode +emailVerificationExpires'),
   findByEmailWithPasswordReset: (email) => Customer.findOne({ email }).select('+passwordResetToken +passwordResetExpires'),
   findById: (id) => Customer.findById(id),

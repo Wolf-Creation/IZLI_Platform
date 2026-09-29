@@ -3,6 +3,22 @@ import { api } from './api'
 
 const CURRENT_USER_KEY = 'izli.currentUser'
 const ACCESS_TOKEN_KEY = 'izli.accessToken'
+const ADMIN_SESSION_EXPIRES_AT_KEY = 'izli.adminSessionExpiresAt'
+const ADMIN_SESSION_DURATION_MS = 60 * 60 * 1000
+
+export interface KeeperProfile {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  gender?: string
+  phone?: string
+  governorate?: string
+  age?: number
+  twoFactorEnabled?: boolean
+  avatarUrl?: string
+  createdAt: string
+}
 
 const MOCK_USER: User = {
   id: 'user-001',
@@ -27,9 +43,30 @@ const persistSession = (user: User | null, accessToken?: string) => {
     }
     if (accessToken) {
       localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
-    } else {
+    } else if (!user) {
       localStorage.removeItem(ACCESS_TOKEN_KEY)
     }
+    if (!user) {
+      localStorage.removeItem(ADMIN_SESSION_EXPIRES_AT_KEY)
+    } else if (['admin', 'owner'].includes(user.role)) {
+      if (accessToken) {
+        localStorage.setItem(ADMIN_SESSION_EXPIRES_AT_KEY, String(getTokenExpiration(accessToken) ?? Date.now() + ADMIN_SESSION_DURATION_MS))
+      }
+    } else if (accessToken) {
+      localStorage.removeItem(ADMIN_SESSION_EXPIRES_AT_KEY)
+    }
+  }
+}
+
+function getTokenExpiration(token: string): number | null {
+  try {
+    const payload = token.split('.')[1]
+    if (!payload) return null
+    const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const decoded = JSON.parse(atob(normalizedPayload.padEnd(Math.ceil(normalizedPayload.length / 4) * 4, '='))) as { exp?: number }
+    return typeof decoded.exp === 'number' ? decoded.exp * 1000 : null
+  } catch {
+    return null
   }
 }
 
@@ -66,6 +103,82 @@ export async function login(email: string, password: string): Promise<User> {
   }
 }
 
+export async function loginAdmin(email: string, password: string): Promise<User> {
+  const result = await api.post<{ user: User; accessToken: string }>('/auth/login', { email, password })
+  if (!['admin', 'owner'].includes(result.user.role)) throw new Error('This account does not have admin access.')
+  persistSession(result.user, result.accessToken)
+  return result.user
+}
+
+export function getStoredUser(): User | null {
+  return readStoredUser()
+}
+
+export function getAdminSessionExpiresAt(): number | null {
+  if (typeof localStorage === 'undefined') return null
+  const user = readStoredUser()
+  if (!user || !['admin', 'owner'].includes(user.role)) return null
+  const storedExpiry = Number(localStorage.getItem(ADMIN_SESSION_EXPIRES_AT_KEY))
+  if (Number.isFinite(storedExpiry) && storedExpiry > 0) return storedExpiry
+
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY)
+  const tokenExpiry = token ? getTokenExpiration(token) : null
+  const expiresAt = tokenExpiry ?? Date.now() + ADMIN_SESSION_DURATION_MS
+  localStorage.setItem(ADMIN_SESSION_EXPIRES_AT_KEY, String(expiresAt))
+  return expiresAt
+}
+
+export function hasStoredSession() {
+  if (typeof localStorage === 'undefined') return false
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY)
+  const user = readStoredUser()
+  if (!token || !user) return false
+  if (['admin', 'owner'].includes(user.role)) {
+    const expiresAt = getAdminSessionExpiresAt()
+    if (!expiresAt || expiresAt <= Date.now()) {
+      persistSession(null)
+      return false
+    }
+  }
+  return true
+}
+
+export function getAdminProfile(): Promise<Pick<User, 'id' | 'email' | 'displayName' | 'role' | 'status'>> {
+  return api.get('/auth/admin/profile')
+}
+
+export function updateAdminProfile(data: { email: string; displayName: string; password?: string }) {
+  return api.patch<Pick<User, 'id' | 'email' | 'displayName' | 'role' | 'status'>>('/auth/admin/profile', data).then(profile => {
+    const current = readStoredUser()
+    if (current) persistSession({ ...current, ...profile })
+    return profile
+  })
+}
+
+export function getKeeperProfile() {
+  return api.get<KeeperProfile>('/auth/keeper/profile')
+}
+
+export function updateKeeperProfile(data: Pick<KeeperProfile, 'firstName' | 'lastName' | 'gender' | 'phone' | 'governorate' | 'age'>) {
+  return api.patch<KeeperProfile>('/auth/keeper/profile', data)
+}
+
+export function updateKeeperSecurity(data: { twoFactorEnabled?: boolean; currentPassword?: string; newPassword?: string }) {
+  return api.patch<KeeperProfile>('/auth/keeper/security', data)
+}
+
+export async function loginWithChallenge(email: string, password: string) {
+  const result = await api.post<{ user?: User; accessToken?: string; twoFactorRequired?: boolean; devCode?: string }>('/auth/login', { email, password })
+  if (result.user && result.accessToken) persistSession(result.user, result.accessToken)
+  return result
+}
+
+export async function verifyLogin(email: string, code: string) {
+  const result = await api.post<{ user: User; accessToken: string }>('/auth/login/verify', { email, code })
+  persistSession(result.user, result.accessToken)
+  return result.user
+}
+
 export async function register(email: string, password: string, name: string): Promise<User> {
   try {
     const result = await api.post<{ user: User; accessToken: string }>('/auth/register', { email, password, name })
@@ -92,7 +205,7 @@ export async function logout(): Promise<void> {
 
 export async function getCurrentUser(): Promise<User | null> {
   if (currentUser) return currentUser
-  currentUser = readStoredUser() ?? MOCK_USER
+  currentUser = hasStoredSession() ? readStoredUser() : null
   return currentUser
 }
 

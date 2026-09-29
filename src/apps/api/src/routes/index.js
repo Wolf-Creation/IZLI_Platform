@@ -4,6 +4,9 @@ import { usersRouter } from '../modules/users/routes.js';
 import { resourcesRouter } from './resources.routes.js';
 import { uploadRouter } from './upload.routes.js';
 import { qrRouter } from '../modules/qr/routes.js';
+import { analyticsRoutes } from '../modules/analytics/routes.js';
+import { adminCollectionsRoutes, collectionsRoutes } from '../modules/collections/routes.js';
+import { adminCollectionsPageRoutes, collectionsPageRoutes } from '../modules/websiteBuilder/routes.js';
 
 export const apiRouter = Router();
 
@@ -12,3 +15,8 @@ apiRouter.use('/users', usersRouter);
 apiRouter.use('/resources', resourcesRouter);
 apiRouter.use('/uploads', uploadRouter);
 apiRouter.use('/qr', qrRouter);
+apiRouter.use('/analytics', analyticsRoutes);
+apiRouter.use('/collections', collectionsRoutes);
+apiRouter.use('/admin/collections', adminCollectionsRoutes);
+apiRouter.use('/website-builder/collections-page', collectionsPageRoutes);
+apiRouter.use('/admin/website-builder/collections-page', adminCollectionsPageRoutes);

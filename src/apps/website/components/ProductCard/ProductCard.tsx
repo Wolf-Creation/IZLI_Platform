@@ -9,6 +9,9 @@ interface ProductCardProps {
   badge?: string
   onClick?: () => void
   onAddToCart?: () => void
+  onToggleWishlist?: () => void
+  isWishlisted?: boolean
+  wishlistIcon?: 'heart' | 'trash'
   className?: string
 }
 
@@ -20,6 +23,9 @@ export function ProductCard({
   badge,
   onClick,
   onAddToCart,
+  onToggleWishlist,
+  isWishlisted = false,
+  wishlistIcon = 'heart',
   className = '',
 }: ProductCardProps) {
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
@@ -34,14 +40,28 @@ export function ProductCard({
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       className={`izli-product-card ${className}`.trim()}
+      data-analytics-cta={`Product: ${name}`}
       onClick={onClick}
       onKeyDown={handleKeyDown}
     >
       <span className="izli-product-card__image">
         <img src={image} alt={name} />
+        {onToggleWishlist && <button
+          type="button"
+          className={`izli-product-card__wishlist${isWishlisted ? ' is-active' : ''}`}
+          onClick={event => {
+            event.stopPropagation()
+            onToggleWishlist()
+          }}
+          aria-label={wishlistIcon === 'trash' ? `Remove ${name} from wishlist` : isWishlisted ? `Remove ${name} from wishlist` : `Add ${name} to wishlist`}
+          aria-pressed={isWishlisted}
+        >
+          {wishlistIcon === 'trash' ? <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg> : <svg viewBox="0 0 24 24" fill={isWishlisted ? 'currentColor' : 'none'} aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z" /></svg>}
+        </button>}
         <button
           type="button"
           className="izli-product-card__cta"
+          data-analytics-cta={`Add to cart: ${name}`}
           onClick={event => {
             event.stopPropagation()
             onAddToCart?.()
