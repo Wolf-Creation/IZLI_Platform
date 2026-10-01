@@ -75,12 +75,12 @@ export default function Footer({ onNavigate, showHomeAbout = false }: Props) {
         </div>
         <div className="site-footer__column site-footer__column--pages">
           <FooterGroup title="Pages" links={PAGE_LINKS} onNavigate={onNavigate} />
-          <FooterGroup title="Legal" links={[{ label: 'Privacy policy', page: 'about' }, { label: 'Cookie policy', page: 'about' }]} onNavigate={onNavigate} />
+          <FooterGroup title="Discover" links={DISCOVER_LINKS} onNavigate={onNavigate} />
         </div>
         <div className="site-footer__column site-footer__column--discover">
-          <FooterGroup title="Discover" links={DISCOVER_LINKS} onNavigate={onNavigate} />
           <FooterGroup title="Collections" links={COLLECTION_LINKS.slice(2)} onNavigate={onNavigate} />
           <FooterGroup title="Categories" links={COLLECTION_LINKS.slice(0, 2)} onNavigate={onNavigate} />
+          <FooterGroup title="Legal" links={[{ label: 'Privacy policy', page: 'about' }, { label: 'Cookie policy', page: 'about' }]} onNavigate={onNavigate} />
         </div>
       </div>
 
@@ -91,8 +91,8 @@ export default function Footer({ onNavigate, showHomeAbout = false }: Props) {
 function FooterGroup({ title, links, onNavigate }: { title: string; links: { label: string; page: WebPage }[]; onNavigate: (p: WebPage) => void }) {
   return (
     <div className="site-footer__group">
-      <h3>{title}</h3>
       <div>{links.map(link => <button type="button" key={link.label} onClick={() => onNavigate(link.page)}>{link.label}</button>)}</div>
+      <h3>{title}</h3>
     </div>
   )
 }

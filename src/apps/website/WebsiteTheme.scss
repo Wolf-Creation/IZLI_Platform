@@ -4,6 +4,8 @@
   --website-surface-raised: #151515;
   --website-text: #f5f1ea;
   --website-text-muted: #c7c0b7;
+  --website-text-accent: #c9924e;
+  --website-bg-accent: #c9924e;
   --website-border: rgba(255, 255, 255, 0.1);
   background: var(--website-bg);
   color: var(--website-text);
@@ -130,7 +132,7 @@
 }
 
 .website-app .site-footer {
-  background: #000000 !important;
+  background: #111 !important;
   border-color: var(--website-border) !important;
   // padding: 72px 0 !important;
 }
@@ -299,9 +301,12 @@
 }
 
 .website-app .home-product-card__meta,
-.website-app .product-card__price,
 .website-app .product-card__name {
   color: var(--website-text-muted) !important;
+}
+
+.website-app .product-card__price {
+  color: var(--website-text-accent) !important;
 }
 
 .website-app input,

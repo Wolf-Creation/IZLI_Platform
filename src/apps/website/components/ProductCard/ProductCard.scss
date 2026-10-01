@@ -163,8 +163,8 @@
 
 .izli-product-card__title {
   display: block;
-  color: #f5f1eae8 !important;
-  font-size: 12px;
+  color: var(--website-text-muted) !important;
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -173,10 +173,11 @@
   grid-row: 2;
   align-self: end;
   justify-self: start;
-  color: #c9924e;
+  color: var(--website-text-accent) !important;
   font-size: 18px;
   white-space: nowrap;
   font-family : 'playfair-display', Georgia, serif;
+  font-weight: 500;
 }
 
 @media (max-width: 768px) {
