@@ -38,6 +38,13 @@ function ReleaseChip({ status }: { status?: string }) {
   return <span style={{ fontSize: 11, fontWeight: 500, padding: '3px 9px', borderRadius: 999, background: s.bg, color: s.color, textTransform: 'uppercase' }}>{key}</span>
 }
 
+function currentReleaseStatus(product: Product) {
+  const configuredStatus = product.releaseSettings?.status
+  if (configuredStatus === 'early-access') return 'upcoming'
+  if (configuredStatus === 'closed') return 'archived'
+  return configuredStatus ?? product.releaseStatus ?? 'draft'
+}
+
 function CatalogChip({ status }: { status: Product['status'] }) {
   const map: Record<string, { bg: string; color: string }> = {
     published: { bg: '#E6EDE8', color: '#4A7A5A' },
@@ -106,7 +113,7 @@ export default function ProductsList({ onCreateProduct, onEditProduct }: Props) 
     }
 
     if (releaseStatus !== 'All') {
-      rows = rows.filter(product => (product.releaseStatus ?? 'draft') === releaseStatus)
+      rows = rows.filter(product => currentReleaseStatus(product) === releaseStatus)
     }
 
     if (search.trim()) {
@@ -311,7 +318,7 @@ export default function ProductsList({ onCreateProduct, onEditProduct }: Props) 
                   <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 999, background: '#F3EDE8', color: '#8C6B52' }}>{productCategory(product)}</span>
                 </td>
                 <td style={{ padding: '14px 16px' }}>
-                  <ReleaseChip status={product.releaseStatus} />
+                  <ReleaseChip status={currentReleaseStatus(product)} />
                   <div style={{ fontSize: 11, color: TEXT_SEC, marginTop: 4, fontFamily: 'JetBrains Mono, monospace' }}>{product.releaseNumber ?? '—'}</div>
                 </td>
                 <td style={{ padding: '14px 16px', fontSize: 13, fontWeight: 500, color: TEXT }}>

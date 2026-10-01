@@ -296,15 +296,16 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
   const [scrollY, setScrollY] = useState(0)
   const [showSplash, setShowSplash] = useState(true)
   const [activeKeeperBenefit, setActiveKeeperBenefit] = useState(0)
-  const websiteProducts = products.map(product => ({
+  const websiteProducts = products.filter(product => (product.releaseSettings?.status ?? product.releaseStatus) === 'live' && product.releaseNumber === '01').map(product => ({
     id: product.id,
     name: product.name,
     price: product.price,
     release: `Release ${product.releaseNumber ?? '01'}`,
+    releaseNumber: product.releaseNumber,
     images: product.images ?? [],
-    releaseStatus: product.releaseStatus,
+    releaseStatus: 'live' as const,
   }))
-  const displayedShopProducts = websiteProducts.filter(product => product.releaseStatus === 'live')
+  const displayedShopProducts = websiteProducts
   const [introTitleRevealed, setIntroTitleRevealed] = useState(false)
   const keeperSectionRef = useRef<HTMLElement>(null)
   const introTitleRevealedRef = useRef(false)

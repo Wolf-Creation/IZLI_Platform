@@ -36,7 +36,7 @@ export default function Collections({ onNavigate, onAddToCart, onToggleWishlist,
   }, [collections, pageConfig.collectionOrder, pageConfig.visibleCollectionSlugs])
 
   const newProducts = useMemo(
-    () => products.filter(product => product.releaseStatus === 'live').slice(0, 4),
+    () => products.filter(product => (product.releaseSettings?.status ?? product.releaseStatus) === 'live' && product.releaseNumber === '01').slice(0, 4),
     [products],
   )
 
