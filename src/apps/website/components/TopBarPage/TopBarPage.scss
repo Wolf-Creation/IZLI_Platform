@@ -139,15 +139,24 @@
     min-height: 0;
     margin-inline: 20px;
     flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .top-bar-page__brand-block {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .top-bar-page__label {
-    padding: 24px 18px 24px 0;
+    padding: 18px 0 10px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(245, 241, 234, .12);
     font-size: 18px;
   }
 
   .top-bar-page__descriptions {
-    padding: 24px 0 24px 18px;
+    padding: 10px 0 18px;
   }
 
   .top-bar-page__descriptions small {

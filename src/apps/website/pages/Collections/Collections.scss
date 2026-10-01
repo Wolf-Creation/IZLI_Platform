@@ -922,4 +922,8 @@
     .collections-page:not(.collections-detail-page) > .collections-page__top-bar {
         top: 64px;
     }
+
+    .collections-page{
+        margin-top: 0 !important;
+    }
 }
