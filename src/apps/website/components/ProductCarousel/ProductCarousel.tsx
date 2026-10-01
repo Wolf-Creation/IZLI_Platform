@@ -150,7 +150,7 @@ export function ProductCarousel({ products, autoScrollSpeed = DEFAULT_AUTO_SCROL
       }
     }
 
-    if (isVisible) {
+    if (isVisible && !isManuallyScrolling) {
       const animate = () => {
         const container = containerRef.current
         if (!container) {
