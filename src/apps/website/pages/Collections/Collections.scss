@@ -870,12 +870,29 @@
     }
 
     .collections-new-products__rail {
+        overflow-x: auto;
+        overflow-y: hidden;
         border-top: 1px solid rgba(245, 241, 234, .18);
         border-left: 0;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        touch-action: pan-x pan-y;
+    }
+
+    .collections-new-products__rail::-webkit-scrollbar {
+        display: none;
+    }
+
+    .collections-new-products__track {
+        animation: none;
+        will-change: auto;
     }
 
     .collections-new-products__item {
         flex-basis: min(78vw, 330px);
+        scroll-snap-align: start;
     }
 
     .collections-new-products__card .izli-product-card__info {
