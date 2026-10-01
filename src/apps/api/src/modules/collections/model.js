@@ -1,4 +1,5 @@
 ﻿import mongoose from 'mongoose';
+import { mediaAssetSchema } from '../../utils/mediaAssetSchema.js';
 
 const collectionSchema = new mongoose.Schema({
   slug: { type: String, required: true, lowercase: true, trim: true },
@@ -27,6 +28,7 @@ const collectionSchema = new mongoose.Schema({
     default: 'draft',
   },
   coverImageUrl: { type: String, default: '' },
+  mediaAssets: { type: [mediaAssetSchema], default: [] },
   productIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
   tags: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Tag' }],
   publishedAt: { type: Date },

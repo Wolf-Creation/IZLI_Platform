@@ -33,3 +33,22 @@ test('partial collection updates accept real booleans and reject string booleans
 test('partial updates cannot clear required text fields', () => {
   assert.throws(() => validateCollectionInput({ tagline: '   ' }, { partial: true }));
 });
+
+test('collection updates preserve valid Cloudinary asset metadata beside legacy image URLs', () => {
+  const mediaAsset = {
+    field: 'coverImage',
+    url: 'https://res.cloudinary.com/demo/image/upload/v123/izli/collection.jpg',
+    publicId: 'izli/collection',
+    resourceType: 'image',
+    format: 'jpg',
+    width: 1600,
+    height: 1200,
+    bytes: 245000,
+  };
+
+  const result = validateCollectionInput({ coverImage: mediaAsset.url, mediaAssets: [mediaAsset] }, { partial: true });
+
+  assert.equal(result.coverImage, mediaAsset.url);
+  assert.deepEqual(result.mediaAssets, [mediaAsset]);
+  assert.throws(() => validateCollectionInput({ mediaAssets: [{ ...mediaAsset, field: 'unknown' }] }, { partial: true }));
+});

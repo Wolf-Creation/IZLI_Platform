@@ -1,4 +1,6 @@
 import type { KeyboardEvent } from 'react'
+import type { MediaAsset } from '../../../entities'
+import { OptimizedImage } from '../OptimizedImage/OptimizedImage'
 import './ProductCard.scss'
 
 interface ProductCardProps {
@@ -6,12 +8,15 @@ interface ProductCardProps {
   subtitle?: string
   price: string
   image: string
+  images?: readonly string[]
+  mediaAssets?: readonly MediaAsset[]
   badge?: string
   onClick?: () => void
   onAddToCart?: () => void
   onToggleWishlist?: () => void
   isWishlisted?: boolean
   wishlistIcon?: 'heart' | 'trash'
+  isInteractive?: boolean
   className?: string
 }
 
@@ -20,15 +25,26 @@ export function ProductCard({
   subtitle,
   price,
   image,
+  images = [],
+  mediaAssets = [],
   badge,
   onClick,
   onAddToCart,
   onToggleWishlist,
   isWishlisted = false,
   wishlistIcon = 'heart',
+  isInteractive = true,
   className = '',
 }: ProductCardProps) {
+  const productImages = [...new Set([image, ...images].filter(Boolean))]
+  const secondaryImage = productImages.find(productImage => productImage !== image)
+  const dimensionsForImage = (url: string) => {
+    const asset = mediaAssets.find(mediaAsset => mediaAsset.url === url)
+    return asset ? { width: asset.width, height: asset.height } : undefined
+  }
+
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.target !== event.currentTarget) return
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
       onClick?.()
@@ -45,7 +61,8 @@ export function ProductCard({
       onKeyDown={handleKeyDown}
     >
       <span className="izli-product-card__image">
-        <img src={image} alt={name} />
+        <OptimizedImage src={image} preset="productCard" dimensions={dimensionsForImage(image)} alt={name} />
+        {secondaryImage && <OptimizedImage src={secondaryImage} preset="productCard" dimensions={dimensionsForImage(secondaryImage)} alt="" aria-hidden="true" loading="lazy" className="izli-product-card__image-hover" />}
         {onToggleWishlist && <button
           type="button"
           className={`izli-product-card__wishlist${isWishlisted ? ' is-active' : ''}`}
@@ -61,6 +78,7 @@ export function ProductCard({
         <button
           type="button"
           className="izli-product-card__cta"
+          tabIndex={isInteractive ? undefined : -1}
           data-analytics-cta={`Add to cart: ${name}`}
           onClick={event => {
             event.stopPropagation()

@@ -1,10 +1,39 @@
 import { useEffect } from 'react'
 import type { WebPage } from '../../types'
+import type { Product } from '../../../../entities'
 import { useCollection } from '../../../../shared/hooks/useCollections'
+import { OptimizedImage } from '../../components/OptimizedImage/OptimizedImage'
 import { TopBarPage } from '../../components/TopBarPage/TopBarPage'
 import './Collections.scss'
 
 interface Props { slug: string; onNavigate: (page: WebPage, productId?: string) => void }
+
+function CollectionProductCard({ product, onNavigate }: { product: Product; onNavigate: Props['onNavigate'] }) {
+  const productImages = [...new Set([
+    product.coverImageUrl || product.images?.[0] || product.media?.mainImage || '',
+    ...(product.images ?? []),
+    product.media?.mainImage ?? '',
+  ].filter(Boolean))]
+  const [image, hoverImage] = productImages
+  const dimensionsForImage = (url: string) => {
+    const asset = product.mediaAssets?.find(mediaAsset => mediaAsset.url === url)
+    return asset ? { width: asset.width, height: asset.height } : undefined
+  }
+
+  return (
+    <article className="collections-detail-product">
+      <div className="collections-detail-product__image">
+        <button type="button" className="collections-detail-product__image-open" onClick={() => onNavigate('product-detail', product.id)} aria-label={`View ${product.name}`}>
+          {image ? <OptimizedImage src={image} preset="collectionCard" dimensions={dimensionsForImage(image)} alt={product.name} /> : <span>IZLI</span>}
+          {hoverImage && <OptimizedImage src={hoverImage} preset="collectionCard" dimensions={dimensionsForImage(hoverImage)} alt="" aria-hidden="true" loading="lazy" className="collections-detail-product__image-hover" />}
+        </button>
+      </div>
+      <button type="button" className="collections-detail-product__open" onClick={() => onNavigate('product-detail', product.id)}>
+        <span className="collections-detail-product__meta"><strong>{product.name}</strong><span>{product.price ?? 'Price TBA'} {product.price !== undefined ? product.currency : ''}</span></span>
+      </button>
+    </article>
+  )
+}
 
 export default function CollectionDetailPage({ slug, onNavigate }: Props) {
   const { collection, products, loading, error } = useCollection(slug)
@@ -42,7 +71,7 @@ export default function CollectionDetailPage({ slug, onNavigate }: Props) {
       <TopBarPage label={collection.name} descriptions={[collection.tagline || '', collection.shortDescription || '']} />
       <div className={`${collectionNameClass}_container`}>
         <section className="collections-detail-hero">
-          {heroImage ? <img src={heroImage} alt={`${collection.name} collection`} /> : <div className="collections-detail-hero__empty">{collection.name}</div>}
+          {heroImage ? <OptimizedImage src={heroImage} preset="collectionHero" priority dimensions={collection.mediaAssets?.find(asset => asset.url === heroImage)} alt={`${collection.name} collection`} /> : <div className="collections-detail-hero__empty">{collection.name}</div>}
           <div className="collections-detail-hero__overlay" />
           <div className="collections-detail-hero__caption">
             <p>{collection.tagline}</p>
@@ -55,13 +84,7 @@ export default function CollectionDetailPage({ slug, onNavigate }: Props) {
         <section className="collections-detail-products">
           <header><span>Collection</span><h2>Pieces in this collection</h2></header>
           {products.length ? <div className="collections-detail-products__grid">
-            {products.map(product => {
-              const image = product.coverImageUrl || product.images?.[0] || product.media?.mainImage
-              return <button type="button" className="collections-detail-product" key={product.id} onClick={() => onNavigate('product-detail', product.id)}>
-                <span className="collections-detail-product__image">{image ? <img src={image} alt={product.name} /> : <span>IZLI</span>}</span>
-                <span className="collections-detail-product__meta"><strong>{product.name}</strong><span>{product.price ?? 'Price TBA'} {product.price !== undefined ? product.currency : ''}</span></span>
-              </button>
-            })}
+            {products.map(product => <CollectionProductCard key={product.id} product={product} onNavigate={onNavigate} />)}
           </div> : <p className="collections-detail-products__empty">Products from this collection will appear here.</p>}
         </section>
       </div>

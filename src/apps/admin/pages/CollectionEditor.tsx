@@ -1,6 +1,6 @@
 import { useEffect, useState, type ChangeEvent } from 'react'
 import type { Screen } from '../../../types'
-import type { Collection, OfficialCollectionType } from '../../../entities'
+import type { Collection, MediaAsset, OfficialCollectionType } from '../../../entities'
 import { createCollection, getAdminCollections, updateCollection, uploadCollectionImage } from '../../../shared/services/collections'
 
 const INDIGO = '#1E2F44'
@@ -64,7 +64,22 @@ export default function CollectionEditor({ onNavigate, collectionId, onDone }: P
     setUploading(field)
     setError('')
     try {
-      update(field, await uploadCollectionImage(file))
+      const uploaded = await uploadCollectionImage(file)
+      const asset: MediaAsset = {
+        field,
+        url: uploaded.url,
+        publicId: uploaded.publicId,
+        resourceType: uploaded.resourceType,
+        format: uploaded.format,
+        width: uploaded.width,
+        height: uploaded.height,
+        bytes: uploaded.bytes,
+      }
+      setForm(current => ({
+        ...current,
+        [field]: uploaded.url,
+        mediaAssets: [...(current.mediaAssets ?? []).filter(existing => existing.field !== field), asset],
+      }))
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Image upload failed.')
     } finally {

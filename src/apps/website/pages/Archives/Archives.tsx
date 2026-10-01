@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { WebPage } from '../../types'
+import { OptimizedImage } from '../../components/OptimizedImage/OptimizedImage'
 import './Archives.scss'
 
 const INDIGO = '#1E2F44'
@@ -88,7 +89,7 @@ export default function Archives({ onNavigate: _onNavigate }: Props) {
               <article key={a.id} className="archives-card">
                 <div className="archives-card__cover">
                   {a.img ? (
-                    <img src={`https://images.unsplash.com/${a.img}?w=600&h=400&fit=crop&auto=format`} alt={a.name} />
+                    <OptimizedImage src={`https://images.unsplash.com/${a.img}?w=600&h=400&fit=crop&auto=format`} preset="story" dimensions={{ width: 600, height: 400 }} alt={a.name} />
                   ) : (
                     <div className="archives-card__empty">Coming Soon</div>
                   )}

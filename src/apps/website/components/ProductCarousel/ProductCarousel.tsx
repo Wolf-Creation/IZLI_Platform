@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { OptimizedImage } from '../OptimizedImage/OptimizedImage'
 import './ProductCarousel.scss'
 
 interface Product {
@@ -81,22 +82,13 @@ function resolveProductImage(image?: string) {
 }
 
 export function ProductCarousel({ products, autoScrollSpeed = DEFAULT_AUTO_SCROLL_SPEED }: Props) {
-  const [hoveredCardId, setHoveredCardId] = useState<string | null>(null)
   const [isVisible, setIsVisible] = useState(false)
+  const [cycleCount, setCycleCount] = useState(2)
   const containerRef = useRef<HTMLDivElement>(null)
   const cycleRef = useRef<HTMLDivElement>(null)
   const carouselRef = useRef<HTMLDivElement>(null)
-  const [currentImageIndex, setCurrentImageIndex] = useState<Record<string, number>>({})
   const autoScrollFrameRef = useRef<number | null>(null)
   const scrollPositionRef = useRef(0)
-
-  useEffect(() => {
-    const initialState: Record<string, number> = {}
-    products.forEach(p => {
-      initialState[p.id] = 0
-    })
-    setCurrentImageIndex(initialState)
-  }, [products])
 
   useEffect(() => {
     const carousel = carouselRef.current
@@ -112,6 +104,26 @@ export function ProductCarousel({ products, autoScrollSpeed = DEFAULT_AUTO_SCROL
   }, [])
 
   useEffect(() => {
+    const container = containerRef.current
+    const cycle = cycleRef.current
+    if (!container || !cycle) return
+
+    const updateCycleCount = () => {
+      const cycleWidth = cycle.getBoundingClientRect().width
+      if (cycleWidth <= 0) return
+      const cycleGap = Number.parseFloat(getComputedStyle(cycle.parentElement!).columnGap) || 0
+      const cycleDistance = cycleWidth + cycleGap
+      setCycleCount(Math.max(2, Math.ceil(container.clientWidth / cycleDistance) + 2))
+    }
+
+    updateCycleCount()
+    const observer = new ResizeObserver(updateCycleCount)
+    observer.observe(container)
+    observer.observe(cycle)
+    return () => observer.disconnect()
+  }, [products.length])
+
+  useEffect(() => {
     const stopAutoScroll = () => {
       if (autoScrollFrameRef.current !== null) {
         cancelAnimationFrame(autoScrollFrameRef.current)
@@ -119,7 +131,7 @@ export function ProductCarousel({ products, autoScrollSpeed = DEFAULT_AUTO_SCROL
       }
     }
 
-    if (isVisible && !hoveredCardId) {
+    if (isVisible) {
       const animate = () => {
         const container = containerRef.current
         if (!container) {
@@ -127,14 +139,17 @@ export function ProductCarousel({ products, autoScrollSpeed = DEFAULT_AUTO_SCROL
           return
         }
 
-        const cycleWidth = cycleRef.current?.offsetWidth ?? 0
-        if (cycleWidth <= 0) {
+        const cycle = cycleRef.current
+        const cycleWidth = cycle?.offsetWidth ?? 0
+        const cycleGap = cycle ? Number.parseFloat(getComputedStyle(cycle.parentElement!).columnGap) || 0 : 0
+        const cycleDistance = cycleWidth + cycleGap
+        if (cycleDistance <= 0) {
           autoScrollFrameRef.current = requestAnimationFrame(animate)
           return
         }
 
         const nextPosition = scrollPositionRef.current + autoScrollSpeed
-        scrollPositionRef.current = nextPosition >= cycleWidth ? nextPosition - cycleWidth : nextPosition
+        scrollPositionRef.current = nextPosition >= cycleDistance ? nextPosition % cycleDistance : nextPosition
         container.scrollLeft = scrollPositionRef.current
         autoScrollFrameRef.current = requestAnimationFrame(animate)
       }
@@ -147,24 +162,7 @@ export function ProductCarousel({ products, autoScrollSpeed = DEFAULT_AUTO_SCROL
     }
 
     return stopAutoScroll
-  }, [autoScrollSpeed, isVisible, hoveredCardId])
-
-  const changeImage = (productId: string, direction: 'next' | 'prev') => {
-    setCurrentImageIndex(prev => {
-      const product = products.find(p => p.id === productId)
-      if (!product) return prev
-
-      const imageCount = getLocalProductImages(product).length || product.images.length
-      if (imageCount === 0) return prev
-
-      const currentIdx = prev[productId] || 0
-      const nextIdx = direction === 'next'
-        ? (currentIdx + 1) % imageCount
-        : (currentIdx - 1 + imageCount) % imageCount
-
-      return { ...prev, [productId]: nextIdx }
-    })
-  }
+  }, [autoScrollSpeed, isVisible])
 
   return (
     <div
@@ -173,54 +171,38 @@ export function ProductCarousel({ products, autoScrollSpeed = DEFAULT_AUTO_SCROL
     >
       <div className="product-carousel__container" ref={containerRef}>
         <div className="product-carousel__track">
-          {[0, 1].map(cycle => (
+          {Array.from({ length: cycleCount }, (_, cycle) => (
             <div
               key={`product-cycle-${cycle}`}
               ref={cycle === 0 ? cycleRef : undefined}
               className="product-carousel__cycle"
-              aria-hidden={cycle === 1}
+              aria-hidden={cycle > 0}
             >
               {products.map((product, productIndex) => {
-          const imgIdx = currentImageIndex[product.id] || 0
-          const imgUrl = resolveProductImage(product.images[imgIdx])
           const localImages = getLocalProductImages(product)
+          const image = localImages[0] ?? resolveProductImage(product.images[0])
+          const hoverImage = localImages[1] ?? resolveProductImage(product.images[1])
 
           return (
             <div
               key={`${cycle}-${product.id}-${productIndex}`}
               className="product-card"
-              onMouseEnter={() => setHoveredCardId(product.id)}
-              onMouseLeave={() => setHoveredCardId(null)}
             >
               <div className="product-card__image-wrapper">
-                <img
-                  src={localImages[imgIdx] ?? imgUrl}
+                <OptimizedImage
+                  src={image ?? ''}
+                  preset="productCarousel"
                   alt={product.name}
                   className="product-card__image"
                 />
+                {hoverImage && <OptimizedImage src={hoverImage} preset="productCarousel" alt="" aria-hidden="true" loading="lazy" className="product-card__image product-card__image--hover" />}
                 <div className="product-card__badge">Only {REMAINING_STOCK[product.id] ?? 36} left</div>
 
-                <button className="product-card__cta" aria-label={`Add ${product.name} to cart`}>
+                <button className="product-card__cta" tabIndex={cycle > 0 ? -1 : undefined} aria-label={`Add ${product.name} to cart`}>
                   <span>Add to cart</span>
                   <span className="product-card__cta-icon" aria-hidden="true">+</span>
                 </button>
 
-                <div className="product-card__nav">
-                  <button
-                    className="product-card__arrow product-card__arrow--prev"
-                    onClick={() => changeImage(product.id, 'prev')}
-                    aria-label="Previous image"
-                  >
-                    ←
-                  </button>
-                  <button
-                    className="product-card__arrow product-card__arrow--next"
-                    onClick={() => changeImage(product.id, 'next')}
-                    aria-label="Next image"
-                  >
-                    →
-                  </button>
-                </div>
               </div>
 
               <div className="product-card__info">

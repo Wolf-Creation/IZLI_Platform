@@ -58,6 +58,8 @@ const uploadMedia = asyncHandler(async (request, response) => {
     width: result.width,
     height: result.height,
     format: result.format,
+    bytes: result.bytes,
+    resourceType: result.resource_type,
   }));
 });
 

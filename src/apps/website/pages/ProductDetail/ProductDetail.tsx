@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { WebPage } from '../../types'
 import type { Product } from '../../../../entities'
 import type { CartItemInput } from '../../cart'
+import { OptimizedImage } from '../../components/OptimizedImage/OptimizedImage'
 import { useProduct } from '../../../../shared/hooks/useProducts'
 import './ProductDetail.scss'
 
@@ -63,10 +64,10 @@ export default function ProductDetail({ productId, onNavigate, onAddToCart, onTo
         <main className="product-detail-shell product-detail-main">
             <section className="product-detail-hero">
                 <div className="product-detail-gallery" aria-label={`${product.name} image gallery`}>
-                    <div className="product-detail-gallery__feature-grid">{images.map((image, index) => <div key={`${image}-${index}`}><img src={image} alt={`${product.name} view ${index + 1}`} /></div>)}</div>
+                    <div className="product-detail-gallery__feature-grid">{images.map((image, index) => <div key={`${image}-${index}`}><OptimizedImage src={image} preset="productDetail" dimensions={product.mediaAssets?.find(asset => asset.url === image)} priority={index === 0} alt={`${product.name} view ${index + 1}`} /></div>)}</div>
                     <div className="product-detail-gallery__mobile-slider">
                         <div className="product-detail-gallery__mobile-track" style={{ transform: `translateX(-${mobileImageIndex * 100}%)` }}>
-                            {images.map((image, index) => <img key={`${image}-mobile-${index}`} src={image} alt={`${product.name} view ${index + 1}`} />)}
+                            {images.map((image, index) => <OptimizedImage key={`${image}-mobile-${index}`} src={image} preset="productDetail" dimensions={product.mediaAssets?.find(asset => asset.url === image)} priority={index === 0} alt={`${product.name} view ${index + 1}`} />)}
                         </div>
                         {images.length > 1 && <>
                             <button type="button" className="product-detail-gallery__mobile-arrow product-detail-gallery__mobile-arrow--prev" onClick={() => setMobileImageIndex(index => (index - 1 + images.length) % images.length)} aria-label="Previous product image">‹</button>
@@ -92,7 +93,7 @@ export default function ProductDetail({ productId, onNavigate, onAddToCart, onTo
                     </div>
                     <p className="product-detail-sku">{product.sku}</p>
                     <p className="product-detail-description">{product.shortDescription || product.description}</p>
-                    {product.colorways?.length ? <div className="product-detail-color"><span>Color</span><div className="product-detail-color__swatches">{product.colorways.map(colorway => <button type="button" key={colorway.id} aria-label={colorway.name}>{colorway.images?.[0] ? <img src={colorway.images[0]} alt={colorway.name} /> : <i style={{ background: colorway.hex }} />}</button>)}</div></div> : color && <div className="product-detail-color"><span>Color</span><strong><i style={{ background: color.hex }} />{color.name}</strong></div>}
+                    {product.colorways?.length ? <div className="product-detail-color"><span>Color</span><div className="product-detail-color__swatches">{product.colorways.map(colorway => <button type="button" key={colorway.id} aria-label={colorway.name}>{colorway.images?.[0] ? <OptimizedImage src={colorway.images[0]} preset="thumbnail" alt={colorway.name} /> : <i style={{ background: colorway.hex }} />}</button>)}</div></div> : color && <div className="product-detail-color"><span>Color</span><strong><i style={{ background: color.hex }} />{color.name}</strong></div>}
                     {sizes.length > 0 && <div className="product-detail-size"><div className="product-detail-field-label"><span>Size</span><span>Choose your fit</span></div><div className="product-detail-size__options">{sizes.map(size => { const available = isSizeAvailable(size.size, size.stock); return <button type="button" key={size.size} className={activeSize === size.size ? 'is-selected' : ''} disabled={!available} onClick={() => setSelectedSize(size.size)}>{size.size}</button> })}</div></div>}
                     <div className="product-detail-buy"><div className="product-detail-quantity"><button type="button" onClick={() => setQty(value => Math.max(1, value - 1))} aria-label="Decrease quantity">−</button><span>{qty}</span><button type="button" onClick={() => setQty(value => value + 1)} aria-label="Increase quantity">+</button></div><button type="button" className="product-detail-add" onClick={addToCart}>Add to Cart <span>{totalLabel}</span></button></div><p className="product-detail-shipping">Complimentary delivery on orders over 250 {product.currency}. Secure checkout.</p>
                     <div className="product-detail-tabs">
@@ -118,7 +119,7 @@ export default function ProductDetail({ productId, onNavigate, onAddToCart, onTo
                     </div>
                 </div>
             </section>
-            {product.media?.modelImages?.length ? <section className="product-detail-campaign"><div><p className="product-detail-eyebrow">Campaign</p><h2>Seen in the world.</h2></div><div className="product-detail-campaign__images">{product.media.modelImages.slice(0, 3).map((image, index) => <img key={`${image}-${index}`} src={image} alt={`${product.name} campaign ${index + 1}`} />)}</div></section> : null}
+            {product.media?.modelImages?.length ? <section className="product-detail-campaign"><div><p className="product-detail-eyebrow">Campaign</p><h2>Seen in the world.</h2></div><div className="product-detail-campaign__images">{product.media.modelImages.slice(0, 3).map((image, index) => <OptimizedImage key={`${image}-${index}`} src={image} preset="story" dimensions={product.mediaAssets?.find(asset => asset.url === image)} alt={`${product.name} campaign ${index + 1}`} />)}</div></section> : null}
         </main>
     </div>
 }

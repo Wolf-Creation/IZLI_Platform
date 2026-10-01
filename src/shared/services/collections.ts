@@ -1,4 +1,4 @@
-import type { Collection, Product } from '../../entities'
+import type { Collection, MediaUploadResult, Product } from '../../entities'
 import { api } from './api'
 
 export interface CollectionDetails {
@@ -14,7 +14,7 @@ export interface CollectionsPageConfig {
   visibleCollectionSlugs: string[]
   showTagline: boolean
   showShortDescription: boolean
-  columns: 1 | 2
+  columns: 1 | 4
 }
 
 export const DEFAULT_COLLECTIONS_PAGE_CONFIG: CollectionsPageConfig = {
@@ -25,7 +25,7 @@ export const DEFAULT_COLLECTIONS_PAGE_CONFIG: CollectionsPageConfig = {
   visibleCollectionSlugs: ['legacy', 'studio', 'essentials', 'community-lab'],
   showTagline: true,
   showShortDescription: true,
-  columns: 2,
+  columns: 4,
 }
 
 export async function getCollections(): Promise<Collection[]> {
@@ -60,10 +60,9 @@ export function deleteCollection(id: string): Promise<{ id: string }> {
   return api.del<{ id: string }>(`/admin/collections/${id}`)
 }
 
-export async function uploadCollectionImage(file: File): Promise<string> {
+export async function uploadCollectionImage(file: File): Promise<MediaUploadResult> {
   const body = new FormData()
   body.append('file', file)
   body.append('folder', 'collections')
-  const result = await api.upload<{ url: string }>('/uploads/collections', body)
-  return result.url
+  return api.upload<MediaUploadResult>('/uploads/collections', body)
 }

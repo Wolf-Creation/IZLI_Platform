@@ -11,7 +11,7 @@ export const DEFAULT_COLLECTIONS_PAGE_CONFIG = {
   visibleCollectionSlugs: ['legacy', 'studio', 'essentials', 'community-lab'],
   showTagline: true,
   showShortDescription: true,
-  columns: 2,
+  columns: 4,
 };
 
 export function normalizeCollectionsPageConfig(input = {}) {
@@ -33,6 +33,6 @@ export function normalizeCollectionsPageConfig(input = {}) {
     visibleCollectionSlugs,
     showTagline: input.showTagline === undefined ? DEFAULT_COLLECTIONS_PAGE_CONFIG.showTagline : Boolean(input.showTagline),
     showShortDescription: input.showShortDescription === undefined ? DEFAULT_COLLECTIONS_PAGE_CONFIG.showShortDescription : Boolean(input.showShortDescription),
-    columns: Number(input.columns) === 1 ? 1 : 2,
+    columns: Number(input.columns) === 1 ? 1 : 4,
   };
 }

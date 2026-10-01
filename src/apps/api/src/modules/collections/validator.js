@@ -10,9 +10,32 @@ export const normalizeSlug = (value) => String(value ?? '')
 	.replace(/[^a-z0-9]+/g, '-')
 	.replace(/^-+|-+$/g, '');
 
+const validateMediaAssets = (assets) => {
+	if (!Array.isArray(assets)) throw new AppError('mediaAssets must be an array', 400);
+	return assets.map((asset) => {
+		if (!asset || typeof asset !== 'object' || !['coverImage', 'heroImage'].includes(asset.field)) {
+			throw new AppError('mediaAssets contains an invalid image field', 400);
+		}
+		if (typeof asset.url !== 'string' || typeof asset.publicId !== 'string' || !['image', 'video'].includes(asset.resourceType)) {
+			throw new AppError('mediaAssets contains invalid Cloudinary metadata', 400);
+		}
+		return {
+			field: asset.field,
+			url: asset.url,
+			publicId: asset.publicId,
+			resourceType: asset.resourceType,
+			format: String(asset.format || ''),
+			width: Math.max(0, Number(asset.width) || 0),
+			height: Math.max(0, Number(asset.height) || 0),
+			bytes: Math.max(0, Number(asset.bytes) || 0),
+		};
+	});
+};
+
 export const validateCollectionInput = (input, { partial = false } = {}) => {
-	const allowedFields = ['name', 'slug', 'type', 'tagline', 'shortDescription', 'description', 'coverImage', 'heroImage', 'displayOrder', 'isFeatured', 'isActive', 'status'];
+	const allowedFields = ['name', 'slug', 'type', 'tagline', 'shortDescription', 'description', 'coverImage', 'heroImage', 'mediaAssets', 'displayOrder', 'isFeatured', 'isActive', 'status'];
 	const data = Object.fromEntries(Object.entries(input ?? {}).filter(([field]) => allowedFields.includes(field)));
+	if (data.mediaAssets !== undefined) data.mediaAssets = validateMediaAssets(data.mediaAssets);
 	if (data.name !== undefined) data.name = String(data.name).trim();
 	if (data.slug !== undefined || data.name !== undefined) data.slug = normalizeSlug(data.slug || data.name);
 

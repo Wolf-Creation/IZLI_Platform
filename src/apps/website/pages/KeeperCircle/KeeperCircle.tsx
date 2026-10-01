@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { WebPage } from '../../types'
+import { OptimizedImage } from '../../components/OptimizedImage/OptimizedImage'
 import KeeperCircleAccess from './KeeperCircleAccess'
 import { getKeeperProfile, type KeeperProfile } from '../../../../shared/services/auth'
 import './KeeperCircle.scss'
@@ -111,7 +112,7 @@ export default function KeeperCircle({ onNavigate, requireAuth = true }: Props) 
                 {ownedProducts.map((p) => (
                   <div key={p.name} style={{ flex: '0 0 180px', background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, overflow: 'hidden' }}>
                     <div style={{ aspectRatio: '4/5', overflow: 'hidden' }}>
-                      <img src={`https://images.unsplash.com/${p.img}?w=360&h=450&fit=crop&auto=format`} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      <OptimizedImage src={`https://images.unsplash.com/${p.img}?w=360&h=450&fit=crop&auto=format`} preset="productCard" dimensions={{ width: 360, height: 450 }} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                     </div>
                     <div style={{ padding: '10px 12px' }}>
                       <div style={{ fontSize: 12, fontWeight: 500, color: INDIGO, marginBottom: 4 }}>{p.name}</div>
@@ -153,7 +154,7 @@ export default function KeeperCircle({ onNavigate, requireAuth = true }: Props) 
                 {stories.map((s) => (
                   <div key={s.title} style={{ flex: '1 1 240px', background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, overflow: 'hidden', display: 'flex' }}>
                     <div style={{ width: 90, flexShrink: 0, overflow: 'hidden', position: 'relative' }}>
-                      <img src={`https://images.unsplash.com/${s.img}?w=180&h=180&fit=crop&auto=format`} alt={s.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      <OptimizedImage src={`https://images.unsplash.com/${s.img}?w=180&h=180&fit=crop&auto=format`} preset="thumbnail" dimensions={{ width: 180, height: 180 }} alt={s.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                       <div style={{ position: 'absolute', top: 6, left: 6, background: CLAY, color: CREAM, borderRadius: 999, padding: '2px 7px', fontSize: 9, fontWeight: 700 }}>Exclusive</div>
                     </div>
                     <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>

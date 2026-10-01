@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { mediaAssetSchema } from '../../utils/mediaAssetSchema.js';
 
 const referenceSchema = new mongoose.Schema({
   label: { type: String, required: true, trim: true },
@@ -25,6 +26,7 @@ const legacySchema = new mongoose.Schema({
   },
   coverImageUrl: { type: String, default: '' },
   heroImageUrl: { type: String, default: '' },
+  mediaAssets: { type: [mediaAssetSchema], default: [] },
   symbol: { type: String, default: '' },
   icon: { type: String, default: '' },
   primaryColor: { type: String, default: '#1E2F44' },

@@ -7,7 +7,8 @@ import product1 from '../../../../../assets/Website_img/model_front_view_final3.
 import product2 from '../../../../../assets/Website_img/model_front_view_final4.png'
 import product3 from '../../../../../assets/Website_img/model_front_view_final5.png'
 import type { WebPage } from '../../../types'
-import { KeeperCircleCta } from '../../../components/KeeperCircleCta/KeeperCircleCta'
+import { PrimaryButton } from '../../../components/PrimaryButton/PrimaryButton'
+import { OptimizedImage } from '../../../components/OptimizedImage/OptimizedImage'
 import './HeroSlider.scss'
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -217,20 +218,25 @@ export function HeroSlider({ scrollY, onNavigate }: Props) {
       <div className="hero-slider__background">
         {/* Previous slide exits */}
         {isTransitioning && (
-          <div
+          <OptimizedImage
             className="hero-slider__slide hero-slider__slide--exit"
-            style={{
-              backgroundImage: `url(${previousSlide.image})`,
-            }}
+            src={previousSlide.image}
+            preset="heroDesktop"
+            priority
+            alt=""
+            aria-hidden="true"
+            style={{ objectPosition: previousSlide.focus }}
           />
         )}
 
         {/* Current slide enters or stays active */}
-        <div
+        <OptimizedImage
           className={`hero-slider__slide ${isTransitioning ? 'hero-slider__slide--enter' : 'hero-slider__slide--active'}`}
-          style={{
-            backgroundImage: `url(${currentSlide.image})`,
-          }}
+          src={currentSlide.image}
+          preset="heroDesktop"
+          priority
+          alt={currentSlide.title}
+          style={{ objectPosition: currentSlide.focus }}
         />
 
         <div className="hero-slider__overlay" />
@@ -243,9 +249,9 @@ export function HeroSlider({ scrollY, onNavigate }: Props) {
         <p className="hero-slider__mini-description hero-slider__content-item--1">{currentSlide.miniDescription}</p>
         <div className="hero-slider__divider hero-slider__content-item--2" />
         <p className="hero-slider__description-text hero-slider__content-item--3">{currentSlide.description}</p>
-        <KeeperCircleCta className="hero-slider__cta hero-slider__content-item--4" onClick={() => onNavigate('shop')}>
+        <PrimaryButton className="hero-slider__cta hero-slider__content-item--4" onClick={() => onNavigate('shop')}>
           {currentSlide.cta}
-        </KeeperCircleCta>
+        </PrimaryButton>
       </div>
 
       {/* RIGHT SIDE - PRODUCT TILES */}
@@ -255,15 +261,15 @@ export function HeroSlider({ scrollY, onNavigate }: Props) {
         onMouseLeave={() => setIsHoveredOnProducts(false)}
       >
         <div className="hero-slider__product-tile">
-          <img src={product1} alt="Product 1" />
+          <img src={product1} alt="Product 1" loading="lazy" decoding="async" />
           <button className="hero-slider__product-cta">View</button>
         </div>
         <div className="hero-slider__product-tile">
-          <img src={product2} alt="Product 2" />
+          <img src={product2} alt="Product 2" loading="lazy" decoding="async" />
           <button className="hero-slider__product-cta">View</button>
         </div>
         <div className="hero-slider__product-tile">
-          <img src={product3} alt="Product 3" />
+          <img src={product3} alt="Product 3" loading="lazy" decoding="async" />
           <button className="hero-slider__product-cta">View</button>
         </div>
       </div>

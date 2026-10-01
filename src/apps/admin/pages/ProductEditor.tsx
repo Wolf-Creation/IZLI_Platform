@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Screen } from '../../../types'
-import type { Currency, InventoryPiece, InventoryPieceStatus, Product, ProductActivity, ProductMedia, ProductSeo, ProductStatus, ProductStory, ProductType, ProductUniverse } from '../../../entities'
+import type { Currency, InventoryPiece, InventoryPieceStatus, MediaAsset, MediaUploadResult, Product, ProductActivity, ProductMedia, ProductSeo, ProductStatus, ProductStory, ProductType, ProductUniverse } from '../../../entities'
 import { useProduct } from '../../../shared/hooks/useProducts'
 import { useCategories } from '../../../shared/hooks/useCategories'
 import { useCollections } from '../../../shared/hooks/useCollections'
@@ -14,6 +14,15 @@ const BORDER = '#D8D0C4'
 const CLAY = '#8C6B52'
 const PRODUCT_TABS = ['Overview', 'Product Information', 'Caractéristiques produit', 'Design & Heritage', 'Variants', 'Pricing', 'Release', 'Inventory', 'QR Codes', 'Media', 'Story', 'SEO', 'Activity'] as const
 type ProductTab = typeof PRODUCT_TABS[number]
+const REQUIRED_FIELD_TABS: Record<string, ProductTab> = {
+  name: 'Product Information', sku: 'Product Information', categoryId: 'Product Information', collectionId: 'Product Information',
+  universe: 'Product Information', gender: 'Product Information', productType: 'Product Information', shortDescription: 'Product Information',
+  colors: 'Variants', sizes: 'Variants', sellingPrice: 'Pricing', mainImage: 'Media',
+}
+const REQUIRED_FIELD_LABELS: Record<string, string> = {
+  name: 'Product name', sku: 'SKU', categoryId: 'Category', collectionId: 'Collection', universe: 'Universe', gender: 'Gender',
+  productType: 'Product type', shortDescription: 'Short description', colors: 'Color name / color code', sizes: 'Size', sellingPrice: 'Selling price', mainImage: 'Main image',
+}
 const PRODUCT_STATUSES: ProductStatus[] = ['draft', 'ready', 'published', 'archived']
 const PRODUCT_TYPES = ['Oversized T-Shirt', 'Heritage Jersey', 'Heavy T-Shirt', 'Hoodie', 'Shirt']
 const GENDERS = ['Men', 'Women', 'Unisex']
@@ -38,12 +47,25 @@ interface ProductInformationForm {
 const EMPTY_FORM: ProductInformationForm = { name: '', sku: '', categoryId: '', collectionId: '', legacy: '', universe: '', gender: '', productType: '', shortDescription: '', fullDescription: '', status: 'draft', characteristics: { fit: 'Boxy Heavy Oversized', fabric: 'Jersey Cotton', composition: '100% Cotton', weight: '300 GSM', finish: 'Garment Washed', collar: '1x1 Rib', sleeve: '24 cm', bottomHem: '3 cm', sleeveHem: '3 cm' }, design: { designName: '', tifinaghText: '', meaning: '', inspiration: '', heritageTheme: '', motif: '', motifMeaning: '', designStory: '', heritageStory: '', decorationTechnique: '', decorationPosition: '', customPosition: '', threadColor: '', threadColorHex: '#E7DFD2', version: 'v1.0' }, colors: [], sizes: [], pricing: { sellingPrice: '', compareAtPrice: '', currency: 'TND', fabricCost: '', sewingCost: '', embroideryCost: '', washingCost: '', packagingCost: '', otherCost: '' }, release: { number: '01', name: '', date: '', quantity: '', price: '', status: 'draft', earlyAccess: false, earlyAccessDuration: '', earlyAccessUnit: 'hours', keeperPoints: '', keeperExclusive: false } }
 const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '11px 13px', border: `1px solid ${BORDER}`, borderRadius: 9, background: '#FBF9F5', color: TEXT, fontSize: 13, outline: 'none', fontFamily: 'Inter, sans-serif' }
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
-  return <label style={{ display: 'grid', gap: 7, color: TEXT_SEC, fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }}><span>{label}{required && <span style={{ color: CLAY }}> *</span>}</span>{children}</label>
+function Field({ label, required, error, children }: { label: string; required?: boolean; error?: string; children: React.ReactNode }) {
+  return <label style={{ display: 'grid', gap: 7, color: TEXT_SEC, fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }}><span>{label}{required && <span style={{ color: CLAY }}> *</span>}</span>{children}{error && <span style={{ color: '#B42318', fontSize: 11, fontWeight: 500, letterSpacing: 0, textTransform: 'none' }}>{error}</span>}</label>
 }
 
 function slugify(value: string) {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+}
+
+function mediaAssetFromUpload(field: string, upload: MediaUploadResult): MediaAsset {
+  return {
+    field,
+    url: upload.url,
+    publicId: upload.publicId,
+    resourceType: upload.resourceType,
+    format: upload.format,
+    width: upload.width,
+    height: upload.height,
+    bytes: upload.bytes,
+  }
 }
 
 type MediaCollectionField = Exclude<keyof ProductMedia, 'mainImage' | 'campaignVideo'>
@@ -69,6 +91,8 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
   const [form, setForm] = useState<ProductInformationForm>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const [validationAttempted, setValidationAttempted] = useState(false)
+  const [validationToast, setValidationToast] = useState('')
   const [skuError, setSkuError] = useState('')
   const [inventoryPieces, setInventoryPieces] = useState<InventoryPiece[]>([])
   const [adjustmentOpen, setAdjustmentOpen] = useState(false)
@@ -78,6 +102,7 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
   const [adjustmentReason, setAdjustmentReason] = useState('')
   const [adjustmentNotes, setAdjustmentNotes] = useState('')
   const [media, setMedia] = useState<ProductMedia>(EMPTY_MEDIA)
+  const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([])
   const [uploadingMedia, setUploadingMedia] = useState<string | null>(null)
   const [story, setStory] = useState<ProductStory>(EMPTY_STORY)
   const [seo, setSeo] = useState<ProductSeo>(EMPTY_SEO)
@@ -90,6 +115,7 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
     if (!product) return
     setInventoryPieces(product.inventoryPieces ?? [])
     setMedia({ ...EMPTY_MEDIA, mainImage: product.media?.mainImage || product.coverImageUrl || '', ...product.media })
+    setMediaAssets(product.mediaAssets ?? [])
     setStory({ ...EMPTY_STORY, ...product.story })
     setSeo({ ...EMPTY_SEO, ...product.seo })
     setSeoSlugEdited(Boolean(product.seo?.slug))
@@ -102,6 +128,12 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
   }, [form.name, seoSlugEdited])
 
   useEffect(() => {
+    if (!validationToast) return
+    const timeoutId = window.setTimeout(() => setValidationToast(''), 5000)
+    return () => window.clearTimeout(timeoutId)
+  }, [validationToast])
+
+  useEffect(() => {
     if (!productId || activeTab !== 'Activity') return
     setActivityLoading(true)
     getProductActivity(productId).then(setActivity).catch(() => setActivity([])).finally(() => setActivityLoading(false))
@@ -109,7 +141,25 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
 
   const update = <K extends keyof ProductInformationForm>(field: K, value: ProductInformationForm[K]) => setForm(current => ({ ...current, [field]: value }))
   const isEditing = Boolean(productId)
-  const missingFields = useMemo(() => [['Product Name', form.name.trim().length >= 2], ['SKU', /^[A-Z0-9-]+$/.test(form.sku)], ['Category', Boolean(form.categoryId)], ['Collection', Boolean(form.collectionId)], ['Gender', Boolean(form.gender)], ['Product Type', Boolean(form.productType)]].filter(([, ready]) => !ready).map(([label]) => label), [form])
+  const fieldErrors = useMemo(() => ({
+    name: form.name.trim().length >= 2 ? '' : 'Enter a product name with at least 2 characters.',
+    sku: /^[A-Z0-9-]+$/.test(form.sku.trim()) ? '' : 'Enter a SKU using letters, numbers, or hyphens.',
+    categoryId: form.categoryId ? '' : 'Select a category.',
+    collectionId: form.collectionId ? '' : 'Select a collection.',
+    universe: form.universe ? '' : 'Select a universe.',
+    gender: form.gender ? '' : 'Select a gender.',
+    productType: form.productType ? '' : 'Select a product type.',
+    shortDescription: form.shortDescription.trim() ? '' : 'Enter a short description.',
+    colors: form.colors.length > 0 && form.colors.every(color => color.name.trim() && color.colorCode.trim()) ? '' : 'Add at least one color and enter its name and color code.',
+    sizes: form.sizes.length > 0 ? '' : 'Select at least one size.',
+    sellingPrice: Number(form.pricing.sellingPrice) > 0 ? '' : 'Enter a selling price greater than zero.',
+    mainImage: media.mainImage.trim() ? '' : 'Add a main product image.',
+  }), [form.categoryId, form.collectionId, form.colors, form.gender, form.name, form.pricing.sellingPrice, form.productType, form.shortDescription, form.sizes, form.sku, form.universe, media.mainImage])
+  const missingFields = Object.entries(fieldErrors).filter(([, error]) => error)
+  const requiredFieldError = (field: keyof typeof fieldErrors) => validationAttempted ? fieldErrors[field] : ''
+  const requiredFieldStyle = (field: keyof typeof fieldErrors) => requiredFieldError(field)
+    ? { ...inputStyle, borderColor: '#B42318', boxShadow: '0 0 0 1px #B42318' }
+    : inputStyle
   const variants = useMemo(() => form.colors.flatMap(color => form.sizes.map(size => ({ id: `${color.colorCode}-${size}`, sku: `${form.sku.trim().toUpperCase()}-${color.colorCode}-${size}`, colorName: color.name, colorCode: color.colorCode, size, hex: color.hex, image: color.image }))), [form.colors, form.sizes, form.sku])
   const pricingNumbers = Object.fromEntries(Object.entries(form.pricing).map(([key, value]) => [key, typeof value === 'string' ? Number(value || 0) : value])) as Record<string, number>
   const totalCost = ['fabricCost', 'sewingCost', 'embroideryCost', 'washingCost', 'packagingCost', 'otherCost'].reduce((total, key) => total + (pricingNumbers[key] ?? 0), 0)
@@ -137,15 +187,19 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
     if (selectedFiles.length === 0) return
     setUploadingMedia(field)
     try {
-      const uploaded = [] as string[]
+      const uploaded = [] as MediaAsset[]
       for (const file of selectedFiles) {
         const formData = new FormData()
         formData.append('file', file)
         formData.append('folder', 'products')
-        const result = await api.upload<{ url: string }>('/uploads/images', formData)
-        uploaded.push(result.url)
+        const result = await api.upload<MediaUploadResult>('/uploads/images', formData)
+        uploaded.push(mediaAssetFromUpload(field, result))
       }
-      setMedia(current => field === 'mainImage' || field === 'campaignVideo' ? { ...current, [field]: uploaded[0] } : { ...current, [field]: [...current[field], ...uploaded] })
+      setMedia(current => field === 'mainImage' || field === 'campaignVideo' ? { ...current, [field]: uploaded[0].url } : { ...current, [field]: [...current[field], ...uploaded.map(asset => asset.url)] })
+      setMediaAssets(current => [
+        ...(field === 'mainImage' || field === 'campaignVideo' ? current.filter(asset => asset.field !== field) : current),
+        ...uploaded,
+      ])
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Media upload failed.')
     } finally {
@@ -159,8 +213,9 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
       const formData = new FormData()
       formData.append('file', file)
       formData.append('folder', 'products')
-      const result = await api.upload<{ url: string }>('/uploads/images', formData)
+      const result = await api.upload<MediaUploadResult>('/uploads/images', formData)
       setSeo(current => ({ ...current, ogImage: result.url }))
+      setMediaAssets(current => [...current.filter(asset => asset.field !== 'seo.ogImage'), mediaAssetFromUpload('seo.ogImage', result)])
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'OG image upload failed.')
     } finally {
@@ -179,6 +234,10 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
   }
 
   const removeMedia = (field: keyof ProductMedia, index?: number) => {
+    const removedUrl = field === 'mainImage' || field === 'campaignVideo'
+      ? media[field] as string
+      : (media[field] as string[])[index ?? -1]
+    if (removedUrl) setMediaAssets(current => current.filter(asset => !(asset.field === field && asset.url === removedUrl)))
     setMedia(current => {
       if (field === 'mainImage' || field === 'campaignVideo') return { ...current, [field]: '' }
       return { ...current, [field]: current[field].filter((_, itemIndex) => itemIndex !== index) }
@@ -188,12 +247,31 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
   const save = async () => {
     setMessage(''); setSkuError('')
     const normalizedSku = form.sku.trim().toUpperCase()
-    if (form.name.trim().length < 2 || !/^[A-Z0-9-]+$/.test(normalizedSku) || !form.categoryId || !form.collectionId || !form.gender || !form.productType) { setMessage('Complete all required Product Information fields.'); return }
+    if (missingFields.length > 0) {
+      setValidationAttempted(true)
+      const missingByTab = missingFields.reduce<Record<string, string[]>>((groups, [field]) => {
+        const tab = REQUIRED_FIELD_TABS[field]
+        if (tab) groups[tab] = [...(groups[tab] ?? []), REQUIRED_FIELD_LABELS[field] ?? field]
+        return groups
+      }, {})
+      setValidationToast(Object.entries(missingByTab).map(([tab, fields]) => `${tab}: ${fields.join(', ')}`).join('\n'))
+      const firstMissingField = missingFields[0][0]
+      setActiveTab(REQUIRED_FIELD_TABS[firstMissingField] ?? 'Product Information')
+      window.requestAnimationFrame(() => {
+        const firstMissingControl = document.querySelector<HTMLElement>(`[data-required-field="${firstMissingField}"]`)
+        firstMissingControl?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        firstMissingControl?.focus({ preventScroll: true })
+      })
+      return
+    }
+    setValidationAttempted(false)
+    setValidationToast('')
     try {
       const products = await getProducts()
       if (products.some(existing => existing.sku.toUpperCase() === normalizedSku && existing.id !== productId)) { setSkuError('This SKU already exists. Choose a unique SKU.'); return }
       setSaving(true)
       const payload: Partial<Product> = { name: form.name.trim(), sku: normalizedSku, categoryIds: [form.categoryId], collectionIds: [form.collectionId], legacy: form.legacy.trim(), universe: form.universe || 'Heritage', gender: form.gender, productType: form.productType as ProductType, shortDescription: form.shortDescription.trim(), fullDescription: form.fullDescription.trim(), description: form.fullDescription.trim(), status: form.status, price: pricingNumbers.sellingPrice, currency: form.pricing.currency, coverImageUrl: media.mainImage, images: media.gallery, media, story, seo, pricing: { compareAtPrice: pricingNumbers.compareAtPrice, fabricCost: pricingNumbers.fabricCost, sewingCost: pricingNumbers.sewingCost, embroideryCost: pricingNumbers.embroideryCost, washingCost: pricingNumbers.washingCost, packagingCost: pricingNumbers.packagingCost, otherCost: pricingNumbers.otherCost }, releaseNumber: form.release.number.padStart(2, '0'), launchDate: form.release.date ? new Date(form.release.date).toISOString() : undefined, quantity: Number(form.release.quantity || 0), releaseSettings: { name: form.release.name.trim(), date: form.release.date ? new Date(form.release.date).toISOString() : undefined, price: Number(form.release.price || 0), status: form.release.status, earlyAccess: form.release.earlyAccess, earlyAccessDuration: Number(form.release.earlyAccessDuration || 0), earlyAccessUnit: form.release.earlyAccessUnit, keeperPoints: Number(form.release.keeperPoints || 0), keeperExclusive: form.release.keeperExclusive }, characteristics: form.characteristics, design: form.design, colorways: form.colors.map(color => ({ id: color.id, name: color.name, colorCode: color.colorCode, hex: color.hex, images: color.image ? [color.image] : [], sizeStocks: Object.fromEntries(form.sizes.map(size => [size, 0])) })), sizes: form.sizes.map(size => ({ size, availability: 'available', stock: 0 })), variants, inventoryPieces }
+      payload.mediaAssets = mediaAssets
       payload.collectionId = form.collectionId
       payload.collectionIds = []
       const saved = isEditing && productId ? await updateProduct(productId, payload) : await createProduct(payload)
@@ -210,24 +288,23 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
       <div style={{ display: 'flex', gap: 8 }}><button type="button" onClick={() => onNavigate('products')} style={{ padding: '10px 16px', border: `1px solid ${BORDER}`, borderRadius: 9, background: 'transparent', color: TEXT_SEC, cursor: 'pointer' }}>Cancel</button><button type="button" onClick={() => void save()} disabled={saving} style={{ padding: '10px 18px', border: 0, borderRadius: 9, background: INDIGO, color: '#E7DFD2', fontWeight: 600, cursor: saving ? 'wait' : 'pointer' }}>{saving ? 'Saving...' : 'Save Draft'}</button></div>
     </header>
     {message && <div style={{ marginTop: 18, padding: 12, borderRadius: 9, background: message.includes('Complete') || message.includes('could') ? '#F9EDEA' : '#E6EDE8', color: message.includes('Complete') || message.includes('could') ? '#A63D2F' : '#4A7A5A', fontSize: 13 }}>{message}</div>}
-    <nav style={{ display: 'flex', gap: 2, overflowX: 'auto', marginTop: 24, borderBottom: `1px solid ${BORDER}` }}>{PRODUCT_TABS.map(tab => <button key={tab} type="button" onClick={() => setActiveTab(tab)} style={{ flex: '0 0 auto', padding: '13px 12px', border: 0, borderBottom: `2px solid ${activeTab === tab ? CLAY : 'transparent'}`, background: 'transparent', color: activeTab === tab ? INDIGO : TEXT_SEC, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>{tab}</button>)}</nav>
+    <nav style={{ display: 'flex', gap: 2, overflowX: 'auto', marginTop: 24, borderBottom: `1px solid ${BORDER}` }}>{PRODUCT_TABS.map(tab => { const tabHasErrors = missingFields.some(([field]) => REQUIRED_FIELD_TABS[field] === tab); return <button key={tab} type="button" onClick={() => setActiveTab(tab)} style={{ flex: '0 0 auto', padding: '13px 12px', border: 0, borderBottom: `2px solid ${activeTab === tab ? CLAY : 'transparent'}`, background: 'transparent', color: activeTab === tab ? INDIGO : TEXT_SEC, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>{tab}{validationAttempted && tabHasErrors && <span aria-label="Missing required fields" style={{ marginLeft: 5, color: '#B42318', fontSize: 14 }}>*</span>}</button> })}</nav>
     <main style={{ marginTop: 26, maxWidth: 920 }}>
       {activeTab === 'Product Information' && <section style={{ padding: 26, border: `1px solid ${BORDER}`, borderRadius: 14, background: '#F7F3EC' }}>
         <div style={{ marginBottom: 24 }}><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em' }}>PRODUCT INFORMATION</div><p style={{ margin: '8px 0 0', color: TEXT_SEC, fontSize: 13 }}>This tab contains the core product information.</p></div>
         <h2 style={{ margin: '0 0 16px', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Basic Information</h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
-          <Field label="Product Name" required><input value={form.name} minLength={2} maxLength={100} onChange={event => update('name', event.target.value)} style={inputStyle} /></Field>
-          <Field label="SKU" required><input value={form.sku} onChange={event => update('sku', event.target.value.toUpperCase().replace(/\s/g, '-'))} style={{ ...inputStyle, fontFamily: 'monospace' }} />{skuError && <span style={{ color: '#A63D2F', fontSize: 11, textTransform: 'none', letterSpacing: 0 }}>{skuError}</span>}</Field>
-          <Field label="Category" required><select value={form.categoryId} onChange={event => update('categoryId', event.target.value)} style={inputStyle}><option value="">Select category</option>{categories.map(category => <option key={category.id} value={category.id}>{category.label}</option>)}</select></Field>
-          <Field label="Collection" required><select value={form.collectionId} onChange={event => update('collectionId', event.target.value)} style={inputStyle}><option value="">Select collection</option>{collections.map(collection => <option key={collection.id} value={collection.id}>{collection.name}</option>)}</select></Field>
+          <Field label="Product Name" required error={requiredFieldError('name')}><input data-required-field="name" aria-invalid={Boolean(requiredFieldError('name'))} value={form.name} minLength={2} maxLength={100} onChange={event => update('name', event.target.value)} style={requiredFieldStyle('name')} /></Field>
+          <Field label="SKU" required error={requiredFieldError('sku')}><input data-required-field="sku" aria-invalid={Boolean(requiredFieldError('sku') || skuError)} value={form.sku} onChange={event => { setSkuError(''); update('sku', event.target.value.toUpperCase().replace(/\s/g, '-')) }} style={{ ...requiredFieldStyle('sku'), ...(skuError ? { borderColor: '#B42318', boxShadow: '0 0 0 1px #B42318' } : {}), fontFamily: 'monospace' }} />{skuError && <span style={{ color: '#A63D2F', fontSize: 11, textTransform: 'none', letterSpacing: 0 }}>{skuError}</span>}</Field>
+          <Field label="Category" required error={requiredFieldError('categoryId')}><select data-required-field="categoryId" aria-invalid={Boolean(requiredFieldError('categoryId'))} value={form.categoryId} onChange={event => update('categoryId', event.target.value)} style={requiredFieldStyle('categoryId')}><option value="">Select category</option>{categories.map(category => <option key={category.id} value={category.id}>{category.label}</option>)}</select></Field>
+          <Field label="Collection" required error={requiredFieldError('collectionId')}><select data-required-field="collectionId" aria-invalid={Boolean(requiredFieldError('collectionId'))} value={form.collectionId} onChange={event => update('collectionId', event.target.value)} style={requiredFieldStyle('collectionId')}><option value="">Select collection</option>{collections.map(collection => <option key={collection.id} value={collection.id}>{collection.name}</option>)}</select></Field>
           <Field label="Legacy"><input value={form.legacy} onChange={event => update('legacy', event.target.value)} style={inputStyle} /></Field>
-          <Field label="Universe"><select value={form.universe} onChange={event => update('universe', event.target.value as ProductUniverse)} style={inputStyle}><option value="">Select universe</option>{UNIVERSES.map(universe => <option key={universe}>{universe}</option>)}</select></Field>
-          <Field label="Gender" required><select value={form.gender} onChange={event => update('gender', event.target.value)} style={inputStyle}><option value="">Select gender</option>{GENDERS.map(gender => <option key={gender}>{gender}</option>)}</select></Field>
-          <Field label="Product Type" required><select value={form.productType} onChange={event => update('productType', event.target.value)} style={inputStyle}><option value="">Select product type</option>{PRODUCT_TYPES.map(type => <option key={type}>{type}</option>)}</select></Field>
+          <Field label="Universe" required error={requiredFieldError('universe')}><select data-required-field="universe" aria-invalid={Boolean(requiredFieldError('universe'))} value={form.universe} onChange={event => update('universe', event.target.value as ProductUniverse)} style={requiredFieldStyle('universe')}><option value="">Select universe</option>{UNIVERSES.map(universe => <option key={universe}>{universe}</option>)}</select></Field>
+          <Field label="Gender" required error={requiredFieldError('gender')}><select data-required-field="gender" aria-invalid={Boolean(requiredFieldError('gender'))} value={form.gender} onChange={event => update('gender', event.target.value)} style={requiredFieldStyle('gender')}><option value="">Select gender</option>{GENDERS.map(gender => <option key={gender}>{gender}</option>)}</select></Field>
+          <Field label="Product Type" required error={requiredFieldError('productType')}><select data-required-field="productType" aria-invalid={Boolean(requiredFieldError('productType'))} value={form.productType} onChange={event => update('productType', event.target.value)} style={requiredFieldStyle('productType')}><option value="">Select product type</option>{PRODUCT_TYPES.map(type => <option key={type}>{type}</option>)}</select></Field>
         </div>
-        <div style={{ display: 'grid', gap: 18, marginTop: 18 }}><Field label="Short Description" required><textarea value={form.shortDescription} maxLength={500} onChange={event => update('shortDescription', event.target.value)} style={{ ...inputStyle, minHeight: 82, resize: 'vertical' }} /></Field><Field label="Full Description"><textarea value={form.fullDescription} onChange={event => update('fullDescription', event.target.value)} style={{ ...inputStyle, minHeight: 150, resize: 'vertical' }} /></Field></div>
+        <div style={{ display: 'grid', gap: 18, marginTop: 18 }}><Field label="Short Description" required error={requiredFieldError('shortDescription')}><textarea data-required-field="shortDescription" aria-invalid={Boolean(requiredFieldError('shortDescription'))} value={form.shortDescription} maxLength={500} onChange={event => update('shortDescription', event.target.value)} style={{ ...requiredFieldStyle('shortDescription'), minHeight: 82, resize: 'vertical' }} /></Field><Field label="Full Description"><textarea value={form.fullDescription} onChange={event => update('fullDescription', event.target.value)} style={{ ...inputStyle, minHeight: 150, resize: 'vertical' }} /></Field></div>
         <div style={{ marginTop: 22, paddingTop: 22, borderTop: `1px solid ${BORDER}` }}><h2 style={{ margin: '0 0 16px', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Product Status</h2><Field label="Status"><select value={form.status} onChange={event => update('status', event.target.value as ProductStatus)} style={inputStyle}>{PRODUCT_STATUSES.map(status => <option key={status} value={status}>{status[0].toUpperCase() + status.slice(1)}</option>)}</select></Field></div>
-        {missingFields.length > 0 && <div style={{ marginTop: 20, color: '#A06030', fontSize: 12 }}>Missing required fields: {missingFields.join(', ')}</div>}
       </section>}
       {activeTab === 'Caractéristiques produit' && <section style={{ padding: 26, border: `1px solid ${BORDER}`, borderRadius: 14, background: '#F7F3EC' }}>
         <div style={{ marginBottom: 24 }}><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em' }}>CARACTÉRISTIQUES PRODUIT</div><p style={{ margin: '8px 0 0', color: TEXT_SEC, fontSize: 13 }}>Configure the product fit, materials and construction details.</p></div>
@@ -259,15 +336,16 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
       {activeTab === 'Variants' && <section style={{ padding: 26, border: `1px solid ${BORDER}`, borderRadius: 14, background: '#F7F3EC' }}>
         <div style={{ marginBottom: 24 }}><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em' }}>VARIANTS</div><p style={{ margin: '8px 0 0', color: TEXT_SEC, fontSize: 13 }}>Manage colors and sizes. Variants are generated automatically.</p></div>
         <h2 style={{ margin: '0 0 16px', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Colors</h2>
-        <div style={{ display: 'grid', gap: 12 }}>{form.colors.map((color, index) => <div key={color.id} style={{ display: 'grid', gridTemplateColumns: '1fr 120px 72px 1fr auto', gap: 10, alignItems: 'end', padding: 14, border: `1px solid ${BORDER}`, borderRadius: 10, background: '#FBF9F5' }}><Field label="Color Name"><input value={color.name} onChange={event => { const next = [...form.colors]; next[index] = { ...color, name: event.target.value }; update('colors', next) }} style={inputStyle} /></Field><Field label="Color Code"><input value={color.colorCode} maxLength={5} onChange={event => { const next = [...form.colors]; next[index] = { ...color, colorCode: event.target.value.toUpperCase().replace(/\s/g, '') }; update('colors', next) }} style={{ ...inputStyle, fontFamily: 'monospace' }} /></Field><Field label="Hex"><input type="color" value={color.hex} onChange={event => { const next = [...form.colors]; next[index] = { ...color, hex: event.target.value }; update('colors', next) }} style={{ width: '100%', height: 42, padding: 3, border: `1px solid ${BORDER}`, borderRadius: 9 }} /></Field><Field label="Color Image URL"><input value={color.image} onChange={event => { const next = [...form.colors]; next[index] = { ...color, image: event.target.value }; update('colors', next) }} placeholder="Cloudinary URL" style={inputStyle} /></Field><button type="button" onClick={() => update('colors', form.colors.filter(item => item.id !== color.id))} style={{ height: 42, border: 0, background: 'transparent', color: '#A63D2F', cursor: 'pointer' }}>Remove</button></div>)}</div>
-        <button type="button" onClick={() => update('colors', [...form.colors, { id: `color-${Date.now()}`, name: '', colorCode: '', hex: '#111111', image: '' }])} style={{ marginTop: 14, padding: '10px 14px', border: `1px dashed ${BORDER}`, borderRadius: 9, background: 'transparent', color: INDIGO, cursor: 'pointer' }}>+ Add Color</button>
-        <div style={{ marginTop: 30, paddingTop: 24, borderTop: `1px solid ${BORDER}` }}><h2 style={{ margin: '0 0 16px', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Sizes</h2><div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>{SIZE_OPTIONS.map(size => <label key={size} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 12px', border: `1px solid ${form.sizes.includes(size) ? INDIGO : BORDER}`, borderRadius: 9, background: form.sizes.includes(size) ? '#E8EDF3' : '#FBF9F5', color: form.sizes.includes(size) ? INDIGO : TEXT_SEC, cursor: 'pointer', fontSize: 13 }}><input type="checkbox" checked={form.sizes.includes(size)} onChange={event => update('sizes', event.target.checked ? [...form.sizes, size] : form.sizes.filter(item => item !== size))} />{size}</label>)}</div></div>
+        <div style={{ display: 'grid', gap: 12 }}>{form.colors.map((color, index) => <div key={color.id} style={{ display: 'grid', gridTemplateColumns: '1fr 120px 72px 1fr auto', gap: 10, alignItems: 'end', padding: 14, border: `1px solid ${validationAttempted && (!color.name.trim() || !color.colorCode.trim()) ? '#B42318' : BORDER}`, boxShadow: validationAttempted && (!color.name.trim() || !color.colorCode.trim()) ? '0 0 0 1px #B42318' : undefined, borderRadius: 10, background: '#FBF9F5' }}><Field label="Color Name"><input value={color.name} onChange={event => { const next = [...form.colors]; next[index] = { ...color, name: event.target.value }; update('colors', next) }} style={inputStyle} /></Field><Field label="Color Code"><input value={color.colorCode} maxLength={5} onChange={event => { const next = [...form.colors]; next[index] = { ...color, colorCode: event.target.value.toUpperCase().replace(/\s/g, '') }; update('colors', next) }} style={{ ...inputStyle, fontFamily: 'monospace' }} /></Field><Field label="Hex"><input type="color" value={color.hex} onChange={event => { const next = [...form.colors]; next[index] = { ...color, hex: event.target.value }; update('colors', next) }} style={{ width: '100%', height: 42, padding: 3, border: `1px solid ${BORDER}`, borderRadius: 9 }} /></Field><Field label="Color Image URL"><input value={color.image} onChange={event => { const next = [...form.colors]; next[index] = { ...color, image: event.target.value }; update('colors', next) }} placeholder="Cloudinary URL" style={inputStyle} /></Field><button type="button" onClick={() => update('colors', form.colors.filter(item => item.id !== color.id))} style={{ height: 42, border: 0, background: 'transparent', color: '#A63D2F', cursor: 'pointer' }}>Remove</button></div>)}</div>
+        <button type="button" data-required-field="colors" onClick={() => update('colors', [...form.colors, { id: `color-${Date.now()}`, name: '', colorCode: '', hex: '#111111', image: '' }])} style={{ marginTop: 14, padding: '10px 14px', border: `1px dashed ${validationAttempted && requiredFieldError('colors') ? '#B42318' : BORDER}`, borderRadius: 9, background: 'transparent', color: INDIGO, cursor: 'pointer', boxShadow: validationAttempted && requiredFieldError('colors') && form.colors.length === 0 ? '0 0 0 1px #B42318' : undefined }}>+ Add Color{validationAttempted && requiredFieldError('colors') && form.colors.length === 0 && <span style={{ color: '#B42318' }}> *</span>}</button>
+        {validationAttempted && requiredFieldError('colors') && <div style={{ marginTop: 7, color: '#B42318', fontSize: 11 }}>{requiredFieldError('colors')}</div>}
+        <div style={{ marginTop: 30, paddingTop: 24, borderTop: `1px solid ${BORDER}` }}><h2 style={{ margin: '0 0 16px', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Sizes <span style={{ color: '#B42318' }}>*</span></h2><div data-required-field="sizes" tabIndex={-1} style={{ display: 'flex', flexWrap: 'wrap', gap: 10, padding: 8, border: `1px solid ${validationAttempted && requiredFieldError('sizes') ? '#B42318' : 'transparent'}`, borderRadius: 8, boxShadow: validationAttempted && requiredFieldError('sizes') ? '0 0 0 1px #B42318' : undefined }}>{SIZE_OPTIONS.map(size => <label key={size} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 12px', border: `1px solid ${form.sizes.includes(size) ? INDIGO : BORDER}`, borderRadius: 9, background: form.sizes.includes(size) ? '#E8EDF3' : '#FBF9F5', color: form.sizes.includes(size) ? INDIGO : TEXT_SEC, cursor: 'pointer', fontSize: 13 }}><input type="checkbox" checked={form.sizes.includes(size)} onChange={event => update('sizes', event.target.checked ? [...form.sizes, size] : form.sizes.filter(item => item !== size))} />{size}</label>)}</div>{validationAttempted && requiredFieldError('sizes') && <div style={{ marginTop: 7, color: '#B42318', fontSize: 11 }}>{requiredFieldError('sizes')}</div>}</div>
         <div style={{ marginTop: 30, paddingTop: 24, borderTop: `1px solid ${BORDER}` }}><h2 style={{ margin: '0 0 8px', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Variant Matrix</h2><p style={{ margin: '0 0 16px', color: TEXT_SEC, fontSize: 13 }}>{variants.length} variant{variants.length === 1 ? '' : 's'} generated from colors x sizes.</p>{variants.length === 0 ? <div style={{ color: TEXT_SEC, fontSize: 13 }}>Add at least one color and one size.</div> : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>{variants.map(variant => <div key={variant.id} style={{ padding: 12, border: `1px solid ${BORDER}`, borderRadius: 9, background: '#FBF9F5' }}><div style={{ fontFamily: 'monospace', fontSize: 12, color: INDIGO }}>{variant.sku}</div><div style={{ marginTop: 6, color: TEXT_SEC, fontSize: 12 }}>{variant.colorName} · {variant.size}</div></div>)}</div>}</div>
       </section>}
       {activeTab === 'Pricing' && <section style={{ padding: 26, border: `1px solid ${BORDER}`, borderRadius: 14, background: '#F7F3EC' }}>
         <div style={{ marginBottom: 24 }}><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em' }}>PRICING</div><p style={{ margin: '8px 0 0', color: TEXT_SEC, fontSize: 13 }}>Display commercial information.</p></div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
-          {([['sellingPrice', 'Selling Price'], ['compareAtPrice', 'Compare-at Price'], ['fabricCost', 'Fabric Cost'], ['sewingCost', 'Sewing Cost'], ['embroideryCost', 'Embroidery Cost'], ['washingCost', 'Washing Cost'], ['packagingCost', 'Packaging Cost'], ['otherCost', 'Other Production Cost']] as const).map(([field, label]) => <Field key={field} label={label}><input type="number" min="0" step="0.001" value={form.pricing[field]} onChange={event => update('pricing', { ...form.pricing, [field]: event.target.value })} style={inputStyle} /></Field>)}
+          {([['sellingPrice', 'Selling Price'], ['compareAtPrice', 'Compare-at Price'], ['fabricCost', 'Fabric Cost'], ['sewingCost', 'Sewing Cost'], ['embroideryCost', 'Embroidery Cost'], ['washingCost', 'Washing Cost'], ['packagingCost', 'Packaging Cost'], ['otherCost', 'Other Production Cost']] as const).map(([field, label]) => <Field key={field} label={label} required={field === 'sellingPrice'} error={field === 'sellingPrice' ? requiredFieldError('sellingPrice') : undefined}><input data-required-field={field === 'sellingPrice' ? 'sellingPrice' : undefined} aria-invalid={field === 'sellingPrice' && Boolean(requiredFieldError('sellingPrice'))} type="number" min="0" step="0.001" value={form.pricing[field]} onChange={event => update('pricing', { ...form.pricing, [field]: event.target.value })} style={field === 'sellingPrice' ? requiredFieldStyle('sellingPrice') : inputStyle} /></Field>)}
           <Field label="Currency"><select value={form.pricing.currency} onChange={event => update('pricing', { ...form.pricing, currency: event.target.value as Currency })} style={inputStyle}><option value="TND">TND</option><option value="EUR">EUR</option><option value="USD">USD</option><option value="MAD">MAD</option><option value="DZD">DZD</option></select></Field>
         </div>
         <div style={{ marginTop: 24, paddingTop: 24, borderTop: `1px solid ${BORDER}` }}><h2 style={{ margin: '0 0 16px', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Calculated Values</h2><div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>{[['Total Cost', totalCost], ['Gross Profit', grossProfit], ['Margin %', margin]].map(([label, value]) => <div key={label as string} style={{ padding: 16, border: `1px solid ${BORDER}`, borderRadius: 9, background: '#EDE8DF' }}><div style={{ color: TEXT_SEC, fontSize: 11, textTransform: 'uppercase', letterSpacing: '.08em' }}>{label}</div><div style={{ marginTop: 8, color: INDIGO, fontSize: 20, fontWeight: 700 }}>{label === 'Margin %' ? `${Number(value).toFixed(1)}%` : `${Number(value).toFixed(3)} ${form.pricing.currency}`}</div></div>)}</div></div>
@@ -297,7 +375,7 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
         <div style={{ marginBottom: 24 }}><div style={{ color: CLAY, fontSize: 11, fontWeight: 700, letterSpacing: '.14em' }}>MEDIA</div><p style={{ margin: '8px 0 0', color: TEXT_SEC, fontSize: 13 }}>Manage product media. Drop files into a slot and drag thumbnails to reorder them.</p></div>
         <div style={{ display: 'grid', gap: 14 }}>
           <h2 style={{ margin: '4px 0 0', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Main Image</h2>
-          <MediaSlot label="Main Product Image" field="mainImage" media={media} uploading={uploadingMedia === 'mainImage'} onFiles={uploadMediaFiles} onReorder={reorderMedia} onRemove={removeMedia} />
+          <div data-required-field="mainImage" tabIndex={-1} style={{ padding: validationAttempted && requiredFieldError('mainImage') ? 5 : 0, border: `1px solid ${validationAttempted && requiredFieldError('mainImage') ? '#B42318' : 'transparent'}`, borderRadius: 11 }}><MediaSlot label="Main Product Image" field="mainImage" media={media} uploading={uploadingMedia === 'mainImage'} onFiles={uploadMediaFiles} onReorder={reorderMedia} onRemove={removeMedia} />{validationAttempted && requiredFieldError('mainImage') && <div style={{ marginTop: 7, padding: '8px 10px', border: '1px solid #B42318', borderRadius: 7, color: '#B42318', fontSize: 11 }}>* {requiredFieldError('mainImage')}</div>}</div>
           <h2 style={{ margin: '18px 0 0', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Gallery</h2>
           {([['gallery', 'Product Images'], ['detailImages', 'Detail Images'], ['front', 'Front'], ['back', 'Back'], ['sleeve', 'Sleeve'], ['embroidery', 'Embroidery']] as const).map(([field, label]) => <MediaSlot key={field} label={label} field={field} media={media} uploading={uploadingMedia === field} onFiles={uploadMediaFiles} onReorder={reorderMedia} onRemove={removeMedia} />)}
           <h2 style={{ margin: '18px 0 0', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Campaign</h2>
@@ -325,5 +403,6 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
       {adjustmentOpen && <div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, zIndex: 20, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(30, 47, 68, .32)' }}><div style={{ width: 'min(520px, 100%)', padding: 26, borderRadius: 14, background: '#F7F3EC', border: `1px solid ${BORDER}`, boxShadow: '0 20px 60px rgba(30, 47, 68, .2)' }}><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}><h2 style={{ margin: 0, color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 23, fontWeight: 500 }}>Adjust Inventory</h2><button type="button" onClick={() => setAdjustmentOpen(false)} aria-label="Close" style={{ border: 0, background: 'transparent', color: TEXT_SEC, fontSize: 22, cursor: 'pointer' }}>×</button></div><div style={{ display: 'grid', gap: 16 }}><Field label="Variant"><select value={adjustmentVariantId} onChange={event => setAdjustmentVariantId(event.target.value)} style={inputStyle}><option value="">Select variant</option>{variants.map(variant => <option key={variant.id} value={variant.id}>{variant.size} / {variant.colorName} ({variant.sku})</option>)}</select></Field><Field label="Adjustment Type"><select value={adjustmentType} onChange={event => setAdjustmentType(event.target.value as InventoryPieceStatus)} style={inputStyle}>{INVENTORY_STATUSES.filter(status => status !== 'lost').map(status => <option key={status} value={status}>{status[0].toUpperCase() + status.slice(1)}</option>)}</select></Field><Field label="Quantity"><input type="number" min="1" step="1" value={adjustmentQuantity} onChange={event => setAdjustmentQuantity(event.target.value)} style={inputStyle} /></Field><Field label="Reason"><input value={adjustmentReason} onChange={event => setAdjustmentReason(event.target.value)} style={inputStyle} placeholder="Production defect" /></Field><Field label="Notes"><textarea value={adjustmentNotes} onChange={event => setAdjustmentNotes(event.target.value)} style={{ ...inputStyle, minHeight: 78, resize: 'vertical' }} placeholder="Optional" /></Field></div><div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 24 }}><button type="button" onClick={() => setAdjustmentOpen(false)} style={{ padding: '10px 14px', border: `1px solid ${BORDER}`, borderRadius: 9, background: 'transparent', color: TEXT_SEC, cursor: 'pointer' }}>Cancel</button><button type="button" onClick={applyAdjustment} disabled={!adjustmentVariantId} style={{ padding: '10px 14px', border: 0, borderRadius: 9, background: INDIGO, color: '#E7DFD2', cursor: adjustmentVariantId ? 'pointer' : 'not-allowed', opacity: adjustmentVariantId ? 1 : .5 }}>Apply Adjustment</button></div></div></div>}
       {!['Product Information', 'Caractéristiques produit', 'Design & Heritage', 'Variants', 'Pricing', 'Release', 'Inventory', 'Media', 'Story', 'SEO', 'Activity'].includes(activeTab) && <section style={{ minHeight: 260, display: 'grid', placeItems: 'center', border: `1px dashed ${BORDER}`, borderRadius: 14, color: TEXT_SEC, background: '#FBF9F5' }}><div style={{ textAlign: 'center' }}><div style={{ color: INDIGO, fontWeight: 700 }}>{activeTab}</div><div style={{ marginTop: 8, fontSize: 13 }}>This tab is intentionally empty and ready for the next product module.</div></div></section>}
     </main>
+    {validationToast && <div role="alert" aria-live="assertive" style={{ position: 'fixed', right: 24, bottom: 24, zIndex: 1500, width: 'min(380px, calc(100vw - 32px))', boxSizing: 'border-box', padding: '14px 18px', border: '1px solid #E4B8B3', borderRadius: 10, background: '#F9EDEA', color: '#8F1D15', fontSize: 13, lineHeight: 1.5, whiteSpace: 'pre-line', boxShadow: '0 14px 36px rgba(30, 47, 68, .2)' }}>{validationToast}</div>}
   </div>
 }

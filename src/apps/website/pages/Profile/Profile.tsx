@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { BORDER, CLAY, SAGE, FONT_SERIF, FONT_SANS, FONT_MONO } from '../../../../tokens'
 import type { WebPage } from '../../types'
 import { TopBarPage } from '../../components/TopBarPage/TopBarPage'
+import { OptimizedImage } from '../../components/OptimizedImage/OptimizedImage'
 import { getKeeperProfile, hasStoredSession, updateKeeperProfile, updateKeeperSecurity, type KeeperProfile } from '../../../../shared/services/auth'
 import './Profile.scss'
 
@@ -230,7 +231,7 @@ export default function Profile({ onNavigate }: Props) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
             {CONTRIBUTIONS.map(c => { const s = STATUS_STYLE[c.status]; return (
               <div key={c.id} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 16, overflow: 'hidden' }}>
-                <div style={{ aspectRatio: '4/3', overflow: 'hidden' }}><img src={`https://images.unsplash.com/${c.img}?w=600&h=450&fit=crop&auto=format`} alt={c.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /></div>
+                <div style={{ aspectRatio: '4/3', overflow: 'hidden' }}><OptimizedImage src={`https://images.unsplash.com/${c.img}?w=600&h=450&fit=crop&auto=format`} preset="community" dimensions={{ width: 600, height: 450 }} alt={c.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /></div>
                 <div style={{ padding: '16px 18px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}><span style={{ fontFamily: FONT_MONO, fontSize: 10, color: SAND }}>{c.id}</span><span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 999, background: s.bg, color: s.color, fontWeight: 500 }}>{c.status}</span></div>
                   <div style={{ fontSize: 14, fontWeight: 500, color: TEXT, lineHeight: 1.3, marginBottom: 6 }}>{c.title}</div>

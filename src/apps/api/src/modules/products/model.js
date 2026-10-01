@@ -1,4 +1,5 @@
 ﻿import mongoose from 'mongoose';
+import { mediaAssetSchema } from '../../utils/mediaAssetSchema.js';
 
 const productSizeSchema = new mongoose.Schema({
   size: { type: String, required: true },
@@ -93,6 +94,7 @@ const productSchema = new mongoose.Schema({
   description: { type: String, default: '' },
   coverImageUrl: { type: String, default: '' },
   images: [{ type: String }],
+  mediaAssets: { type: [mediaAssetSchema], default: [] },
   sizes: [productSizeSchema],
   colorways: [productColorwaySchema],
   variants: [productVariantSchema],

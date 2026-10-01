@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { INDIGO, TEXT_SEC, BORDER, CLAY, BG, SURFACE, SURFACE_2, CREAM, SAND, FONT_SERIF, FONT_SANS } from '../../../../tokens'
 import type { WebPage } from '../../types'
+import { OptimizedImage } from '../../components/OptimizedImage/OptimizedImage'
 import './Stories.scss'
 
 interface Props { onNavigate: (p: WebPage) => void }
@@ -38,7 +39,7 @@ export default function Stories({ onNavigate: _ }: Props) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><div style={{ width: 30, height: 30, borderRadius: 999, background: INDIGO, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: CREAM }}>SB</div><span style={{ fontSize: 13, color: TEXT_SEC }}>Sara Berrada</span></div>
             </div>
           </div>
-          <div style={{ overflow: 'hidden' }}><img src={`https://images.unsplash.com/${featured.img}?w=800&h=600&fit=crop&auto=format`} alt={featured.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /></div>
+          <div style={{ overflow: 'hidden' }}><OptimizedImage src={`https://images.unsplash.com/${featured.img}?w=800&h=600&fit=crop&auto=format`} preset="story" priority alt={featured.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /></div>
         </div>
       </section>
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '48px 40px 80px' }}>
@@ -53,7 +54,7 @@ export default function Stories({ onNavigate: _ }: Props) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 28 }}>
           {grid.map(s => (
             <button key={s.title} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
-              <div style={{ borderRadius: 14, overflow: 'hidden', marginBottom: 16, aspectRatio: '4/3' }}><img src={`https://images.unsplash.com/${s.img}?w=640&h=480&fit=crop&auto=format`} alt={s.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /></div>
+              <div style={{ borderRadius: 14, overflow: 'hidden', marginBottom: 16, aspectRatio: '4/3' }}><OptimizedImage src={`https://images.unsplash.com/${s.img}?w=640&h=480&fit=crop&auto=format`} preset="story" alt={s.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /></div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}><span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: 999, background: s.type === 'Editorial' ? SURFACE_2 : '#E8EDF3', color: s.type === 'Editorial' ? CLAY : INDIGO }}>{s.type}</span><span style={{ fontSize: 11, color: SAND }}>{s.time} read · {s.reads}</span></div>
               <h3 style={{ fontFamily: FONT_SERIF, fontSize: 18, fontWeight: 500, color: INDIGO, lineHeight: 1.3, margin: 0, marginBottom: 8 }}>{s.title}</h3>
               <div style={{ fontSize: 12, color: TEXT_SEC }}>{s.author}</div>

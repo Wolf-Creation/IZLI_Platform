@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
-import type { Collection, OfficialCollectionType } from '../../../entities'
+import type { Collection, MediaAsset, OfficialCollectionType } from '../../../entities'
 import {
   DEFAULT_COLLECTIONS_PAGE_CONFIG,
   createCollection,
@@ -86,8 +86,21 @@ export default function CollectionsPageBuilder() {
     setError('')
     setMessage('Uploading image to Cloudinary...')
     try {
-      const imageUrl = await uploadCollectionImage(file)
-      const updated = await updateCollection(collection.id, { [field]: imageUrl })
+      const uploaded = await uploadCollectionImage(file)
+      const asset: MediaAsset = {
+        field,
+        url: uploaded.url,
+        publicId: uploaded.publicId,
+        resourceType: uploaded.resourceType,
+        format: uploaded.format,
+        width: uploaded.width,
+        height: uploaded.height,
+        bytes: uploaded.bytes,
+      }
+      const updated = await updateCollection(collection.id, {
+        [field]: uploaded.url,
+        mediaAssets: [...(collection.mediaAssets ?? []).filter(existing => existing.field !== field), asset],
+      })
       setCollections(items => items.map(item => item.id === updated.id
         ? { ...updated, name: item.name, tagline: item.tagline, shortDescription: item.shortDescription }
         : item))
@@ -235,7 +248,7 @@ export default function CollectionsPageBuilder() {
         <h3 style={{ margin: 0, color: INK, fontSize: 14 }}>Section display</h3>
         <label style={{ display: 'flex', alignItems: 'center', gap: 9, color: MUTED, fontSize: 12 }}><input type="checkbox" checked={config.showTagline} onChange={event => updateConfig('showTagline', event.target.checked)} />Show collection tagline</label>
         <label style={{ display: 'flex', alignItems: 'center', gap: 9, color: MUTED, fontSize: 12 }}><input type="checkbox" checked={config.showShortDescription} onChange={event => updateConfig('showShortDescription', event.target.checked)} />Show short description</label>
-        <label style={{ display: 'grid', gap: 6, color: MUTED, fontSize: 11, fontWeight: 700 }}>CARD COLUMNS<select value={config.columns} onChange={event => updateConfig('columns', Number(event.target.value) as 1 | 2)} style={FIELD}><option value={2}>2 columns</option><option value={1}>1 column</option></select></label>
+        <label style={{ display: 'grid', gap: 6, color: MUTED, fontSize: 11, fontWeight: 700 }}>CARD COLUMNS<select value={config.columns} onChange={event => updateConfig('columns', Number(event.target.value) as 1 | 4)} style={FIELD}><option value={4}>4 columns</option><option value={1}>1 column</option></select></label>
         <button type="button" onClick={() => void save()} disabled={saving || Boolean(uploading)} style={{ marginTop: 6, padding: '10px 14px', border: 0, background: INK, color: '#F5F1EA', cursor: saving ? 'wait' : 'pointer' }}>{saving ? 'Saving...' : 'Save page settings'}</button>
       </aside>
     </section>

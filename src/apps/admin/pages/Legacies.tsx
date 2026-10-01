@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react'
+import type { MediaAsset, MediaUploadResult } from '../../../entities'
 import type { Screen } from '../../../types'
 import { api } from '../../../shared/services/api'
 
@@ -61,6 +62,7 @@ interface LegacyRecord {
   legacyType: LegacyType
   coverImageUrl: string
   heroImageUrl: string
+  mediaAssets: MediaAsset[]
   symbol: string
   icon: string
   primaryColor: string
@@ -104,6 +106,7 @@ interface LegacyFormState {
   legacyType: LegacyType
   coverImageUrl: string
   heroImageUrl: string
+  mediaAssets: MediaAsset[]
   symbol: string
   icon: string
   primaryColor: string
@@ -294,6 +297,7 @@ const emptyForm = (): LegacyFormState => ({
   legacyType: 'History',
   coverImageUrl: '',
   heroImageUrl: '',
+  mediaAssets: [],
   symbol: '◉',
   icon: '◉',
   primaryColor: INDIGO,
@@ -364,6 +368,7 @@ function normalizeLegacy(record: Record<string, unknown>, index: number): Legacy
     legacyType: (record.legacyType as LegacyType) ?? 'History',
     coverImageUrl: String(record.coverImageUrl ?? ''),
     heroImageUrl: String(record.heroImageUrl ?? ''),
+    mediaAssets: Array.isArray(record.mediaAssets) ? record.mediaAssets as MediaAsset[] : [],
     symbol: String(record.symbol ?? '◉'),
     icon: String(record.icon ?? '◉'),
     primaryColor: String(record.primaryColor ?? INDIGO),
@@ -684,10 +689,20 @@ export default function Legacies({ onNavigate }: Props) {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('folder', 'banners')
-      const result = await api.upload<{ url: string; publicId: string; width: number; height: number; format: string }>('/uploads/images', formData)
+      const result = await api.upload<MediaUploadResult>('/uploads/images', formData)
       const imageUrl = result.url
       updateDraft('coverImageUrl', imageUrl)
       updateDraft('heroImageUrl', imageUrl)
+      updateDraft('mediaAssets', [...draft.mediaAssets.filter(asset => asset.field !== 'legacyHero'), {
+        field: 'legacyHero',
+        url: result.url,
+        publicId: result.publicId,
+        resourceType: result.resourceType,
+        format: result.format,
+        width: result.width,
+        height: result.height,
+        bytes: result.bytes,
+      }])
       setMessage('Image uploaded and attached to the legacy.')
     } catch {
       setMessage('Image upload failed. Please try another file.')

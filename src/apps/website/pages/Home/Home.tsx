@@ -6,6 +6,7 @@ import { HeroSlider } from './Hero/HeroSlider'
 import { SplashScreen } from '../../components/SplashScreen/SplashScreen'
 import { ProductCarousel } from '../../components/ProductCarousel/ProductCarousel'
 import { ProductCard } from '../../components/ProductCard/ProductCard'
+import { PrimaryButton } from '../../components/PrimaryButton/PrimaryButton'
 import { useProducts } from '../../../../shared/hooks/useProducts'
 import { KeeperCircleCta } from '../../components/KeeperCircleCta/KeeperCircleCta'
 import type { CartItemInput } from '../../cart'
@@ -104,12 +105,12 @@ const COLLECTION_FEATURES = [
 const RELEASE_POINTS = ['Release 001 badge', '100 Keeper points', 'Exclusive archive access']
 
 const TOP_PRODUCTS = [
-  { name: 'Atlas Symbol Tee', color: 'Black', price: '65 TND', image: topsAtlasPrincipal },
-  { name: 'Atlas Symbol Tee', color: 'Sand', price: '65 TND', image: topsAtlasDetail },
-  { name: 'Atlas Symbol Tee', color: 'Charcoal', price: '65 TND', image: topsAtlasBack },
-  { name: 'Porte Ksour Tee', color: 'Ecru', price: '85 TND', image: topsPortePrincipal },
-  { name: 'Porte Ksour Tee', color: 'Marron', price: '85 TND', image: topsPorteDetail },
-  { name: 'Porte Ksour Tee', color: 'Noir', price: '85 TND', image: topsPorteBack },
+  { name: 'Atlas Symbol Tee', color: 'Black', price: '65 TND', image: topsAtlasPrincipal, images: [topsAtlasPrincipal, topsAtlasDetail, topsAtlasBack] },
+  { name: 'Atlas Symbol Tee', color: 'Sand', price: '65 TND', image: topsAtlasDetail, images: [topsAtlasPrincipal, topsAtlasDetail, topsAtlasBack] },
+  { name: 'Atlas Symbol Tee', color: 'Charcoal', price: '65 TND', image: topsAtlasBack, images: [topsAtlasPrincipal, topsAtlasDetail, topsAtlasBack] },
+  { name: 'Porte Ksour Tee', color: 'Ecru', price: '85 TND', image: topsPortePrincipal, images: [topsPortePrincipal, topsPorteDetail, topsPorteBack] },
+  { name: 'Porte Ksour Tee', color: 'Marron', price: '85 TND', image: topsPorteDetail, images: [topsPortePrincipal, topsPorteDetail, topsPorteBack] },
+  { name: 'Porte Ksour Tee', color: 'Noir', price: '85 TND', image: topsPorteBack, images: [topsPortePrincipal, topsPorteDetail, topsPorteBack] },
 ] as const
 
 type KeeperTitleTone = 'primary' | 'accent' | 'muted'
@@ -294,7 +295,6 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
   const { products } = useProducts({ status: 'published' })
   const [scrollY, setScrollY] = useState(0)
   const [showSplash, setShowSplash] = useState(true)
-  const [activeTab, setActiveTab] = useState('new')
   const [activeKeeperBenefit, setActiveKeeperBenefit] = useState(0)
   const websiteProducts = products.map(product => ({
     id: product.id,
@@ -304,7 +304,7 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
     images: product.images ?? [],
     releaseStatus: product.releaseStatus,
   }))
-  const displayedShopProducts = websiteProducts.filter(product => activeTab === 'new' ? product.releaseStatus === 'live' : product.releaseStatus !== 'live')
+  const displayedShopProducts = websiteProducts.filter(product => product.releaseStatus === 'live')
   const [introTitleRevealed, setIntroTitleRevealed] = useState(false)
   const keeperSectionRef = useRef<HTMLElement>(null)
   const introTitleRevealedRef = useRef(false)
@@ -508,13 +508,8 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
 
       <section className="home-section home-section--shop">
         <div className="home-shell">
-          <div className="home-shop-tabs">
-            <button className={`home-shop-tab ${activeTab === 'new' ? 'home-shop-tab--active' : ''}`} onClick={() => setActiveTab('new')}>
-              New releases
-            </button>
-            <button className={`home-shop-tab ${activeTab === 'last' ? 'home-shop-tab--active' : ''}`} onClick={() => setActiveTab('last')}>
-              Last releases
-            </button>
+          <div className="home-shop-tabs" role="tablist" aria-label="Shop releases">
+            <span className="home-shop-tab home-shop-tab--active" role="tab" aria-selected="true" tabIndex={0}>New releases</span>
           </div>
 
           <ProductCarousel products={displayedShopProducts} />
@@ -526,11 +521,11 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
           <div>
             <h2>Tops</h2>
           </div>
-          <KeeperCircleCta onClick={() => onNavigate('shop')}>Shop tops</KeeperCircleCta>
+          <PrimaryButton className="home-tops-editorial__cta" onClick={() => onNavigate('shop')}>Shop tops</PrimaryButton>
         </header>
         <div className="home-tops-editorial">
           <div className="home-tops-editorial__visual">
-            <img src={tafuktImage} alt="IZLI tops collection" />
+            <img src={tafuktImage} alt="IZLI tops collection" loading="lazy" decoding="async" />
             <div className="home-tops-editorial__visual-overlay" />
             <div className="home-tops-editorial__visual-caption">
               <span>Essential forms</span>
@@ -547,6 +542,7 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
                   subtitle={product.color}
                   price={product.price}
                   image={product.image}
+                  images={product.images}
                   badge="new"
                   onClick={() => onNavigate('product-detail')}
                   onAddToCart={() => onAddToCart({ id: `home-${product.name}-${product.color}-${index}`, name: product.name, universe: 'Essentials', price: Number(product.price.replace(/[^0-9.]/g, '')), currency: 'TND', size: 'M', img: product.image })}
@@ -565,11 +561,11 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
           <div>
             <h2>Bottoms</h2>
           </div>
-          <KeeperCircleCta onClick={() => onNavigate('shop')}>Shop bottoms</KeeperCircleCta>
+          <PrimaryButton className="home-tops-editorial__cta" onClick={() => onNavigate('shop')}>Shop bottoms</PrimaryButton>
         </header>
         <div className="home-tops-editorial home-bottoms-editorial">
           <div className="home-tops-editorial__visual">
-            <img src={tafuktBottomsImage} alt="IZLI bottoms collection" />
+            <img src={tafuktBottomsImage} alt="IZLI bottoms collection" loading="lazy" decoding="async" />
             <div className="home-tops-editorial__visual-overlay" />
             <div className="home-tops-editorial__visual-caption">
               <span>Grounded silhouettes</span>
@@ -586,6 +582,7 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
                   subtitle={product.color}
                   price={product.price}
                   image={product.image}
+                  images={product.images}
                   badge="new"
                   onClick={() => onNavigate('product-detail')}
                   onAddToCart={() => onAddToCart({ id: `home-${product.name}-${product.color}-${index}`, name: product.name, universe: 'Essentials', price: Number(product.price.replace(/[^0-9.]/g, '')), currency: 'TND', size: 'M', img: product.image })}
@@ -651,7 +648,7 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
       <section ref={keeperSectionRef} className="home-section home-section--keeper-circle">
         <div className="keeper-circle-layout">
           <div className="keeper-sticky-visual">
-            <img src={keeperCircleImage} alt="Keeper Circle community" style={{ transform: `scale(${keeperImageScale})` }} />
+            <img src={keeperCircleImage} alt="Keeper Circle community" loading="lazy" decoding="async" style={{ transform: `scale(${keeperImageScale})` }} />
             <div className="keeper-sticky-visual__overlay" aria-hidden="true" />
             <div className="keeper-sticky-visual__title">KEEPER CIRCLE</div>
             {/* <div className="keeper-sticky-visual__caption">The circle around the archive.</div> */}
@@ -753,11 +750,6 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
           </nav>
         </div>
 
-        <div className="home-about-socials" aria-label="IZLI social media links">
-          <a href="https://www.instagram.com/izli.tn/" target="_blank" rel="noreferrer" aria-label="Instagram @izli.tn"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" /></svg></a>
-          <a href="https://www.facebook.com/izli.tn/" target="_blank" rel="noreferrer" aria-label="Facebook @izli.tn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 21v-8h3l.5-3H14V8.2c0-.9.3-1.5 1.6-1.5H18V4.1c-.4-.1-1.4-.2-2.5-.2-2.5 0-4.2 1.5-4.2 4.3V10H8.5v3h2.8v8z" /></svg></a>
-          <a href="https://wa.me/21690577555" target="_blank" rel="noreferrer" aria-label="WhatsApp +216 90 577 555"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z" /><path d="M9 9.3c.2-.4.4-.4.5.4l.6 1.4c.1.2 0 .4-.1.6l-.5.6c.5 1 1.2 1.7 2.2 2.2l.6-.5c.2-.2.4-.2.6-.1l1.4.6c.3.1.4.3.4.5v.5c0 .3 0 .5-.4.7-.3.2-.8.3-1.2.2-2.5-.6-4.8-2.9-5.4-5.4-.1-.4 0-.9.2-1.2Z" /></svg></a>
-        </div>
       </section>
 
     </div>

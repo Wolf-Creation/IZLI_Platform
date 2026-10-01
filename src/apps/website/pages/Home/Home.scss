@@ -334,7 +334,7 @@
 
 .home-section--shop {
   position: relative;
-  height: min(100svh - 50px, 820px);
+  height: auto;
   padding-top: 128px;
   padding-bottom: 0;
   box-sizing: border-box;
@@ -343,29 +343,35 @@
 }
 
 .home-section--shop .home-shell {
-  height: 100%;
+  height: auto;
   display: flex;
   flex-direction: column;
 }
 
 .home-section--shop .product-carousel {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
 }
 
 .home-section--shop .product-carousel__container {
-  height: 100%;
-  align-items: stretch;
+  height: auto;
+  align-items: flex-start;
 }
 
 .home-section--shop .product-card {
-  height: 100%;
+  height: 520px;
 }
 
 .home-section--shop .product-card__image-wrapper {
-  flex: 1;
-  min-height: 0;
+  flex: 1 1 auto;
+  width: 100%;
+  height: auto;
   aspect-ratio: auto;
+  min-height: 0;
+}
+
+.home-section--shop .product-card__info {
+  flex: 0 0 auto;
+  padding: 12px;
 }
 
 .home-section--release {
@@ -391,19 +397,16 @@
 }
 
 .home-shop-tab {
-  background: none;
-  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  text-align: center;
   font-size: 16px;
   font-weight: 500;
   color: #506681;
-  cursor: pointer;
   padding: 0;
-  transition: all 300ms ease;
   position: relative;
-
-  &:hover {
-    color: #1f3248;
-  }
 
   &--active {
     color: #c9924e;
@@ -1886,7 +1889,7 @@
 }
 
 .home-section--tops {
-  --home-main-header-height: 92px;
+  --home-main-header-height: 91px;
   height: auto;
   min-height: calc(100vh - var(--home-main-header-height));
   overflow: visible;
@@ -1985,9 +1988,9 @@
 
 .home-tops-editorial__visual {
   position: sticky;
-  top: calc(var(--home-main-header-height) + 104px);
+  top: calc(var(--home-main-header-height) + 82px);
   align-self: start;
-  height: calc(100svh - var(--home-main-header-height) - 104px);
+  height: calc(100svh - var(--home-main-header-height) - 82px);
   overflow: hidden;
   background: #dedbd6;
 }
@@ -2048,11 +2051,12 @@
   z-index: 3;
   will-change: transform;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 24px;
-  height: 104px;
-  padding: 24px 64px;
+  box-sizing: border-box;
+  height: 82px;
+  padding: 8px 32px;
   background: rgba(0, 0, 0);
   border-bottom: 1px solid rgba(23, 23, 23, 0.14);
   backdrop-filter: blur(10px);
@@ -2061,34 +2065,20 @@
 .home-tops-editorial__header h2 {
   font-family: 'Playfair Display', serif;
   font-size: clamp(24px, 2vw, 32px);
-  font-weight: 700;
+  font-weight: 400;
   line-height: 0.95;
   margin: 0;
 }
 
-.home-tops-editorial__header button {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  height: auto;
-  flex-shrink: 0;
-  padding: 6px 0;
-  border: 0;
-  border-bottom: 1px solid #c9924e;
-  background: transparent;
-  color: #171717;
-  cursor: pointer;
-  font: inherit;
-  font-size: 11px;
+.home-tops-editorial__header .home-tops-editorial__cta {
+  align-self: center;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .home-tops-editorial__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: 700px;
+  grid-auto-rows: auto;
   gap: 1px;
   background: rgba(23, 23, 23, 0.14);
   gap: 4px;
@@ -2096,7 +2086,7 @@
 
 .home-tops-product-card {
   min-width: 0;
-  height: 700px;
+  height: auto;
   padding: 0;
   border: 0;
   background: #dedfe0;
@@ -3354,7 +3344,8 @@
   }
 
   .home-section--shop .product-card__image-wrapper {
-    aspect-ratio: 1 / 1.3;
+    flex: 0 0 auto;
+    aspect-ratio: 3 / 4;
   }
 
   .home-services-bar__item {
@@ -3791,10 +3782,6 @@
     grid-template-columns: minmax(300px, 0.82fr) minmax(460px, 1.18fr);
   }
 
-  .home-tops-editorial__header {
-    padding-inline: 28px;
-  }
-
   .home-section--collections {
     padding: 84px 64px;
   }
@@ -3977,8 +3964,9 @@
 
   .home-tops-editorial__header {
     position: relative;
-    min-height: 92px;
-    padding: 22px 20px;
+    height: 82px;
+    min-height: 82px;
+    padding: 8px 32px;
   }
 
   .home-tops-editorial__grid {

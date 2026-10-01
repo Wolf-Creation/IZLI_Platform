@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { WebPage } from '../../types'
+import type { MediaAsset } from '../../../../entities'
 import { coreApi } from '../../../../core/api'
+import { OptimizedImage } from '../../components/OptimizedImage/OptimizedImage'
 
 interface Props {
   qrNumber: string
@@ -16,7 +18,7 @@ type QrDetails = {
   colorCode?: string | null
   releaseNumber?: string | null
   releaseProductNumber?: string | null
-  productId?: { name?: string; sku?: string; description?: string; coverImageUrl?: string } | null
+  productId?: { name?: string; sku?: string; description?: string; coverImageUrl?: string; mediaAssets?: MediaAsset[] } | null
 }
 
 export default function QrProduct({ qrNumber, onNavigate }: Props) {
@@ -47,7 +49,7 @@ export default function QrProduct({ qrNumber, onNavigate }: Props) {
             {[['QR number', qr.qrNumber], ['Serial number', qr.serialNumber || 'Non assigne'], ['Taille', qr.size || '—'], ['Couleur', qr.color ? `${qr.color}${qr.colorCode ? ` (${qr.colorCode})` : ''}` : '—'], ['Release', qr.releaseNumber || '—'], ['Produit dans la release', qr.releaseProductNumber || '—'], ['Statut', qr.status]].map(([label, value]) => <div key={label} style={{ padding: 14, background: '#F5F1EA', border: '1px solid #D8D0C4', borderRadius: 10 }}><div style={{ fontSize: 10, color: '#506681', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div><div style={{ marginTop: 6, fontSize: 13, fontFamily: label.includes('number') ? 'monospace' : 'inherit' }}>{value}</div></div>)}
           </div>
         </div>
-        {product?.coverImageUrl ? <img src={product.coverImageUrl} alt={product.name || qr.qrNumber} style={{ width: '100%', aspectRatio: '4 / 5', objectFit: 'cover', borderRadius: 14 }} /> : <div style={{ aspectRatio: '4 / 5', borderRadius: 14, background: '#1E2F44', display: 'grid', placeItems: 'center', color: '#E7DFD2', fontFamily: 'Playfair Display, serif', fontSize: 24 }}>IZLI</div>}
+        {product?.coverImageUrl ? <OptimizedImage src={product.coverImageUrl} preset="productCard" priority dimensions={product.mediaAssets?.find(asset => asset.url === product.coverImageUrl)} alt={product.name || qr.qrNumber} style={{ width: '100%', aspectRatio: '4 / 5', objectFit: 'cover', borderRadius: 14 }} /> : <div style={{ aspectRatio: '4 / 5', borderRadius: 14, background: '#1E2F44', display: 'grid', placeItems: 'center', color: '#E7DFD2', fontFamily: 'Playfair Display, serif', fontSize: 24 }}>IZLI</div>}
       </div>
     </main>
   )

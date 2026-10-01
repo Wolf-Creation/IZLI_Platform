@@ -152,7 +152,7 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
     switch (page) {
       case 'not-found': return <NotFoundPage onReturnHome={() => navigate('home')} />
       case 'home':           return <Home onNavigate={navigate} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} isWishlisted={id => wishlistItems.some(item => item.id === id)} />
-      case 'collections':    return <Collections onNavigate={navigate} />
+      case 'collections':    return <Collections onNavigate={navigate} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} isWishlisted={id => wishlistItems.some(item => item.id === id)} />
       case 'collection-detail': return <CollectionDetailPage slug={collectionSlug ?? ''} onNavigate={navigate} />
       case 'shop':           return <Shop onNavigate={navigate} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} isWishlisted={id => wishlistItems.some(item => item.id === id)} />
       case 'product-detail': return <ProductDetail productId={productId} onNavigate={navigate} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} isWishlisted={id => wishlistItems.some(item => item.id === id)} />

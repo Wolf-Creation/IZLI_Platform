@@ -7,12 +7,13 @@
   height: 100%;
   padding: 0;
   border: 0;
-  background: #dedfe0;
+  background: #111111;
   color: #171717;
   cursor: pointer;
   text-align: left;
   overflow: hidden;
   transition: transform 240ms ease, box-shadow 240ms ease;
+  border:1px solid rgba(255, 255, 255, 0.1);
 }
 
 .izli-product-card:hover {
@@ -23,21 +24,34 @@
 .izli-product-card__image {
   position: relative;
   display: block;
-  height: calc(100% - 98px);
+  flex: 0 0 auto;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
   overflow: hidden;
   background: #dedfe0;
 }
 
 .izli-product-card__image img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
   object-fit: cover;
-  transition: transform 400ms ease;
+}
+
+.izli-product-card__image-hover {
+  opacity: 0;
+  transition: opacity 380ms ease;
+}
+
+.izli-product-card__image:hover .izli-product-card__image-hover,
+.izli-product-card__image:focus-within .izli-product-card__image-hover {
+  opacity: 1;
 }
 
 .izli-product-card__wishlist {
-  position: absolute;
   top: 14px;
   right: 14px;
   z-index: 2;
@@ -71,10 +85,6 @@
 .izli-product-card__wishlist:focus-visible {
   outline: 2px solid #e2b36f;
   outline-offset: 3px;
-}
-
-.izli-product-card:hover .izli-product-card__image img {
-  transform: scale(1.02);
 }
 
 .izli-product-card__cta {
@@ -139,14 +149,16 @@
 }
 
 .izli-product-card__info {
+  flex: 1 0 auto;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 5px 12px;
   padding: 30px 20px;
-  background: #111111;
+  background: #111;
   color: #f5f1ea;
   font-size: 12px;
   font-weight: 600;
+  
 }
 
 .izli-product-card__title {

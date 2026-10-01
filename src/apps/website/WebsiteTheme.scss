@@ -1,10 +1,10 @@
 .website-app {
-  --website-bg: #000000;
+  --website-bg: #111;
   --website-surface: #0d0d0d;
   --website-surface-raised: #151515;
   --website-text: #f5f1ea;
   --website-text-muted: #c7c0b7;
-  --website-border: rgba(245, 241, 234, 0.2);
+  --website-border: rgba(255, 255, 255, 0.1);
   background: var(--website-bg);
   color: var(--website-text);
 }
@@ -152,17 +152,14 @@
 .website-app .heritage-page,
 .website-app .about-page,
 .website-app .archives-page {
-  background: #000000 !important;
   color: var(--website-text) !important;
 }
 
 .website-app .home-shop-tabs,
 .website-app .shop-tabs {
-  width: min(400px, 100%);
+  width: fit-content;
   margin: 0 auto 40px;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: #0b0b0b;
@@ -170,8 +167,8 @@
 
 .website-app .home-shop-tab,
 .website-app .shop-tab {
-  min-height: 36px;
-  padding: 0 18px;
+  min-height: 40px;
+  padding: 0 40px;
   border: 0;
   border-radius: 0;
   background: transparent !important;
@@ -257,7 +254,7 @@
 .website-app .home-page .home-section--release,
 .website-app .home-page .home-section--legacy,
 .website-app .home-page .home-section--cta {
-  background: #000000 !important;
+  background: #111 !important;
   background-image: none !important;
   color: var(--website-text) !important;
 }
@@ -294,10 +291,7 @@
   background: #111111 !important;
 }
 
-.website-app .home-product-card,
-.website-app [class*='card'] {
-  border-color: var(--website-border) !important;
-}
+
 
 .website-app .home-product-card__body,
 .website-app .product-card__info {

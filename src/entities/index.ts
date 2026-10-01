@@ -146,6 +146,20 @@ export interface ProductMedia {
   lifestyleImages: string[]
 }
 
+export interface MediaUploadResult {
+  url: string
+  publicId: string
+  resourceType: 'image' | 'video'
+  format: string
+  width: number
+  height: number
+  bytes: number
+}
+
+export interface MediaAsset extends MediaUploadResult {
+  field: string
+}
+
 export interface ProductStory {
   fullStory: string
   designStory: string
@@ -219,6 +233,7 @@ export interface Product {
   variants?: ProductVariant[]
   inventoryPieces?: InventoryPiece[]
   media?: ProductMedia
+  mediaAssets?: MediaAsset[]
   story?: ProductStory
   seo?: ProductSeo
   pricing?: {
@@ -292,6 +307,7 @@ export interface Collection {
   shortDescription?: string
   coverImage?: URL | null
   heroImage?: URL | null
+  mediaAssets?: MediaAsset[]
   displayOrder?: number
   isFeatured?: boolean
   isActive?: boolean

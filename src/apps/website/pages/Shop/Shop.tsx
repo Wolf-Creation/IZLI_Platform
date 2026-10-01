@@ -141,6 +141,8 @@ export default function Shop({ onNavigate, onAddToCart, onToggleWishlist, isWish
                   subtitle={`${categoryLabel} / ${product.sku}`}
                   price={product.price === undefined ? 'Price TBA' : `${product.price} ${product.currency}`}
                   image={product.coverImageUrl || product.images?.[0] || ''}
+                  images={product.images}
+                  mediaAssets={product.mediaAssets}
                   badge={`Only ${remainingStock} left`}
                   onClick={() => onNavigate('product-detail', product.id)}
                   onAddToCart={() => onAddToCart({ id: product.id, name: product.name, universe: product.universe, price: product.price, currency: product.currency, size: product.sizes?.find(size => size.stock > 0)?.size ?? 'M', img: product.coverImageUrl || product.images?.[0] || '' })}
