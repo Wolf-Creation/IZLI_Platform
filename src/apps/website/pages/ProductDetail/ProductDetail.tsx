@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { WebPage } from '../../types'
 import type { Product } from '../../../../entities'
 import type { CartItemInput } from '../../cart'
@@ -19,24 +19,44 @@ function productImages(product: Product) {
 export default function ProductDetail({ productId, onNavigate, onAddToCart, onToggleWishlist, isWishlisted }: Props) {
     const { product, loading, error } = useProduct(productId ?? '')
     const [mobileImageIndex, setMobileImageIndex] = useState(0)
+    const [isManuallySwiping, setIsManuallySwiping] = useState(false)
     const [selectedSize, setSelectedSize] = useState('')
     const [qty, setQty] = useState(1)
     const [specsTab, setSpecsTab] = useState<'details' | 'returns'>('details')
+    const swipeStartXRef = useRef<number | null>(null)
+    const galleryResumeTimeoutRef = useRef<number | null>(null)
     const images = product ? productImages(product) : [FALLBACK_IMAGE]
+
+    const pauseGallery = () => {
+        if (galleryResumeTimeoutRef.current !== null) window.clearTimeout(galleryResumeTimeoutRef.current)
+        setIsManuallySwiping(true)
+    }
+
+    const resumeGallery = () => {
+        if (galleryResumeTimeoutRef.current !== null) window.clearTimeout(galleryResumeTimeoutRef.current)
+        galleryResumeTimeoutRef.current = window.setTimeout(() => {
+            galleryResumeTimeoutRef.current = null
+            setIsManuallySwiping(false)
+        }, 1000)
+    }
+
+    useEffect(() => () => {
+        if (galleryResumeTimeoutRef.current !== null) window.clearTimeout(galleryResumeTimeoutRef.current)
+    }, [])
 
     useEffect(() => {
         setMobileImageIndex(0)
     }, [productId])
 
     useEffect(() => {
-        if (images.length < 2 || loading || error) return
+        if (images.length < 2 || loading || error || isManuallySwiping) return
 
         const intervalId = window.setInterval(() => {
             setMobileImageIndex(currentIndex => (currentIndex + 1) % images.length)
         }, 2000)
 
         return () => window.clearInterval(intervalId)
-    }, [error, images.length, loading])
+    }, [error, images.length, isManuallySwiping, loading])
 
     if (loading) return <div className="product-detail-state"><p>Loading product...</p></div>
     if (error || !product) return <div className="product-detail-state"><p className="product-detail-eyebrow">Product unavailable</p><h1>This piece could not be found.</h1><button type="button" onClick={() => onNavigate('shop')}>Back to Shop</button></div>
@@ -65,7 +85,27 @@ export default function ProductDetail({ productId, onNavigate, onAddToCart, onTo
             <section className="product-detail-hero">
                 <div className="product-detail-gallery" aria-label={`${product.name} image gallery`}>
                     <div className="product-detail-gallery__feature-grid">{images.map((image, index) => <div key={`${image}-${index}`}><OptimizedImage src={image} preset="productDetail" dimensions={product.mediaAssets?.find(asset => asset.url === image)} priority={index === 0} alt={`${product.name} view ${index + 1}`} /></div>)}</div>
-                    <div className="product-detail-gallery__mobile-slider">
+                    <div
+                        className="product-detail-gallery__mobile-slider"
+                        onTouchStart={event => {
+                            if (event.touches.length !== 1) return
+                            swipeStartXRef.current = event.touches[0].clientX
+                            pauseGallery()
+                        }}
+                        onTouchEnd={event => {
+                            const startX = swipeStartXRef.current
+                            const endX = event.changedTouches[0]?.clientX
+                            swipeStartXRef.current = null
+                            if (startX !== null && endX !== undefined && Math.abs(endX - startX) > 45) {
+                                setMobileImageIndex(index => (endX < startX ? index + 1 : index - 1 + images.length) % images.length)
+                            }
+                            resumeGallery()
+                        }}
+                        onTouchCancel={() => {
+                            swipeStartXRef.current = null
+                            resumeGallery()
+                        }}
+                    >
                         <div className="product-detail-gallery__mobile-track" style={{ transform: `translateX(-${mobileImageIndex * 100}%)` }}>
                             {images.map((image, index) => <OptimizedImage key={`${image}-mobile-${index}`} src={image} preset="productDetail" dimensions={product.mediaAssets?.find(asset => asset.url === image)} priority={index === 0} alt={`${product.name} view ${index + 1}`} />)}
                         </div>

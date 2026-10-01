@@ -704,6 +704,8 @@
         height: calc(100svh - 92px - 52px);
         overflow: hidden;
         background: #181818;
+        touch-action: pan-y;
+        user-select: none;
     }
 
     .product-detail-gallery__mobile-track {

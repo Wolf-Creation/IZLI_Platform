@@ -167,5 +167,8 @@
   .product-carousel__container {
     padding: 24px 0;
     gap: 6px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
   }
 }

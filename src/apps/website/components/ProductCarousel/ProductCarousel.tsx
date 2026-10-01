@@ -83,12 +83,31 @@ function resolveProductImage(image?: string) {
 
 export function ProductCarousel({ products, autoScrollSpeed = DEFAULT_AUTO_SCROLL_SPEED }: Props) {
   const [isVisible, setIsVisible] = useState(false)
+  const [isManuallyScrolling, setIsManuallyScrolling] = useState(false)
   const [cycleCount, setCycleCount] = useState(2)
   const containerRef = useRef<HTMLDivElement>(null)
   const cycleRef = useRef<HTMLDivElement>(null)
   const carouselRef = useRef<HTMLDivElement>(null)
   const autoScrollFrameRef = useRef<number | null>(null)
   const scrollPositionRef = useRef(0)
+  const manualScrollTimeoutRef = useRef<number | null>(null)
+
+  const pauseAutoScroll = () => {
+    if (manualScrollTimeoutRef.current !== null) window.clearTimeout(manualScrollTimeoutRef.current)
+    setIsManuallyScrolling(true)
+  }
+
+  const resumeAutoScroll = () => {
+    if (manualScrollTimeoutRef.current !== null) window.clearTimeout(manualScrollTimeoutRef.current)
+    manualScrollTimeoutRef.current = window.setTimeout(() => {
+      manualScrollTimeoutRef.current = null
+      setIsManuallyScrolling(false)
+    }, 1000)
+  }
+
+  useEffect(() => () => {
+    if (manualScrollTimeoutRef.current !== null) window.clearTimeout(manualScrollTimeoutRef.current)
+  }, [])
 
   useEffect(() => {
     const carousel = carouselRef.current
@@ -162,14 +181,27 @@ export function ProductCarousel({ products, autoScrollSpeed = DEFAULT_AUTO_SCROL
     }
 
     return stopAutoScroll
-  }, [autoScrollSpeed, isVisible])
+  }, [autoScrollSpeed, isManuallyScrolling, isVisible])
 
   return (
     <div
       className="product-carousel"
       ref={carouselRef}
     >
-      <div className="product-carousel__container" ref={containerRef}>
+      <div
+        className="product-carousel__container"
+        ref={containerRef}
+        onPointerDown={pauseAutoScroll}
+        onPointerUp={resumeAutoScroll}
+        onPointerCancel={resumeAutoScroll}
+        onTouchStart={pauseAutoScroll}
+        onTouchEnd={resumeAutoScroll}
+        onTouchCancel={resumeAutoScroll}
+        onWheel={() => {
+          pauseAutoScroll()
+          resumeAutoScroll()
+        }}
+      >
         <div className="product-carousel__track">
           {Array.from({ length: cycleCount }, (_, cycle) => (
             <div
