@@ -540,7 +540,6 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
                 <ProductCard
                   key={`${product.name}-${product.color}`}
                   name={product.name}
-                  subtitle={product.color}
                   price={product.price}
                   image={product.image}
                   images={product.images}
@@ -580,7 +579,6 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
                 <ProductCard
                   key={`${product.name}-${product.color}`}
                   name={product.name}
-                  subtitle={product.color}
                   price={product.price}
                   image={product.image}
                   images={product.images}

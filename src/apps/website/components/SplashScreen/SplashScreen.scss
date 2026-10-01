@@ -32,20 +32,18 @@
 }
 
 .splash-screen__title {
-  font-size: clamp(48px, 12vw, 120px);
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  color: #c9924e !important;
-  font-family: 'Playfair Display', serif;
+  display: block;
+  width: 400px;
+  max-width: calc(100vw - 48px);
+  height: auto;
+  filter: brightness(0) saturate(100%) invert(64%) sepia(31%) saturate(1051%) hue-rotate(357deg) brightness(87%) contrast(84%);
   margin: 0;
-  text-align: center;
   animation: titleEnter 600ms cubic-bezier(0.16, 1, 0.3, 1) 100ms forwards;
   will-change: transform, opacity;
   opacity: 0;
 
-  @media (max-width: 480px) {
-    font-size: 42px;
-    letter-spacing: 0.06em;
+  @media (max-width: 768px) {
+    width: 150px;
   }
 }
 

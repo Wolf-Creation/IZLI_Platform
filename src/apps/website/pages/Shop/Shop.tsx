@@ -134,11 +134,9 @@ export default function Shop({ onNavigate, onAddToCart, onToggleWishlist, isWish
           {loading || categoriesLoading || collectionsLoading ? <div className="shop-empty"><h3>Loading catalogue...</h3></div> : error || categoriesError || collectionsError ? <div className="shop-empty"><h3>Catalogue unavailable.</h3><p>{error ?? categoriesError ?? collectionsError}</p></div> : visibleProducts.length > 0 ? <div className="shop-product-grid">
             {visibleProducts.map((product, index) => {
               const remainingStock = (product.sizes ?? []).reduce((total, size) => total + size.stock, 0) || product.quantity || 0
-              const categoryLabel = categories.find(category => (product.categoryIds ?? []).includes(category.id))?.label ?? product.universe
               return <motion.div key={product.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.16 }} transition={{ duration: 0.45, delay: index * 0.04 }}>
                 <ProductCard
                   name={product.name}
-                  subtitle={`${categoryLabel} / ${product.sku}`}
                   price={product.price === undefined ? 'Price TBA' : `${product.price} ${product.currency}`}
                   image={product.coverImageUrl || product.images?.[0] || ''}
                   images={product.images}

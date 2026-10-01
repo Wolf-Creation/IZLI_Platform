@@ -5,7 +5,6 @@ import './ProductCard.scss'
 
 interface ProductCardProps {
   name: string
-  subtitle?: string
   price: string
   image: string
   images?: readonly string[]
@@ -22,7 +21,6 @@ interface ProductCardProps {
 
 export function ProductCard({
   name,
-  subtitle,
   price,
   image,
   images = [],
@@ -73,7 +71,7 @@ export function ProductCard({
           aria-label={wishlistIcon === 'trash' ? `Remove ${name} from wishlist` : isWishlisted ? `Remove ${name} from wishlist` : `Add ${name} to wishlist`}
           aria-pressed={isWishlisted}
         >
-          {wishlistIcon === 'trash' ? <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg> : <svg viewBox="0 0 24 24" fill={isWishlisted ? 'currentColor' : 'none'} aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z" /></svg>}
+          {wishlistIcon === 'trash' ? <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg> : <svg viewBox="0 0 24 24" fill={isWishlisted ? 'currentColor' : 'none'} aria-hidden="true"><path d="M7.25 3.75h9.5A1.75 1.75 0 0 1 18.5 5.5v14.75L12 16.4l-6.5 3.85V5.5a1.75 1.75 0 0 1 1.75-1.75Z" /></svg>}
         </button>}
         <button
           type="button"
@@ -95,7 +93,6 @@ export function ProductCard({
 
       <span className="izli-product-card__info">
         <span className="izli-product-card__title">{name}</span>
-        {subtitle ? <small>{subtitle}</small> : null}
         <strong>{price}</strong>
       </span>
     </article>

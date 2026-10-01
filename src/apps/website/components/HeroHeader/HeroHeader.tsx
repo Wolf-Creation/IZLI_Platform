@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { WebPage } from '../../types'
+import izliLogoText from '../../../../assets/logo/IZLI_logo_text.svg'
 import './HeroHeader.scss'
 
 interface Props {
@@ -135,14 +136,12 @@ export function HeroHeader({ onNavigate, currentPage, cartCount, wishlistCount, 
           </button>
 
           <button className="hero-header__mobile-brand" onClick={() => onNavigate('home')} aria-label="Back to home">
-            <svg className="hero-header__logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 313.12 313.12">
-              <g><rect className="hero-header__logo-line" x="-2.32" y="78.42" width="165.9" height="4.4" transform="translate(-33.39 80.62) rotate(-45)" /><rect className="hero-header__logo-line" x="230.31" y="-2.33" width="4.4" height="165.9" transform="translate(11.1 188.02) rotate(-45)" /><rect className="hero-header__logo-line" x="149.54" y="230.31" width="165.9" height="4.4" transform="translate(-96.31 232.5) rotate(-45)" /><rect className="hero-header__logo-line" x="78.41" y="149.55" width="4.4" height="165.93" transform="translate(-140.8 125.1) rotate(-45)" /><rect className="hero-header__logo-accent" x="147.36" y="3.81" width="18.4" height="18.4" transform="translate(36.66 114.51) rotate(-45)" /><rect className="hero-header__logo-accent" x="3.81" y="147.36" width="18.4" height="18.4" transform="translate(-106.9 55.05) rotate(-45)" /><rect className="hero-header__logo-accent" x="147.36" y="290.91" width="18.4" height="18.4" transform="translate(-166.37 198.63) rotate(-45)" /><rect className="hero-header__logo-accent" x="290.91" y="147.36" width="18.4" height="18.4" transform="translate(-22.8 258.07) rotate(-45)" /><polygon className="hero-header__logo-accent" points="189.56 187.75 189.61 129.87 218.82 158.45 189.56 187.75" /><polygon className="hero-header__logo-line" points="163.53 249.61 163.53 75.95 178.94 75.95 178.94 212.41 232.9 158.45 216.41 141.97 227.31 131.07 254.69 158.45 163.53 249.61" /><polygon className="hero-header__logo-accent" points="123.56 125.37 123.51 183.25 94.3 154.67 123.56 125.37" /><polygon className="hero-header__logo-line" points="149.59 237.17 134.18 237.17 134.18 100.72 80.23 154.67 96.71 171.15 85.81 182.05 58.43 154.67 149.59 63.51 149.59 237.17" /></g>
-            </svg>
+            <img className="hero-header__logo" src={izliLogoText} alt="" />
           </button>
 
           <div className="hero-header__mobile-actions">
             <button className="hero-header__mobile-action" onClick={onWishlist} aria-label={`Wishlist${wishlistCount > 0 ? `, ${wishlistCount} items` : ''}`}>
-              <svg viewBox="0 0 24 24" fill={wishlistCount > 0 ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.7"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z" /></svg>
+              <svg viewBox="0 0 24 24" fill={wishlistCount > 0 ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.7"><path d="M7.25 3.75h9.5A1.75 1.75 0 0 1 18.5 5.5v14.75L12 16.4l-6.5 3.85V5.5a1.75 1.75 0 0 1 1.75-1.75Z" /></svg>
               {wishlistCount > 0 && <span className="hero-header__wishlist-badge">{wishlistCount}</span>}
             </button>
             <button className="hero-header__mobile-action hero-header__cart-action" onClick={onCart} aria-label={`Cart${cartCount > 0 ? `, ${cartCount} items` : ''}`}>
@@ -185,28 +184,7 @@ export function HeroHeader({ onNavigate, currentPage, cartCount, wishlistCount, 
         {/* Center Brand - Logo */}
         <div className="hero-header__brand">
           <button type="button" className="hero-header__brand-button" onClick={() => onNavigate('home')} aria-label="Back to home">
-            <svg className="hero-header__logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 313.12 313.12">
-            <g id="Calque_2" data-name="Calque 2">
-              <g id="Calque_1-2" data-name="Calque 1">
-                <rect className="hero-header__logo-line" x="-2.32" y="78.42" width="165.9" height="4.4" transform="translate(-33.39 80.62) rotate(-45)" />
-                <rect className="hero-header__logo-line" x="230.31" y="-2.33" width="4.4" height="165.9" transform="translate(11.1 188.02) rotate(-45)" />
-                <rect className="hero-header__logo-line" x="149.54" y="230.31" width="165.9" height="4.4" transform="translate(-96.31 232.5) rotate(-45)" />
-                <rect className="hero-header__logo-line" x="78.41" y="149.55" width="4.4" height="165.93" transform="translate(-140.8 125.1) rotate(-45)" />
-                <rect className="hero-header__logo-line" x="6" y="85.64" width="165.9" height="6.6" transform="translate(-36.84 88.94) rotate(-45)" />
-                <rect className="hero-header__logo-line" x="220.87" y="6.01" width="6.6" height="165.9" transform="translate(2.75 184.57) rotate(-45)" />
-                <rect className="hero-header__logo-line" x="141.2" y="220.86" width="165.9" height="6.6" transform="translate(-92.86 224.15) rotate(-45)" />
-                <rect className="hero-header__logo-line" x="85.66" y="141.21" width="6.6" height="165.93" transform="translate(-132.46 128.56) rotate(-45)" />
-                <rect className="hero-header__logo-accent" x="147.36" y="3.81" width="18.4" height="18.4" transform="translate(36.66 114.51) rotate(-45)" />
-                <rect className="hero-header__logo-accent" x="3.81" y="147.36" width="18.4" height="18.4" transform="translate(-106.9 55.05) rotate(-45)" />
-                <rect className="hero-header__logo-accent" x="147.36" y="290.91" width="18.4" height="18.4" transform="translate(-166.37 198.63) rotate(-45)" />
-                <rect className="hero-header__logo-accent" x="290.91" y="147.36" width="18.4" height="18.4" transform="translate(-22.8 258.07) rotate(-45)" />
-                <polygon className="hero-header__logo-accent" points="189.56 187.75 189.61 129.87 218.82 158.45 189.56 187.75" />
-                <polygon className="hero-header__logo-line" points="163.53 249.61 163.53 75.95 178.94 75.95 178.94 212.41 232.9 158.45 216.41 141.97 227.31 131.07 254.69 158.45 163.53 249.61" />
-                <polygon className="hero-header__logo-accent" points="123.56 125.37 123.51 183.25 94.3 154.67 123.56 125.37" />
-                <polygon className="hero-header__logo-line" points="149.59 237.17 134.18 237.17 134.18 100.72 80.23 154.67 96.71 171.15 85.81 182.05 58.43 154.67 149.59 63.51 149.59 237.17" />
-              </g>
-            </g>
-            </svg>
+            <img className="hero-header__logo" src={izliLogoText} alt="" />
           </button>
         </div>
 
@@ -214,7 +192,7 @@ export function HeroHeader({ onNavigate, currentPage, cartCount, wishlistCount, 
         <div className="hero-header__icons">
           <button className={`hero-header__icon${wishlistCount > 0 ? ' is-active' : ''}`} title="Wishlist" aria-label={`Wishlist${wishlistCount > 0 ? `, ${wishlistCount} items` : ''}`} onClick={onWishlist}>
             <svg viewBox="0 0 24 24" fill={wishlistCount > 0 ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              <path d="M7.25 3.75h9.5A1.75 1.75 0 0 1 18.5 5.5v14.75L12 16.4l-6.5 3.85V5.5a1.75 1.75 0 0 1 1.75-1.75Z" />
             </svg>
             {wishlistCount > 0 && <span className="hero-header__wishlist-badge">{wishlistCount}</span>}
           </button>

@@ -196,29 +196,11 @@
 }
 
 .hero-header__logo {
-  height: 54px;
-  width: auto;
+  display: block;
+  width: 104px;
+  height: auto;
   opacity: 1;
-
-  .hero-header__logo-line {
-    fill: #ffffff;
-    transition: fill 300ms ease;
-  }
-
-  .hero-header__logo-accent {
-    fill: #c9924e;
-    transition: fill 300ms ease;
-  }
-
-  .hero-header--scrolled & {
-    .hero-header__logo-line {
-      fill: #c9924e;
-    }
-
-    .hero-header__logo-accent {
-      fill: #c9924e;
-    }
-  }
+  filter: brightness(0) saturate(100%) invert(64%) sepia(31%) saturate(1051%) hue-rotate(357deg) brightness(87%) contrast(84%);
 }
 
 .hero-header__brand-text {
@@ -368,20 +350,19 @@
   .hero-header__mobile-brand {
     display: grid;
     place-items: center;
-    width: 48px;
+    width: 99px;
     height: 48px;
     padding: 5px;
   }
 
   .hero-header__mobile-brand .hero-header__logo {
-    width: 38px;
-    height: 38px;
+    width: 86px;
   }
 
   .hero-header__mobile-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 7px;
+    gap: 2px;
   }
 
   .hero-header__mobile-action {
@@ -670,4 +651,5 @@
     width: 20px;
     height: 20px;
   }
+
 }

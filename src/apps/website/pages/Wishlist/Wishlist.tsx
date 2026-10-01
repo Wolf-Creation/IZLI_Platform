@@ -19,7 +19,6 @@ export default function Wishlist({ items, onNavigate, onAddToCart, onRemove }: P
       <TopBarPage
         label={`Wishlist (${items.length})`}
         descriptions={['IZLI / YOUR SELECTION', 'Keep the pieces that speak to you close.']}
-        action={<button type="button" className="wishlist-continue" onClick={() => onNavigate('shop')}>Continue shopping <span aria-hidden="true">↗</span></button>}
       />
       <div className="wishlist-shell">
 
@@ -36,14 +35,12 @@ export default function Wishlist({ items, onNavigate, onAddToCart, onRemove }: P
               <div className="wishlist-item" key={item.id}>
                 <ProductCard
                   name={item.name}
-                  subtitle={`${item.universe} / Size ${item.size}`}
                   price={formatPrice(item.price, item.currency)}
                   image={item.img}
                   onClick={() => onNavigate('product-detail', item.id)}
                   onAddToCart={() => onAddToCart(item)}
                   onToggleWishlist={() => onRemove(item.id)}
                   isWishlisted
-                  wishlistIcon="trash"
                   className="wishlist-product-card"
                 />
               </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import izliLogoText from '../../../../assets/logo/IZLI_logo_text.svg'
 import './SplashScreen.scss'
 
 interface Props {
@@ -21,7 +22,7 @@ export function SplashScreen({ onComplete }: Props) {
   return (
     <div className={`splash-screen ${isExiting ? 'splash-screen--exit' : ''}`}>
       <div className="splash-screen__content">
-        <h1 className="splash-screen__title">IZLI</h1>
+        <img className="splash-screen__title" src={izliLogoText} alt="IZLI" />
       </div>
     </div>
   )
