@@ -16,6 +16,7 @@ export const ADMIN_ROUTES = {
   COLLECTION_EDIT: '/collections/:id',
   ORDERS: '/orders',
   ORDER_DETAIL: '/orders/:id',
+  SHIPPING_SETTINGS: '/commerce/shipping',
   CUSTOMERS: '/customers',
   CUSTOMER_DETAIL: '/customers/:id',
 
@@ -81,6 +82,7 @@ export function adminPathForScreen(screen: Screen, productId?: string | null) {
     case 'collections': return ADMIN_ROUTES.COLLECTIONS
     case 'collection-editor': return productId ? adminCollectionPath(productId) : ADMIN_ROUTES.COLLECTION_NEW
     case 'orders': return ADMIN_ROUTES.ORDERS
+    case 'shipping-settings': return ADMIN_ROUTES.SHIPPING_SETTINGS
     case 'customer': return ADMIN_ROUTES.CUSTOMERS
     case 'home-builder': return ADMIN_ROUTES.HOME_BUILDER
     case 'site-page-editor': return ADMIN_ROUTES.PAGE_EDITOR.replace(':slug', 'about')
@@ -148,6 +150,7 @@ export function adminStateFromPath(pathname: string): { screen: Screen; productE
   if (pathname === ADMIN_ROUTES.PROFILE) return { screen: 'admin-profile', productEditorId: null }
 
   if (pathname === '/commerce/style-guides') return { screen: 'style-guides', productEditorId: null }
+  if (pathname === ADMIN_ROUTES.SHIPPING_SETTINGS) return { screen: 'shipping-settings', productEditorId: null }
   if (pathname === '/commerce/style-guides/editor') return { screen: 'style-guide-editor', productEditorId: null }
   if (pathname === '/commerce/recommendation-hub') return { screen: 'recommendation-hub', productEditorId: null }
   if (pathname === '/commerce/recommendation-hub/editor') return { screen: 'recommendation-hub-editor', productEditorId: null }
@@ -199,7 +202,7 @@ export function adminStateFromPath(pathname: string): { screen: Screen; productE
     ['/community/members', 'members'], ['/community/contributions', 'contributions'], ['/challenges', 'challenges'], ['/lab', 'lab-projects'],
     ['/lab/open-calls', 'calls-for-contribution'], ['/analytics/commerce', 'commerce-analytics'], ['/analytics/community', 'community-analytics'],
     ['/analytics/content', 'content-analytics'], ['/system/team', 'team-roles'], ['/system/settings', 'global-settings'], ['/system/audit', 'audit-log'],
-    ['/components', 'components'], ['/commerce/style-guides', 'style-guides'], ['/commerce/recommendation-hub', 'recommendation-hub'],
+    ['/components', 'components'], ['/commerce/style-guides', 'style-guides'], ['/commerce/shipping', 'shipping-settings'], ['/commerce/recommendation-hub', 'recommendation-hub'],
     ['/commerce/product-passports', 'product-passports'], ['/content/qr-experiences', 'qr-experiences'], ['/content/qr-code-generator', 'qr-code-generator'],
     ['/production', 'production-center'], ['/production/templates', 'production-templates'], ['/production/assets', 'production-assets'],
     ['/production/batch-jobs', 'batch-generator'], ['/production/exports', 'export-center'], ['/legacy', 'legacies'], ['/legacy/archives', 'legacy-archives'],

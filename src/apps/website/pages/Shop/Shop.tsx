@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { WebPage } from '../../types'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ProductCard } from '../../components/ProductCard/ProductCard'
 import { TopBarPage } from '../../components/TopBarPage/TopBarPage'
 import { useProducts } from '../../../../shared/hooks/useProducts'
@@ -9,7 +9,7 @@ import { useCollections } from '../../../../shared/hooks/useCollections'
 import type { CartItemInput } from '../../cart'
 import './Shop.scss'
 
-interface Props { onNavigate: (p: WebPage, productId?: string) => void; onAddToCart: (item: CartItemInput) => void; onToggleWishlist: (item: CartItemInput) => void; isWishlisted: (id: string) => boolean }
+interface Props { onNavigate: (p: WebPage, productId?: string) => void; onAddToCart: (item: CartItemInput) => void; onToggleWishlist: (item: CartItemInput) => void; isWishlisted: (id: string) => boolean; initialFilter?: string }
 
 type FilterState = {
   productType: string
@@ -18,7 +18,7 @@ type FilterState = {
   clothingSize: string
 }
 
-export default function Shop({ onNavigate, onAddToCart, onToggleWishlist, isWishlisted }: Props) {
+export default function Shop({ onNavigate, onAddToCart, onToggleWishlist, isWishlisted, initialFilter }: Props) {
   const { products, loading, error } = useProducts({ status: 'published' })
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories()
   const { collections, loading: collectionsLoading, error: collectionsError } = useCollections()
@@ -26,8 +26,10 @@ export default function Shop({ onNavigate, onAddToCart, onToggleWishlist, isWish
   const [query, setQuery] = useState('')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [filters, setFilters] = useState<FilterState>({ productType: '', collection: '', color: '', clothingSize: '' })
+  const [showNewReleaseFilter, setShowNewReleaseFilter] = useState(initialFilter === 'new-releases')
+  const shouldReduceMotion = useReducedMotion()
 
-  const activeFilterCount = Object.values(filters).filter(Boolean).length
+  const activeFilterCount = Object.values(filters).filter(Boolean).length + Number(showNewReleaseFilter)
 
   const productCategories = useMemo(
     () => categories.filter(category => products.some(product => (product.categoryIds ?? []).includes(category.id))),
@@ -39,6 +41,10 @@ export default function Shop({ onNavigate, onAddToCart, onToggleWishlist, isWish
     () => collections.filter(collection => products.some(product => product.collectionId === collection.id || (product.collectionIds ?? []).includes(collection.id))),
     [collections, products],
   )
+
+  useEffect(() => {
+    setShowNewReleaseFilter(initialFilter === 'new-releases')
+  }, [initialFilter])
 
   useEffect(() => {
     if (activeCategory !== 'All' && !productCategories.some(category => category.id === activeCategory)) {
@@ -54,11 +60,12 @@ export default function Shop({ onNavigate, onAddToCart, onToggleWishlist, isWish
       const matchesCollection = !filters.collection || product.collectionId === filters.collection || (product.collectionIds ?? []).includes(filters.collection)
       const matchesQuery = !normalizedQuery || product.name.toLowerCase().includes(normalizedQuery)
       const matchesSize = !filters.clothingSize || (product.sizes ?? []).some(size => size.size === filters.clothingSize)
-      return matchesCategory && matchesType && matchesCollection && matchesSize && matchesQuery
+      const matchesRelease = !showNewReleaseFilter || ((product.releaseSettings?.status ?? product.releaseStatus) === 'live' && product.releaseNumber === '01')
+      return matchesCategory && matchesType && matchesCollection && matchesSize && matchesQuery && matchesRelease
     })
 
     return [...filtered].sort((a, b) => a.id.localeCompare(b.id))
-  }, [activeCategory, filters, products, query])
+  }, [activeCategory, filters, products, query, showNewReleaseFilter])
 
   useEffect(() => {
     if (filters.collection && !productCollections.some(collection => collection.id === filters.collection)) {
@@ -70,6 +77,18 @@ export default function Shop({ onNavigate, onAddToCart, onToggleWishlist, isWish
   }, [filters.collection, filters.productType, productCollections, productTypes])
 
   const selectCategory = (categoryId: string) => setActiveCategory(categoryId)
+  const removeNewReleaseFilter = () => {
+    const url = new URL(window.location.href)
+    url.searchParams.delete('filter')
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+    setShowNewReleaseFilter(false)
+  }
+  const clearFilters = () => {
+    setQuery('')
+    setActiveCategory('All')
+    setFilters({ productType: '', collection: '', color: '', clothingSize: '' })
+    removeNewReleaseFilter()
+  }
 
   return (
     <div className="shop-page">
@@ -96,11 +115,35 @@ export default function Shop({ onNavigate, onAddToCart, onToggleWishlist, isWish
             <span aria-hidden="true">+</span> Filter ({activeFilterCount})
           </button>
         </div>
+        {showNewReleaseFilter && (
+          <div className="shop-active-filters">
+            <span>Showing new releases</span>
+            <button type="button" onClick={removeNewReleaseFilter} aria-label="Remove new releases filter">×</button>
+          </div>
+        )}
       </div>
 
-      {isFilterOpen && <>
-        <button type="button" className="shop-filter-overlay" onClick={() => setIsFilterOpen(false)} aria-label="Close filters" />
-        <aside className="shop-filter-drawer" aria-label="Shop filters">
+      <AnimatePresence>
+        {isFilterOpen && <motion.button
+          key="shop-filter-overlay"
+          type="button"
+          className="shop-filter-overlay"
+          onClick={() => setIsFilterOpen(false)}
+          aria-label="Close filters"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: shouldReduceMotion ? 0 : 0.22 }}
+        />}
+        {isFilterOpen && <motion.aside
+          key="shop-filter-drawer"
+          className="shop-filter-drawer"
+          aria-label="Shop filters"
+          initial={{ x: '100%' }}
+          animate={{ x: 0 }}
+          exit={{ x: '100%' }}
+          transition={{ duration: shouldReduceMotion ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}
+        >
           <div className="shop-filter-drawer__header">
             <h2>Filter</h2>
             <button type="button" onClick={() => setIsFilterOpen(false)} aria-label="Close filters">×</button>
@@ -123,9 +166,9 @@ export default function Shop({ onNavigate, onAddToCart, onToggleWishlist, isWish
               </section>
             ))}
           </div>
-          <button type="button" className="shop-filter-clear" onClick={() => setFilters({ productType: '', collection: '', color: '', clothingSize: '' })}>Clear filters</button>
-        </aside>
-      </>}
+          <button type="button" className="shop-filter-clear" onClick={clearFilters}>Clear filters</button>
+        </motion.aside>}
+      </AnimatePresence>
 
       <section className="shop-catalogue" id="shop-catalogue">
         <div className="shop-shell">
@@ -150,7 +193,7 @@ export default function Shop({ onNavigate, onAddToCart, onToggleWishlist, isWish
                 />
               </motion.div>
             })}
-          </div> : <div className="shop-empty"><p className="shop-eyebrow">No match</p><h3>Nothing here yet.</h3><button type="button" onClick={() => { setQuery(''); setActiveCategory('All') }}>Clear filters</button></div>}
+          </div> : <div className="shop-empty"><p className="shop-eyebrow">No match</p><h3>Nothing here yet.</h3><button type="button" onClick={clearFilters}>Clear filters</button></div>}
         </div>
       </section>
     </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import type { CSSProperties } from 'react'
 import legacy from '../../../../../assets/Website_img/Legacy/legacy.png'
 import studio from '../../../../../assets/Website_img/Studio/studio.png'
 import essentials from '../../../../../assets/Website_img/Essantials/essantials.png'
@@ -37,6 +38,9 @@ export interface SlideData {
 interface Props {
   scrollY: number
   onNavigate: (page: WebPage) => void
+  titleOverride?: string
+  descriptionOverride?: string
+  style?: CSSProperties
 }
 
 const SLIDES: SlideData[] = [
@@ -86,7 +90,7 @@ const SLIDES: SlideData[] = [
 const AUTOPLAY_DURATION = 5500
 const TRANSITION_DURATION = 900
 
-export function HeroSlider({ scrollY, onNavigate }: Props) {
+export function HeroSlider({ scrollY, onNavigate, titleOverride, descriptionOverride, style }: Props) {
   const [activeSlide, setActiveSlide] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -196,11 +200,14 @@ export function HeroSlider({ scrollY, onNavigate }: Props) {
 
   const currentSlide = SLIDES[activeSlide]
   const previousSlide = SLIDES[(activeSlide - 1 + SLIDES.length) % SLIDES.length]
+  const currentTitle = titleOverride?.trim() || currentSlide.title
+  const currentDescription = descriptionOverride?.trim() || currentSlide.description
 
   return (
     <div
       ref={sliderRef}
       className="hero-slider"
+      style={style}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -245,10 +252,10 @@ export function HeroSlider({ scrollY, onNavigate }: Props) {
       {/* LEFT SIDE - CONTENT */}
       <div className={`hero-slider__content ${isTransitioning ? 'hero-slider__content--exit' : 'hero-slider__content--enter'}`}>
         {/* <div className="hero-slider__label">{currentSlide.label}</div> */}
-        <h1 className="hero-slider__title-text hero-slider__content-item--0">{currentSlide.title}</h1>
+        <h1 className="hero-slider__title-text hero-slider__content-item--0">{currentTitle}</h1>
         <p className="hero-slider__mini-description hero-slider__content-item--1">{currentSlide.miniDescription}</p>
         <div className="hero-slider__divider hero-slider__content-item--2" />
-        <p className="hero-slider__description-text hero-slider__content-item--3">{currentSlide.description}</p>
+        <p className="hero-slider__description-text hero-slider__content-item--3">{currentDescription}</p>
         <PrimaryButton className="hero-slider__cta hero-slider__content-item--4" onClick={() => onNavigate('shop')}>
           {currentSlide.cta}
         </PrimaryButton>

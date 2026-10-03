@@ -17,6 +17,7 @@
     top: 62px;
     min-height: 85vh;
     padding: 60px 20px;
+    height: calc(100vh - 62px);
   }
 }
 
@@ -269,14 +270,9 @@
   padding: 0 20px;
 
   @media (max-width: 768px) {
-    gap: 32px;
-    bottom: 30px;
-  }
-
-  @media (max-width: 480px) {
-    gap: 20px;
-    bottom: 20px;
-    flex-wrap: wrap;
+    // gap: 32px;
+    // bottom: 30px;
+    display:none;
   }
 }
 

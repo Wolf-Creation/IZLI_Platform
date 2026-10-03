@@ -1,6 +1,7 @@
 import type { KeyboardEvent } from 'react'
 import type { MediaAsset } from '../../../entities'
 import { OptimizedImage } from '../OptimizedImage/OptimizedImage'
+import { PrimaryButton } from '../PrimaryButton/PrimaryButton'
 import './ProductCard.scss'
 
 interface ProductCardProps {
@@ -73,10 +74,9 @@ export function ProductCard({
         >
           {wishlistIcon === 'trash' ? <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg> : <svg viewBox="0 0 24 24" fill={isWishlisted ? 'currentColor' : 'none'} aria-hidden="true"><path d="M7.25 3.75h9.5A1.75 1.75 0 0 1 18.5 5.5v14.75L12 16.4l-6.5 3.85V5.5a1.75 1.75 0 0 1 1.75-1.75Z" /></svg>}
         </button>}
-        <button
+        {onAddToCart && isInteractive && <button
           type="button"
           className="izli-product-card__cta"
-          tabIndex={isInteractive ? undefined : -1}
           data-analytics-cta={`Add to cart: ${name}`}
           onClick={event => {
             event.stopPropagation()
@@ -84,9 +84,14 @@ export function ProductCard({
           }}
           aria-label={`Add ${name} to cart`}
         >
+          <span className="izli-product-card__cta-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+              <path d="M5 8h14l1 13H4L5 8Z" />
+              <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+            </svg>
+          </span>
           <span>Add to cart</span>
-          <span className="izli-product-card__cta-icon" aria-hidden="true">+</span>
-        </button>
+        </button>}
       </span>
 
       {badge ? <span className="izli-product-card__badge">{badge}</span> : null}
@@ -94,6 +99,14 @@ export function ProductCard({
       <span className="izli-product-card__info">
         <span className="izli-product-card__title">{name}</span>
         <strong>{price}</strong>
+        {onAddToCart && isInteractive && <PrimaryButton
+          icon="plus"
+          className="izli-product-card__mobile-cta"
+          onClick={event => {
+            event.stopPropagation()
+            onAddToCart()
+          }}
+        >Add to cart</PrimaryButton>}
       </span>
     </article>
   )

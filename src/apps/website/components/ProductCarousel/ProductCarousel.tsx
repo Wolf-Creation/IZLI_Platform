@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
+import type { KeyboardEvent } from 'react'
 import { OptimizedImage } from '../OptimizedImage/OptimizedImage'
+import type { WebPage } from '../../types'
 import './ProductCarousel.scss'
 
 interface Product {
   id: string
   name: string
-  price: number
+  price?: number
+  currency?: string
   release: string
   images: string[]
 }
@@ -13,6 +16,8 @@ interface Product {
 interface Props {
   products: Product[]
   autoScrollSpeed?: number
+  onNavigate: (page: WebPage, productId?: string) => void
+  onAddToCart?: (productId: string) => void
 }
 
 const DEFAULT_AUTO_SCROLL_SPEED = 0.5
@@ -81,7 +86,7 @@ function resolveProductImage(image?: string) {
   return `https://images.unsplash.com/${image}?w=600&h=900&fit=crop&auto=format`
 }
 
-export function ProductCarousel({ products, autoScrollSpeed = DEFAULT_AUTO_SCROLL_SPEED }: Props) {
+export function ProductCarousel({ products, autoScrollSpeed = DEFAULT_AUTO_SCROLL_SPEED, onNavigate, onAddToCart }: Props) {
   const [isVisible, setIsVisible] = useState(false)
   const [isManuallyScrolling, setIsManuallyScrolling] = useState(false)
   const [cycleCount, setCycleCount] = useState(2)
@@ -219,6 +224,16 @@ export function ProductCarousel({ products, autoScrollSpeed = DEFAULT_AUTO_SCROL
             <div
               key={`${cycle}-${product.id}-${productIndex}`}
               className="product-card"
+              role="button"
+              tabIndex={cycle === 0 ? 0 : -1}
+              onClick={() => onNavigate('product-detail', product.id)}
+              onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+                if (event.target !== event.currentTarget) return
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  onNavigate('product-detail', product.id)
+                }
+              }}
             >
               <div className="product-card__image-wrapper">
                 <OptimizedImage
@@ -230,16 +245,24 @@ export function ProductCarousel({ products, autoScrollSpeed = DEFAULT_AUTO_SCROL
                 {hoverImage && <OptimizedImage src={hoverImage} preset="productCarousel" alt="" aria-hidden="true" loading="lazy" className="product-card__image product-card__image--hover" />}
                 <div className="product-card__badge">Only {REMAINING_STOCK[product.id] ?? 36} left</div>
 
-                <button className="product-card__cta" tabIndex={cycle > 0 ? -1 : undefined} aria-label={`Add ${product.name} to cart`}>
+                <button className="product-card__cta" tabIndex={cycle > 0 ? -1 : undefined} aria-label={`Add ${product.name} to cart`} onClick={event => {
+                  event.stopPropagation()
+                  onAddToCart?.(product.id)
+                }}>
+                  <span className="product-card__cta-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                      <path d="M5 8h14l1 13H4L5 8Z" />
+                      <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+                    </svg>
+                  </span>
                   <span>Add to cart</span>
-                  <span className="product-card__cta-icon" aria-hidden="true">+</span>
                 </button>
 
               </div>
 
               <div className="product-card__info">
                 <div className="product-card__name">{product.name}</div>
-                <div className="product-card__price">{product.price} TND</div>
+                <div className="product-card__price">{product.price === undefined ? 'Price TBA' : `${product.price} ${product.currency ?? 'TND'}`}</div>
               </div>
             </div>
               )

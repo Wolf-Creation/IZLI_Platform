@@ -101,6 +101,7 @@ const NAV: NavItem[] = [
       { label: 'Categories', screen: 'categories', icon: 'mdi:layers-outline' },
       { label: 'Collections', screen: 'collections', icon: 'mdi:folder-multiple-outline' },
       { label: 'Orders', screen: 'orders', icon: 'mdi:package-variant-closed-outline' },
+      { label: 'Expédition', screen: 'shipping-settings', icon: 'mdi:truck-delivery-outline' },
     ],
   },
   {

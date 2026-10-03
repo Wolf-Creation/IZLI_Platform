@@ -44,7 +44,7 @@ export default function Collections({ onNavigate, onAddToCart, onToggleWishlist,
     <div className="collections-page">
       <TopBarPage
         className="collections-page__top-bar"
-        label={'Different stories.\nOne circle.'}
+        label={'Collections'}
         descriptions={['Four creative directions, each with its own purpose, all connected by the same roots.']}
       />
       <section className="collections-sections">
@@ -76,7 +76,14 @@ export default function Collections({ onNavigate, onAddToCart, onToggleWishlist,
 
       <section className="collections-new-products" aria-labelledby="collections-new-products-title">
         <header className="collections-new-products__title-panel">
-          <h2 id="collections-new-products-title">New releases</h2>
+          <div className="collections-new-products__intro">
+            <span className="collections-new-products__eyebrow">JUST ARRIVED</span>
+            <h2 id="collections-new-products-title">New releases</h2>
+            <p>Explore the latest pieces from IZLI, rooted in heritage and made for what comes next.</p>
+            <PrimaryButton onClick={() => onNavigate('shop', 'new-releases')}>
+              DISCOVER NEW RELEASES
+            </PrimaryButton>
+          </div>
         </header>
 
         <div className="collections-new-products__rail">
@@ -106,10 +113,6 @@ export default function Collections({ onNavigate, onAddToCart, onToggleWishlist,
           </div> : <p className="collections-new-products__message">No new releases available right now.</p>}
         </div>
       </section>
-
-      <div className="collections-banner" aria-label="IZLI: a land, a people, a continuing story">
-        <img src={bannerImage} alt="IZLI, a land, a people, a continuing story" loading="lazy" decoding="async" />
-      </div>
     </div>
   )
 }

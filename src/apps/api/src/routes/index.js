@@ -7,6 +7,9 @@ import { qrRouter } from '../modules/qr/routes.js';
 import { analyticsRoutes } from '../modules/analytics/routes.js';
 import { adminCollectionsRoutes, collectionsRoutes } from '../modules/collections/routes.js';
 import { adminCollectionsPageRoutes, collectionsPageRoutes } from '../modules/websiteBuilder/routes.js';
+import { adminHomePageRoutes, homePageRoutes } from '../modules/websiteBuilder/homePageRoutes.js';
+import ordersRoutes from '../modules/orders/routes.js';
+import shippingRoutes from '../modules/shipping/routes.js';
 
 export const apiRouter = Router();
 
@@ -20,3 +23,7 @@ apiRouter.use('/collections', collectionsRoutes);
 apiRouter.use('/admin/collections', adminCollectionsRoutes);
 apiRouter.use('/website-builder/collections-page', collectionsPageRoutes);
 apiRouter.use('/admin/website-builder/collections-page', adminCollectionsPageRoutes);
+apiRouter.use('/website-builder/home-page', homePageRoutes);
+apiRouter.use('/admin/website-builder/home-page', adminHomePageRoutes);
+apiRouter.use('/orders', ordersRoutes);
+apiRouter.use('/shipping', shippingRoutes);

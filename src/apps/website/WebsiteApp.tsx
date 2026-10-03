@@ -25,7 +25,7 @@ import type { User } from '../../entities'
 import { SplashScreen } from './components/SplashScreen/SplashScreen'
 import { trackCtaClick, trackPageView } from '../../shared/services/analytics'
 import { WhatsAppContact } from './components/ScrollToTop'
-import Cart, { type CartItem, type CartItemInput, type WishlistItem } from './cart'
+import Cart, { type CartItem, type CartItemInput, type WishlistItem } from './cart.tsx'
 import Wishlist from './pages/Wishlist/Wishlist'
 import './WebsiteTheme.scss'
 
@@ -48,6 +48,7 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
   const [page, setPage] = useState<WebPage>(() => websitePageFromPath(window.location.pathname))
   const [productId, setProductId] = useState<string | null>(() => window.location.pathname.startsWith('/product/') ? decodeURIComponent(window.location.pathname.split('/')[2] ?? '') : null)
   const [collectionSlug, setCollectionSlug] = useState<string | null>(() => window.location.pathname.startsWith('/collections/') ? decodeURIComponent(window.location.pathname.split('/')[2] ?? '') : null)
+  const [shopFilter, setShopFilter] = useState(() => new URLSearchParams(window.location.search).get('filter') ?? '')
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
     try { return JSON.parse(localStorage.getItem('izli.cart') ?? '[]') as CartItem[] } catch { return [] }
   })
@@ -87,6 +88,7 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
       setPage(websitePageFromPath(window.location.pathname))
       setProductId(window.location.pathname.startsWith('/product/') ? decodeURIComponent(window.location.pathname.split('/')[2] ?? '') : null)
       setCollectionSlug(window.location.pathname.startsWith('/collections/') ? decodeURIComponent(window.location.pathname.split('/')[2] ?? '') : null)
+      setShopFilter(new URLSearchParams(window.location.search).get('filter') ?? '')
     }
 
     window.addEventListener('popstate', syncPage)
@@ -125,17 +127,20 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
     return () => document.removeEventListener('click', handleCtaClick)
   }, [])
 
-  const navigate = (p: WebPage, nextProductId?: string) => {
-    const path = websitePathForPage(p, nextProductId)
+  const navigate = (p: WebPage, routeParam?: string) => {
+    const path = websitePathForPage(p, routeParam)
+    const query = p === 'shop' && routeParam === 'new-releases' ? '?filter=new-releases' : ''
+    const destination = `${path}${query}`
 
-    if (window.location.pathname !== path) {
-      window.history.pushState({}, '', path)
+    if (`${window.location.pathname}${window.location.search}` !== destination) {
+      window.history.pushState({}, '', destination)
     }
 
     setIsIntroTransitioning(true)
     setPage(p)
-    setProductId(p === 'product-detail' ? nextProductId ?? null : null)
-    setCollectionSlug(p === 'collection-detail' ? nextProductId ?? null : null)
+    setProductId(p === 'product-detail' ? routeParam ?? null : null)
+    setCollectionSlug(p === 'collection-detail' ? routeParam ?? null : null)
+    setShopFilter(p === 'shop' && routeParam === 'new-releases' ? routeParam : '')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -154,7 +159,7 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
       case 'home':           return <Home onNavigate={navigate} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} isWishlisted={id => wishlistItems.some(item => item.id === id)} />
       case 'collections':    return <Collections onNavigate={navigate} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} isWishlisted={id => wishlistItems.some(item => item.id === id)} />
       case 'collection-detail': return <CollectionDetailPage slug={collectionSlug ?? ''} onNavigate={navigate} />
-      case 'shop':           return <Shop onNavigate={navigate} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} isWishlisted={id => wishlistItems.some(item => item.id === id)} />
+      case 'shop':           return <Shop initialFilter={shopFilter} onNavigate={navigate} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} isWishlisted={id => wishlistItems.some(item => item.id === id)} />
       case 'product-detail': return <ProductDetail productId={productId} onNavigate={navigate} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} isWishlisted={id => wishlistItems.some(item => item.id === id)} />
       case 'heritage':       return <Heritage onNavigate={navigate} />
       case 'stories':        return <Stories onNavigate={navigate} />
@@ -162,7 +167,7 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
       case 'community-lab':  return <CommunityLab onNavigate={navigate} />
       case 'events':         return <Events onNavigate={navigate} />
       case 'about':          return <About onNavigate={navigate} />
-      case 'cart':           return <Cart items={cartItems} onNavigate={navigate} onUpdateQuantity={updateCartQuantity} onRemove={removeCartItem} />
+      case 'cart':           return <Cart items={cartItems} onNavigate={navigate} onUpdateQuantity={updateCartQuantity} onRemove={removeCartItem} onClearCart={() => setCartItems([])} />
       case 'wishlist':       return <Wishlist items={wishlistItems} onNavigate={navigate} onAddToCart={addToCart} onRemove={removeWishlistItem} />
       case 'login':          return <Login onNavigate={navigate} onAuthenticated={handleAuthenticated} />
       case 'profile':        return <Profile onNavigate={navigate} />

@@ -9,6 +9,7 @@ export type Screen =
   | 'collections'
   | 'collection-editor'
   | 'orders'
+  | 'shipping-settings'
   | 'customer'
   | 'home-builder'
   | 'site-page-editor'

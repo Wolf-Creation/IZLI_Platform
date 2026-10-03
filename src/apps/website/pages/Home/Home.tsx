@@ -1,6 +1,6 @@
 import { BG, FONT_SERIF } from '../../../../tokens'
 import { motion } from 'framer-motion'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import type { WebPage } from '../../types'
 import { HeroSlider } from './Hero/HeroSlider'
 import { SplashScreen } from '../../components/SplashScreen/SplashScreen'
@@ -8,7 +8,7 @@ import { ProductCarousel } from '../../components/ProductCarousel/ProductCarouse
 import { ProductCard } from '../../components/ProductCard/ProductCard'
 import { PrimaryButton } from '../../components/PrimaryButton/PrimaryButton'
 import { useProducts } from '../../../../shared/hooks/useProducts'
-import { KeeperCircleCta } from '../../components/KeeperCircleCta/KeeperCircleCta'
+import { DEFAULT_HOME_PAGE_CONFIG, getHomePageConfig } from '../../../../shared/services/home'
 import type { CartItemInput } from '../../cart'
 import tShirtsImage from '../../../../assets/Website_img/Shop/categories/T-shirts.png'
 import tafuktImage from '../../../../assets/Website_img/Shop/tops/banner/TAFUKT_001.png'
@@ -23,7 +23,6 @@ import topsAtlasBack from '../../../../assets/Website_img/Shop/new releases/Atla
 import topsPortePrincipal from '../../../../assets/Website_img/Shop/new releases/Porte_ksour_heavy_oversized/002-Principal.png'
 import topsPorteDetail from '../../../../assets/Website_img/Shop/new releases/Porte_ksour_heavy_oversized/002-A.png'
 import topsPorteBack from '../../../../assets/Website_img/Shop/new releases/Porte_ksour_heavy_oversized/002-B.png'
-import keeperCircleImage from '../../../../assets/Website_img/Keeper_circle/banner/banner_001.png'
 import arrowTopRightIcon from '../../../../assets/icons/arrow_top_right.svg'
 import motifIcon from '../../../../assets/icons/motif_001.svg'
 import './Home.scss'
@@ -104,6 +103,35 @@ const COLLECTION_FEATURES = [
 
 const RELEASE_POINTS = ['Release 001 badge', '100 Keeper points', 'Exclusive archive access']
 
+function KeeperBenefitIcon({ number }: { number: string }) {
+  if (number === '01') {
+    return (
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <circle cx="16" cy="16" r="11.5" />
+        <path d="M16 9v7l5 3" />
+        <path d="M5 6v6h6" />
+      </svg>
+    )
+  }
+
+  if (number === '02') {
+    return (
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="m16 3 2.8 9.2L28 15l-9.2 2.8L16 27l-2.8-9.2L4 15l9.2-2.8L16 3Z" />
+        <path d="m25 21 .9 3.1L29 25l-3.1.9L25 29l-.9-3.1L21 25l3.1-.9L25 21Z" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <circle cx="16" cy="10" r="4" />
+      <path d="M7 27v-2a9 9 0 0 1 18 0v2H7Z" />
+      <path d="M6 11a3.5 3.5 0 0 0 0 7m20-7a3.5 3.5 0 0 1 0 7" />
+    </svg>
+  )
+}
+
 const TOP_PRODUCTS = [
   { name: 'Atlas Symbol Tee', color: 'Black', price: '65 TND', image: topsAtlasPrincipal, images: [topsAtlasPrincipal, topsAtlasDetail, topsAtlasBack] },
   { name: 'Atlas Symbol Tee', color: 'Sand', price: '65 TND', image: topsAtlasDetail, images: [topsAtlasPrincipal, topsAtlasDetail, topsAtlasBack] },
@@ -113,27 +141,23 @@ const TOP_PRODUCTS = [
   { name: 'Porte Ksour Tee', color: 'Noir', price: '85 TND', image: topsPorteBack, images: [topsPortePrincipal, topsPorteDetail, topsPorteBack] },
 ] as const
 
-type KeeperTitleTone = 'primary' | 'accent' | 'muted'
-type KeeperTitleSegment = { text: string; tone: KeeperTitleTone }
-type KeeperTitleLine = KeeperTitleSegment[]
-
 const KEEPER_BENEFITS = [
   {
     number: '01',
     title: [
-      [{ text: 'BEFORE THE RELEASE.', tone: 'muted' }],
-      [{ text: 'BEFORE EVERYONE ELSE.', tone: 'primary' }],
+      [{ text: 'Before the release.', tone: 'muted' }],
+      [{ text: 'Before everyone else.', tone: 'primary' }],
     ],
     eyebrow: 'FIRST ACCESS',
-    copy: 'As a Keeper, you enter the release before the public. \n\nDiscover new pieces earlier, access limited drops, and secure your size before the collection reaches everyone else.',
+    copy: 'Discover new pieces earlier, access limited drops, and secure your size before the collection reaches everyone else.',
     indicators: [['Discover', 'First'], ['Secure', 'Your Size'], ['Priority', 'Access']],
     closing: [''],
   },
   {
     number: '02',
     title: [
-      [{ text: 'AS YOU RISE', tone: 'muted' }],
-      [{ text: 'NEW DOORS OPEN.', tone: 'primary' }],
+      [{ text: 'As you rise,', tone: 'muted' }],
+      [{ text: 'New doors open.', tone: 'primary' }],
     ],
     eyebrow: 'EXCLUSIVE EXPERIENCES',
     copy: 'The circle opens onto the moments behind the collection. Meet the people, places, and stories that give each release its meaning.',
@@ -143,47 +167,14 @@ const KEEPER_BENEFITS = [
   {
     number: '03',
     title: [
-      [{ text: 'GROW WITHIN.', tone: 'muted' }],
-      [{ text: 'GO FURTHER.', tone: 'primary' }],
+      [{ text: 'Grow within,', tone: 'muted' }],
+      [{ text: 'Go further.', tone: 'primary' }],
     ],
     eyebrow: 'IZLI COMMUNITY',
     copy: 'Every piece you choose, every story you share, and every moment you take part in helps shape your journey within the IZLI community. As you grow, your Keeper Status evolves — opening the way to deeper access and new experiences.',
     indicators: [['Grow', 'Your Status'], ['Share', ' the Story'], ['Carry', 'the Pieces']],
     closing: [''],
   },
-] as const
-
-const KEEPER_PANELS = [
-  {
-    number: '01',
-    id: 'keeper-circle-introduction',
-    title: [
-      [
-        { text: 'Get ', tone: 'muted' },
-        { text: 'First Access ', tone: 'accent' },
-        { text: 'to what comes next,', tone: 'muted' },
-      ],
-      [
-        { text: 'Unlock ', tone: 'muted' },
-        { text: 'Exclusive Experiences', tone: 'accent' },
-        { text: ',', tone: 'muted' },
-      ],
-      [
-        { text: 'and Become part of the ', tone: 'muted' },
-        { text: 'IZLI Community', tone: 'accent' },
-        { text: '.', tone: 'muted' },
-      ],
-    ] satisfies KeeperTitleLine[],
-    eyebrow: '',
-    copy: 'IZLI is more than what you wear. It gives its Keepers a closer connection to what comes next, experiences beyond the garment, and a place within a community carrying a shared heritage forward.',
-    indicators: [],
-    closing: ['', ''],
-  },
-  ...KEEPER_BENEFITS.map((benefit, index) => ({
-    ...benefit,
-    number: `0${index + 1}`,
-    id: benefit.title.flat().map(segment => segment.text).join('-').toLowerCase(),
-  })),
 ] as const
 
 const COLLECTIONS_STORIES = [
@@ -293,25 +284,29 @@ const bannerCtaVariants = {
 
 export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWishlisted }: Props) {
   const { products } = useProducts({ status: 'published' })
+  const [homeConfig, setHomeConfig] = useState(DEFAULT_HOME_PAGE_CONFIG)
   const [scrollY, setScrollY] = useState(0)
   const [showSplash, setShowSplash] = useState(true)
-  const [activeKeeperBenefit, setActiveKeeperBenefit] = useState(0)
   const websiteProducts = products.filter(product => (product.releaseSettings?.status ?? product.releaseStatus) === 'live' && product.releaseNumber === '01').map(product => ({
     id: product.id,
     name: product.name,
     price: product.price,
+    currency: product.currency,
     release: `Release ${product.releaseNumber ?? '01'}`,
     releaseNumber: product.releaseNumber,
     images: product.images ?? [],
     releaseStatus: 'live' as const,
   }))
   const displayedShopProducts = websiteProducts
-  const [introTitleRevealed, setIntroTitleRevealed] = useState(false)
-  const keeperSectionRef = useRef<HTMLElement>(null)
-  const introTitleRevealedRef = useRef(false)
-  const introRevealCompleteRef = useRef(false)
-  const keeperStepTransitionRef = useRef(false)
-  const keeperReturnPendingRef = useRef(false)
+  const homeSections = homeConfig.sections.filter(section => section.enabled)
+
+  useEffect(() => {
+    let isCurrent = true
+    getHomePageConfig().then(config => {
+      if (isCurrent) setHomeConfig(config)
+    }).catch(() => undefined)
+    return () => { isCurrent = false }
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -323,204 +318,39 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  useEffect(() => {
-    const section = keeperSectionRef.current
-    if (!section) return
-
-    const panels = Array.from(section.querySelectorAll<HTMLElement>('[data-keeper-panel]'))
-    const observer = new IntersectionObserver(
-      entries => {
-        const visiblePanel = entries
-          .filter(entry => entry.isIntersecting)
-          .sort((a, b) => {
-            const viewportCenter = window.innerHeight / 2
-            const aCenter = a.boundingClientRect.top + a.boundingClientRect.height / 2
-            const bCenter = b.boundingClientRect.top + b.boundingClientRect.height / 2
-            return Math.abs(aCenter - viewportCenter) - Math.abs(bCenter - viewportCenter)
-          })[0]
-        const nextIndex = visiblePanel ? panels.indexOf(visiblePanel.target as HTMLElement) : -1
-          if (nextIndex >= 0 && !keeperStepTransitionRef.current) {
-            setActiveKeeperBenefit(currentIndex => currentIndex === nextIndex ? currentIndex : nextIndex)
-          }
-      },
-      { threshold: [0.15, 0.35, 0.55, 0.75], rootMargin: '-32% 0px -32% 0px' },
-    )
-
-    panels.forEach(panel => observer.observe(panel))
-    let wasKeeperSectionActive = false
-    let wasKeeperSectionBelow = false
-
-    const resetIntroReveal = () => {
-      introTitleRevealedRef.current = false
-      introRevealCompleteRef.current = false
-      keeperStepTransitionRef.current = false
-      setIntroTitleRevealed(false)
-    }
-
-    const resetKeeperCircle = () => {
-      setActiveKeeperBenefit(0)
-    }
-
-    const handleKeeperSectionScroll = () => {
-      const sectionRect = section.getBoundingClientRect()
-      const headerHeight = document.querySelector<HTMLElement>('.hero-header')?.getBoundingClientRect().height ?? 83
-      const isKeeperSectionActive = sectionRect.top <= headerHeight && sectionRect.bottom > headerHeight
-      const keeperResetLine = window.innerHeight * 0.3
-      const isKeeperSectionBelow = sectionRect.bottom <= keeperResetLine
-
-      if (isKeeperSectionBelow) {
-        keeperReturnPendingRef.current = true
-        wasKeeperSectionBelow = true
-        resetKeeperCircle()
-      }
-
-      if (wasKeeperSectionBelow && isKeeperSectionActive) {
-        wasKeeperSectionBelow = false
-        resetKeeperCircle()
-        keeperStepTransitionRef.current = false
-        keeperReturnPendingRef.current = false
-      }
-
-      if (wasKeeperSectionActive && !isKeeperSectionActive) {
-        resetKeeperCircle()
-
-        if (sectionRect.top > headerHeight) {
-          resetIntroReveal()
-        }
-      }
-
-      wasKeeperSectionActive = isKeeperSectionActive
-    }
-
-    const handleKeeperWheel = (event: WheelEvent) => {
-      if (window.innerWidth <= 900 || Math.abs(event.deltaY) <= 8) return
-
-      const sectionRect = section.getBoundingClientRect()
-      const headerHeight = 83
-      const keeperResetLine = window.innerHeight * 0.3
-      const sectionIsEntering = event.deltaY > 0 && sectionRect.top > headerHeight && sectionRect.top < window.innerHeight
-      if (sectionIsEntering) {
-        event.preventDefault()
-        if (keeperStepTransitionRef.current) return
-
-        resetIntroReveal()
-        setActiveKeeperBenefit(0)
-        keeperStepTransitionRef.current = true
-        window.scrollTo({
-          top: window.scrollY + sectionRect.top - headerHeight,
-          behavior: 'smooth',
-        })
-        window.setTimeout(() => {
-          keeperStepTransitionRef.current = false
-          keeperReturnPendingRef.current = false
-        }, 850)
-        return
-      }
-
-      if (event.deltaY < 0 && sectionRect.bottom <= keeperResetLine) {
-        event.preventDefault()
-        if (keeperStepTransitionRef.current) return
-
-        resetIntroReveal()
-        setActiveKeeperBenefit(0)
-        keeperStepTransitionRef.current = true
-        window.scrollTo({
-          top: sectionRect.top + window.scrollY - headerHeight,
-          behavior: 'auto',
-        })
-        window.setTimeout(() => {
-          keeperStepTransitionRef.current = false
-          keeperReturnPendingRef.current = false
-        }, 850)
-        return
-      }
-
-      const sectionIsActive = sectionRect.top <= headerHeight && sectionRect.bottom > headerHeight
-      if (!sectionIsActive) return
-
-      if (keeperStepTransitionRef.current) {
-        event.preventDefault()
-        return
-      }
-
-      const isScrollingDown = event.deltaY > 0
-      if (isScrollingDown && !introRevealCompleteRef.current) {
-        event.preventDefault()
-
-        if (!introTitleRevealedRef.current) {
-          introTitleRevealedRef.current = true
-          setIntroTitleRevealed(true)
-          keeperStepTransitionRef.current = true
-          window.setTimeout(() => {
-            introRevealCompleteRef.current = true
-            keeperStepTransitionRef.current = false
-          }, 620)
-        }
-
-        return
-      }
-
-      const viewportCenter = window.innerHeight / 2
-      const currentIndex = panels.reduce((closestIndex, panel, index) => {
-        const panelCenter = panel.getBoundingClientRect().top + panel.getBoundingClientRect().height / 2
-        const closestPanel = panels[closestIndex]
-        const closestCenter = closestPanel.getBoundingClientRect().top + closestPanel.getBoundingClientRect().height / 2
-        return Math.abs(panelCenter - viewportCenter) < Math.abs(closestCenter - viewportCenter) ? index : closestIndex
-      }, 0)
-      const nextIndex = currentIndex + (isScrollingDown ? 1 : -1)
-      const nextPanel = panels[nextIndex]
-
-      if (!nextPanel) return
-
-      event.preventDefault()
-      keeperStepTransitionRef.current = true
-      setActiveKeeperBenefit(nextIndex)
-      window.scrollTo({
-        top: window.scrollY + nextPanel.getBoundingClientRect().top - headerHeight,
-        behavior: 'smooth',
-      })
-      window.setTimeout(() => {
-        keeperStepTransitionRef.current = false
-      }, 800)
-    }
-
-    window.addEventListener('scroll', handleKeeperSectionScroll)
-    return () => {
-      observer.disconnect()
-      window.removeEventListener('wheel', handleKeeperWheel)
-      window.removeEventListener('scroll', handleKeeperSectionScroll)
-    }
-  }, [])
-
-  const keeperHeaderHeight = 83
-  const keeperSection = keeperSectionRef.current
-  const keeperViewportHeight = Math.max(window.innerHeight - keeperHeaderHeight, 1)
-  const keeperSectionTravel = Math.max((keeperSection?.offsetHeight ?? keeperViewportHeight) - keeperViewportHeight, 1)
-  const keeperSectionProgress = Math.min(
-    Math.max((scrollY - (keeperSection?.offsetTop ?? 0) + keeperHeaderHeight) / keeperSectionTravel, 0),
-    1,
-  )
-  const keeperImageScale = 1 + keeperSectionProgress * 0.3
-
   return (
-    <div className="home-page" style={{ background: BG }}>
+    <div className="home-page" style={{ background: BG, display: 'flex', flexDirection: 'column' }}>
       {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
-      <HeroSlider scrollY={scrollY} onNavigate={onNavigate} />
-
-      <section className="home-section home-section--shop">
+      {homeSections.map((section, sectionIndex) => section.type === 'hero' && <HeroSlider
+        key={section.id}
+        scrollY={scrollY}
+        onNavigate={onNavigate}
+        titleOverride={section.title}
+        descriptionOverride={section.description}
+        style={{ order: sectionIndex }}
+      />)}
+      {homeSections.map((section, sectionIndex) => section.type === 'new-releases' && <section key={section.id} className="home-section home-section--shop" style={{ order: sectionIndex }}>
         <div className="home-shell">
           <div className="home-shop-tabs" role="tablist" aria-label="Shop releases">
-            <span className="home-shop-tab home-shop-tab--active" role="tab" aria-selected="true" tabIndex={0}>New releases</span>
+            <span className="home-shop-tab home-shop-tab--active" role="tab" aria-selected="true" tabIndex={0}>{section.title || 'New releases'}</span>
           </div>
-
-          <ProductCarousel products={displayedShopProducts} />
+          {section.description && <p className="home-shop-description">{section.description}</p>}
+          <ProductCarousel
+            products={displayedShopProducts}
+            onNavigate={onNavigate}
+            onAddToCart={productId => {
+              const product = products.find(item => item.id === productId)
+              if (!product) return
+              onAddToCart({ id: product.id, name: product.name, universe: product.universe, price: product.price, currency: product.currency, size: product.sizes?.find(size => size.stock > 0)?.size ?? 'M', img: product.coverImageUrl || product.images?.[0] || '' })
+            }}
+          />
         </div>
-      </section>
+      </section>)}
 
-      <section className="home-section home-section--tops">
+      {homeSections.map((section, sectionIndex) => section.type === 'tops' && <section key={section.id} className="home-section home-section--tops" style={{ order: sectionIndex }}>
         <header className="home-tops-editorial__header">
           <div>
-            <h2>Tops</h2>
+            <h2>{section.title || 'Tops'}</h2>
           </div>
           <PrimaryButton className="home-tops-editorial__cta" onClick={() => onNavigate('shop')}>Shop tops</PrimaryButton>
         </header>
@@ -530,7 +360,7 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
             <div className="home-tops-editorial__visual-overlay" />
             <div className="home-tops-editorial__visual-caption">
               <span>Essential forms</span>
-              <strong>Built for every day</strong>
+              <strong>{section.description || 'Built for every day'}</strong>
             </div>
           </div>
 
@@ -544,22 +374,19 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
                   image={product.image}
                   images={product.images}
                   badge="new"
-                  onClick={() => onNavigate('product-detail')}
-                  onAddToCart={() => onAddToCart({ id: `home-${product.name}-${product.color}-${index}`, name: product.name, universe: 'Essentials', price: Number(product.price.replace(/[^0-9.]/g, '')), currency: 'TND', size: 'M', img: product.image })}
-                  onToggleWishlist={() => onToggleWishlist({ id: `home-${product.name}-${product.color}-${index}`, name: product.name, universe: 'Essentials', price: Number(product.price.replace(/[^0-9.]/g, '')), currency: 'TND', size: 'M', img: product.image })}
-                  isWishlisted={isWishlisted(`home-${product.name}-${product.color}-${index}`)}
+                  onClick={() => onNavigate('shop')}
                   className="home-tops-product-card"
                 />
               ))}
             </div>
           </div>
         </div>
-      </section>
+      </section>)}
 
-      <section className="home-section home-section--bottoms">
+      {homeSections.map((section, sectionIndex) => section.type === 'bottoms' && <section key={section.id} className="home-section home-section--bottoms" style={{ order: sectionIndex }}>
         <header className="home-tops-editorial__header">
           <div>
-            <h2>Bottoms</h2>
+            <h2>{section.title || 'Bottoms'}</h2>
           </div>
           <PrimaryButton className="home-tops-editorial__cta" onClick={() => onNavigate('shop')}>Shop bottoms</PrimaryButton>
         </header>
@@ -569,7 +396,7 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
             <div className="home-tops-editorial__visual-overlay" />
             <div className="home-tops-editorial__visual-caption">
               <span>Grounded silhouettes</span>
-              <strong>Made to move with you</strong>
+              <strong>{section.description || 'Made to move with you'}</strong>
             </div>
           </div>
 
@@ -583,17 +410,14 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
                   image={product.image}
                   images={product.images}
                   badge="new"
-                  onClick={() => onNavigate('product-detail')}
-                  onAddToCart={() => onAddToCart({ id: `home-${product.name}-${product.color}-${index}`, name: product.name, universe: 'Essentials', price: Number(product.price.replace(/[^0-9.]/g, '')), currency: 'TND', size: 'M', img: product.image })}
-                  onToggleWishlist={() => onToggleWishlist({ id: `home-${product.name}-${product.color}-${index}`, name: product.name, universe: 'Essentials', price: Number(product.price.replace(/[^0-9.]/g, '')), currency: 'TND', size: 'M', img: product.image })}
-                  isWishlisted={isWishlisted(`home-${product.name}-${product.color}-${index}`)}
+                  onClick={() => onNavigate('shop')}
                   className="home-tops-product-card"
                 />
               ))}
             </div>
           </div>
         </div>
-      </section>
+      </section>)}
 
       {/* <section className="home-section home-section--release">
         <div className="home-shell home-split home-split--release">
@@ -644,112 +468,60 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
         </div>
       </section> */}
 
-      <section ref={keeperSectionRef} className="home-section home-section--keeper-circle">
-        <div className="keeper-circle-layout">
-          <div className="keeper-sticky-visual">
-            <img src={keeperCircleImage} alt="Keeper Circle community" loading="lazy" decoding="async" style={{ transform: `scale(${keeperImageScale})` }} />
-            <div className="keeper-sticky-visual__overlay" aria-hidden="true" />
-            <div className="keeper-sticky-visual__title">KEEPER CIRCLE</div>
-            {/* <div className="keeper-sticky-visual__caption">The circle around the archive.</div> */}
-          </div>
+      {homeSections.map((section, sectionIndex) => section.type === 'keeper-circle' && (
+        <section key={section.id} className="home-section home-section--keeper-circle" style={{ order: sectionIndex }}>
+          <div className="home-keeper-editorial">
+            <aside className="home-keeper-intro">
+              <h2>KEEPER CIRCLE</h2>
+              <p>Get First Access to what comes next, Unlock Exclusive Experiences, and Become part of the IZLI Community.</p>
+              <PrimaryButton className="home-keeper-intro__cta" onClick={() => onNavigate('keeper-circle')}>
+                DISCOVER THE CIRCLE
+              </PrimaryButton>
+            </aside>
 
-          <div className="keeper-scroll-content">
-            {KEEPER_PANELS.map((benefit, benefitIndex) => (
-              <article
-                id={benefit.id}
-                key={benefit.id}
-                data-keeper-panel=""
-                className={`keeper-benefit-panel ${benefitIndex === 0 ? `keeper-benefit-panel--intro ${introTitleRevealed ? 'keeper-benefit-panel--intro-revealed' : ''}` : ''} ${benefitIndex > 0 ? 'keeper-benefit-panel--exclusive' : ''} ${benefitIndex === KEEPER_PANELS.length - 1 ? 'keeper-benefit-panel--community' : ''} ${activeKeeperBenefit === benefitIndex ? 'is-active' : ''}`}
-              >
-                
-                {benefitIndex > 0 && (
-                  <div className="keeper-benefit-panel__eyebrow keeper-benefit-panel__eyebrow--badge">
-                    {/* <span aria-hidden="true">✳</span> */}
-                    {benefit.eyebrow}
-                  </div>
-                )}
-                <h2 className="keeper-benefit-panel__title">
-                  {benefit.title.map((line, lineIndex) => (
-                    <span className="keeper-benefit-panel__title-line" key={lineIndex}>
-                      {line.map((segment, segmentIndex) => (
-                        <span className={`keeper-benefit-panel__title-segment keeper-benefit-panel__title-segment--${segment.tone}`} key={segmentIndex}>
-                          {benefitIndex === 0 && segment.tone === 'accent'
-                            ? [...segment.text].map((character, characterIndex) => (
-                              <span
-                                className="keeper-benefit-panel__title-character"
-                                key={`${character}-${characterIndex}`}
-                                style={{ transitionDelay: `${lineIndex * 100 + characterIndex * 12}ms` }}
-                              >
-                                {character === ' ' ? '\u00a0' : character}
-                              </span>
-                            ))
-                            : segment.text}
+            <div className="keeper-benefit-tabs" aria-label="Keeper Circle benefits">
+              {KEEPER_BENEFITS.map(benefit => (
+                <article className="keeper-benefit-tabs__item" key={benefit.number}>
+                  <h3 className="keeper-benefit-tabs__tab">
+                    <span className="keeper-benefit-tabs__icon">
+                      <KeeperBenefitIcon number={benefit.number} />
+                    </span>
+                    <span className="keeper-benefit-tabs__label">{benefit.eyebrow}</span>
+                  </h3>
+
+                  <div className="keeper-benefit-tab-panel">
+                    <h3 className="keeper-benefit-tab-panel__title">
+                      {benefit.title.map((line, lineIndex) => (
+                        <span className="keeper-benefit-tab-panel__title-line" key={lineIndex}>
+                          {line.map((segment, segmentIndex) => (
+                            <span className={`keeper-benefit-tab-panel__title-segment keeper-benefit-tab-panel__title-segment--${segment.tone}`} key={segmentIndex}>
+                              {segment.text}
+                            </span>
+                          ))}
                         </span>
                       ))}
-                    </span>
-                  ))}
-                </h2>
-                {/* {benefitIndex !== 1 && <p className="keeper-benefit-panel__eyebrow">{benefit.eyebrow}</p>} */}
-                <div className="keeper-benefit-panel__copy">
-                  {benefit.copy.split('\n\n').map(paragraph => <p key={paragraph}>{paragraph}</p>)}
-                </div>
-                {benefit.indicators.length > 0 && (
-                  <div className="keeper-benefit-panel__indicators">
-                    {benefit.indicators.map(indicator => (
-                      <div className="keeper-benefit-indicator" key={indicator.join('-')}>
-                        <span className="keeper-benefit-indicator__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><path d="M12 3.5v17M3.5 12h17" /></svg></span>
-                        <span>{indicator.map(line => <strong key={line}>{line}</strong>)}</span>
-                      </div>
-                    ))}
+                    </h3>
+                    <p className="keeper-benefit-tab-panel__copy">{benefit.copy}</p>
+                    <ul className="keeper-benefit-tab-panel__benefits">
+                      {benefit.indicators.map(indicator => (
+                        <li key={indicator.join('-')}>
+                          <span className="keeper-benefit-tab-panel__benefit-mark" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none">
+                              <path d="M3 8h9M8 4l4 4-4 4" />
+                            </svg>
+                          </span>
+                          <span>{indicator[0]}</span>
+                          <strong>{indicator[1]}</strong>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                )}
-                {benefit.closing[0] && (
-                  <>
-                    <div className="keeper-benefit-panel__rule" />
-                    <p className="keeper-benefit-panel__closing">{benefit.closing[0]}<strong>{benefit.closing[1]}</strong></p>
-                  </>
-                )}
-                {benefitIndex === KEEPER_PANELS.length - 1 && (
-                  <div className="keeper-benefit-panel__actions">
-                    <KeeperCircleCta onClick={() => onNavigate('keeper-circle')}>
-                      Discover the Circle
-                    </KeeperCircleCta>
-                    <KeeperCircleCta variant="secondary" onClick={() => onNavigate('login')}>
-                      Become a Keeper
-                    </KeeperCircleCta>
-                  </div>
-                )}
-              </article>
-            ))}
+                </article>
+              ))}
+            </div>
           </div>
-
-          <nav className="keeper-scroll-indicator" aria-label="Keeper Circle benefits">
-            <span className="keeper-scroll-indicator__line" aria-hidden="true" />
-            {KEEPER_PANELS.map((benefit, index) => (
-              <a
-                className={activeKeeperBenefit === index ? 'is-active' : ''}
-                href={`#${benefit.id}`}
-                key={benefit.id}
-                aria-label={index === 0 ? 'Introduction' : `Point ${benefit.number}`}
-                onClick={event => {
-                  event.preventDefault()
-                  setActiveKeeperBenefit(index)
-                  const targetPanel = document.getElementById(benefit.id)
-                  const mainHeader = document.querySelector<HTMLElement>('.hero-header')
-                  if (!targetPanel) return
-
-                  const headerHeight = mainHeader?.getBoundingClientRect().height ?? 83
-                  const targetTop = targetPanel.getBoundingClientRect().top + window.scrollY - headerHeight
-                  window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' })
-                }}
-              >
-                {index === 0 ? <span className="keeper-scroll-indicator__dot" aria-hidden="true" /> : benefit.number}
-              </a>
-            ))}
-          </nav>
-        </div>
-
-      </section>
+        </section>
+      ))}
 
     </div>
   )

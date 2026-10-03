@@ -74,7 +74,7 @@ export default function Footer({ onNavigate, showHomeAbout = false }: Props) {
             <div className="home-about-socials" aria-label="IZLI social media links">
               <a href="https://www.instagram.com/izli.tn/" target="_blank" rel="noreferrer" aria-label="Instagram @izli.tn"><Icon icon="line-md:instagram" aria-hidden="true" /></a>
               <a href="https://www.facebook.com/izli.tn/" target="_blank" rel="noreferrer" aria-label="Facebook @izli.tn"><Icon icon="line-md:facebook" aria-hidden="true" /></a>
-              <a href="https://tiktok.com/@izliofficial" target="_blank" rel="noreferrer" aria-label="TikTok @izliofficial"><Icon icon="line-md:tiktok" aria-hidden="true" /></a>
+              <a href="https://tiktok.com/@izli_tn" target="_blank" rel="noreferrer" aria-label="TikTok @izli_tn"><Icon icon="line-md:tiktok" aria-hidden="true" /></a>
             </div>
           </div>
         </div>
@@ -95,8 +95,8 @@ export default function Footer({ onNavigate, showHomeAbout = false }: Props) {
 function FooterGroup({ title, links, onNavigate }: { title: string; links: { label: string; page: WebPage }[]; onNavigate: (p: WebPage) => void }) {
   return (
     <div className="site-footer__group">
-      <div>{links.map(link => <button type="button" key={link.label} onClick={() => onNavigate(link.page)}>{link.label}</button>)}</div>
       <h3>{title}</h3>
+      <div>{links.map(link => <button type="button" key={link.label} onClick={() => onNavigate(link.page)}>{link.label}</button>)}</div>
     </div>
   )
 }

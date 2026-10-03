@@ -326,7 +326,7 @@
 
 .collections-directory {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px;
     background: rgba(23, 23, 23, .14);
     
@@ -354,6 +354,7 @@
 .collections-directory__item {
     display: flex;
     flex-direction: column;
+    height: 700px;
     min-width: 0;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -361,8 +362,10 @@
 .collections-directory__visual {
     position: relative;
     display: block;
+    flex: 1 1 auto;
     width: 100%;
-    aspect-ratio: 3 / 4;
+    min-height: 0;
+    aspect-ratio: auto;
     padding: 0;
     overflow: hidden;
     border: 0;
@@ -417,7 +420,7 @@
 
 .collections-directory__copy {
     display: flex;
-    flex: 1;
+    flex: 0 0 auto;
     flex-direction: column;
     align-items: flex-start;
     gap: 14px;
@@ -426,7 +429,6 @@
 }
 
 .collections-directory__copy p {
-    max-width: 480px;
     margin: 0;
     color: rgb(221 214 203 / 85%) !important;
     font-size: 14px;
@@ -448,12 +450,25 @@
 
 .collections-new-products__title-panel {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     box-sizing: border-box;
     width: 100%;
     max-width: 600px;
     padding: 64px;
     background: #0b0b0b;
+}
+
+.collections-new-products__intro {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 20px;
+}
+
+.collections-new-products__eyebrow {
+      color: #c9924e;
+      font: 700 10px/1.4 'Inter', sans-serif;
+      letter-spacing: .18em;
 }
 
 .collections-new-products__title-panel h2 {
@@ -462,10 +477,21 @@
     font: 600 32px/1.15 'Inter', sans-serif;
 }
 
+.collections-new-products__intro p {
+      max-width: 38ch;
+      margin: 0;
+      color: rgba(245, 241, 234, .68);
+      font: 14px/1.7 'Inter', sans-serif;
+}
+
+.collections-new-products__intro .primary-button {
+      margin-top: 8px;
+}
+
 .collections-new-products__rail {
     min-width: 0;
     overflow: hidden;
-    border-left: 1px solid rgba(245, 241, 234, .18);
+    // border-left: 1px solid rgba(245, 241, 234, .18);
 }
 
 .collections-new-products__track,
@@ -473,7 +499,7 @@
     display: flex;
     width: max-content;
     height: 650px;
-    gap: 4px;
+    gap: 8px;
 }
 
 .collections-new-products__track {
@@ -743,7 +769,7 @@
 
 @media (max-width: 1100px) {
     .collections-directory {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .collections-directory[data-columns="1"] {
@@ -857,12 +883,17 @@
 
     .collections-new-products {
         grid-template-columns: 1fr;
-        grid-template-rows: 150px 650px;
+        grid-template-rows: auto 650px;
         min-height: 800px;
     }
 
     .collections-new-products__title-panel {
+        min-height: 230px;
         padding: 32px 20px;
+    }
+
+    .collections-new-products__intro {
+        gap: 12px;
     }
 
     .collections-new-products__title-panel h2 {

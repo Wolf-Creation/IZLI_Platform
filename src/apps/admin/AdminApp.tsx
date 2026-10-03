@@ -13,8 +13,9 @@ import CategoriesList from './pages/CategoriesList'
 import CollectionsList from './pages/CollectionsList'
 import CollectionEditor from './pages/CollectionEditor'
 import OrdersList from './pages/OrdersList'
+import ShippingSettings from './pages/ShippingSettings'
 import CustomerDetail from './pages/CustomerDetail'
-import HomeBuilder from './pages/HomeBuilder'
+import HomeBuilder from './pages/HomePageBuilder'
 import SitePageEditor from './pages/SitePageEditor'
 import MediaLibrary from './pages/MediaLibrary'
 import StoriesList from './pages/StoriesList'
@@ -201,6 +202,7 @@ export default function AdminApp() {
 			case 'collections': return <CollectionsList onNavigate={navigate} onCreate={openCollectionCreate} onEdit={openCollectionEdit} />
 			case 'collection-editor': return <CollectionEditor collectionId={collectionEditorId} onNavigate={navigate} onDone={closeCollectionEditor} />
 			case 'orders': return <OrdersList onNavigate={navigate} />
+			case 'shipping-settings': return <ShippingSettings onNavigate={navigate} />
 			case 'customer': return <CustomerDetail onNavigate={navigate} />
 			case 'home-builder': return <HomeBuilder onNavigate={navigate} />
 			case 'site-page-editor': return <SitePageEditor onNavigate={navigate} />

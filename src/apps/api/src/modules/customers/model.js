@@ -28,7 +28,7 @@ const customerSchema = new mongoose.Schema({
   age: { type: Number, min: 13, max: 120 },
   avatarUrl: { type: String },
   locale: { type: String, enum: ['fr', 'en', 'ar'], default: 'fr' },
-  currency: { type: String, enum: ['EUR', 'USD', 'MAD', 'DZD'], default: 'EUR' },
+  currency: { type: String, enum: ['TND', 'EUR', 'USD', 'MAD', 'DZD'], default: 'TND' },
   status: {
     type: String,
     enum: ['active', 'inactive', 'suspended', 'guest'],
