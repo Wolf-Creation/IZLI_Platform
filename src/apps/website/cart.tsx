@@ -30,7 +30,7 @@ export interface WishlistItem {
 
 interface CartProps {
   items: CartItem[]
-  onNavigate: (page: WebPage) => void
+  onNavigate: (page: WebPage, productId?: string) => void
   onUpdateQuantity: (id: string, delta: number) => void
   onRemove: (id: string) => void
   onClearCart: () => void
@@ -152,10 +152,22 @@ export default function Cart({ items, onNavigate, onUpdateQuantity, onRemove, on
   )
   const cartItems = items.map(item => (
     <article className="cart-item" key={`${item.id}-${item.size}`}>
-      <div className="cart-item__img"><img src={item.img} alt={item.name} /></div>
+      <button
+        type="button"
+        className="cart-item__img-link"
+        onClick={() => onNavigate('product-detail', item.id)}
+        aria-label={`View ${item.name}`}
+      >
+        <span className="cart-item__img"><img src={item.img} alt="" /></span>
+      </button>
       <div className="cart-item__content">
         <div className="cart-item__top">
-          <div><h2 className="cart-item__name">{item.name}</h2><p className="cart-item__meta">{item.universe} / Size {item.size}</p></div>
+          <div>
+            <h2 className="cart-item__name">
+              <button type="button" onClick={() => onNavigate('product-detail', item.id)}>{item.name}</button>
+            </h2>
+            <p className="cart-item__meta">{item.universe} / Size {item.size}</p>
+          </div>
           <strong>{formatPrice((item.price ?? 0) * item.qty, item.currency)}</strong>
         </div>
         <div className="cart-item__actions">

@@ -59,6 +59,137 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
   const [isIntroTransitioning, setIsIntroTransitioning] = useState(false)
 
   useEffect(() => {
+    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)')
+    if (motionPreference.matches) return
+
+    let animationFrame = 0
+    let lastFrameTime = 0
+    let targetY = window.scrollY
+
+    const canScrollWithinTarget = (target: EventTarget | null, deltaY: number) => {
+      let element = target instanceof Element ? target : target instanceof Node ? target.parentElement : null
+
+      while (element && element !== document.body) {
+        const { overflowY } = window.getComputedStyle(element)
+        if ((overflowY === 'auto' || overflowY === 'scroll') && element.scrollHeight > element.clientHeight) {
+          const canContinue = deltaY > 0
+            ? element.scrollTop + element.clientHeight < element.scrollHeight
+            : element.scrollTop > 0
+          if (canContinue) return true
+        }
+        element = element.parentElement
+      }
+
+      return false
+    }
+
+    const animateScroll = (now: number) => {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+      targetY = Math.max(0, Math.min(targetY, maxScroll))
+      const currentY = window.scrollY
+      const distance = targetY - currentY
+      const elapsed = lastFrameTime ? Math.min(now - lastFrameTime, 32) : 16
+      const progress = 1 - Math.exp(-elapsed / 180)
+
+      if (Math.abs(distance) > 0.5) {
+        window.scrollTo({
+          top: currentY + distance * progress,
+          behavior: 'instant',
+        })
+        lastFrameTime = now
+        animationFrame = window.requestAnimationFrame(animateScroll)
+      } else {
+        window.scrollTo({ top: targetY, behavior: 'instant' })
+        animationFrame = 0
+        lastFrameTime = 0
+      }
+    }
+
+    const handleWheel = (event: WheelEvent) => {
+      if (event.ctrlKey || Math.abs(event.deltaY) < Math.abs(event.deltaX) || canScrollWithinTarget(event.target, event.deltaY)) return
+
+      const delta = event.deltaMode === WheelEvent.DOM_DELTA_LINE
+        ? event.deltaY * 16
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+          ? event.deltaY * window.innerHeight
+          : event.deltaY
+      const scrollStep = Math.sign(delta) * Math.min(Math.abs(delta), Math.min(96, window.innerHeight * 0.14))
+      const currentY = window.scrollY
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+
+      if ((currentY <= 0 && scrollStep < 0) || (currentY >= maxScroll && scrollStep > 0)) return
+
+      event.preventDefault()
+      if (!animationFrame) targetY = currentY
+      targetY = Math.max(0, Math.min(targetY + scrollStep, maxScroll))
+      if (!animationFrame) animationFrame = window.requestAnimationFrame(animateScroll)
+    }
+
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    return () => {
+      window.removeEventListener('wheel', handleWheel)
+      if (animationFrame) window.cancelAnimationFrame(animationFrame)
+    }
+  }, [])
+
+  useEffect(() => {
+    const main = document.querySelector('.website-app main')
+    if (!main || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const targets = [
+      'section',
+      'article',
+      'figure',
+      '.izli-product-card',
+      '.collections-directory__item',
+      '.home-collections-story-card',
+      '.keeper-benefit-tabs__item',
+      '.product-detail-campaign__images img',
+      '.product-detail-gallery__feature-grid > div',
+      '.hero-slider',
+      '.hero-slider__content',
+      '.hero-slider__products',
+      '[class*="card"]',
+      '[class*="tile"]',
+    ].join(', ')
+    const cardOrTileClass = /(?:__|-)(?:card|tile)(?:$|--)/
+    const isRevealTarget = (element: Element) => {
+      if (element.matches('section, article, figure, .izli-product-card, .collections-directory__item, .home-collections-story-card, .keeper-benefit-tabs__item, .product-detail-campaign__images img, .product-detail-gallery__feature-grid > div, .hero-slider, .hero-slider__content, .hero-slider__products')) return true
+      return Array.from(element.classList).some(className => cardOrTileClass.test(className))
+    }
+    const observeTarget = (element: Element) => {
+      if (element.hasAttribute('data-scroll-reveal') || !isRevealTarget(element)) return
+      element.setAttribute('data-scroll-reveal', element.tagName === 'SECTION' ? 'section' : 'item')
+    }
+    const observeTargets = (root: Element) => {
+      if (root.matches(targets)) observeTarget(root)
+      root.querySelectorAll(targets).forEach(observeTarget)
+    }
+    const revealVisibleTargets = () => {
+      const revealBoundary = window.innerHeight * 0.88
+      main.querySelectorAll('[data-scroll-reveal]:not(.is-scroll-visible)').forEach(element => {
+        const bounds = element.getBoundingClientRect()
+        if (bounds.top <= revealBoundary && bounds.bottom > 0) element.classList.add('is-scroll-visible')
+      })
+    }
+    const mutations = new MutationObserver(records => {
+      records.forEach(record => record.addedNodes.forEach(node => {
+        if (node instanceof Element) observeTargets(node)
+      }))
+      revealVisibleTargets()
+    })
+
+    observeTargets(main)
+    mutations.observe(main, { childList: true, subtree: true })
+    window.addEventListener('scroll', revealVisibleTargets, { passive: true })
+    revealVisibleTargets()
+    return () => {
+      window.removeEventListener('scroll', revealVisibleTargets)
+      mutations.disconnect()
+    }
+  }, [page, productId, collectionSlug, shopFilter])
+
+  useEffect(() => {
     localStorage.setItem('izli.cart', JSON.stringify(cartItems))
   }, [cartItems])
 
@@ -141,7 +272,8 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
     setProductId(p === 'product-detail' ? routeParam ?? null : null)
     setCollectionSlug(p === 'collection-detail' ? routeParam ?? null : null)
     setShopFilter(p === 'shop' && routeParam === 'new-releases' ? routeParam : '')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'
+    window.scrollTo({ top: 0, behavior })
   }
 
   const handleAuthenticated = (user: User) => {

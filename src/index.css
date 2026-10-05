@@ -52,8 +52,22 @@ body {
 }
 
 html:has(.website-app) {
+  scroll-behavior: smooth;
+  scroll-padding-top: 92px;
   scrollbar-width: auto;
   scrollbar-color: #C9924E #111111;
+}
+
+@media (max-width: 768px) {
+  html:has(.website-app) {
+    scroll-padding-top: 64px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:has(.website-app) {
+    scroll-behavior: auto;
+  }
 }
 
 html:has(.website-app)::-webkit-scrollbar {

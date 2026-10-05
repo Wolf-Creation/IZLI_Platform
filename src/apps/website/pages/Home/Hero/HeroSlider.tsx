@@ -1,311 +1,245 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import legacy from '../../../../../assets/Website_img/Legacy/legacy.png'
-import studio from '../../../../../assets/Website_img/Studio/studio.png'
-import essentials from '../../../../../assets/Website_img/Essantials/essantials.png'
-import communityLab from '../../../../../assets/Website_img/CommunityLab/communitylab.png'
-import product1 from '../../../../../assets/Website_img/model_front_view_final3.png'
-import product2 from '../../../../../assets/Website_img/model_front_view_final4.png'
-import product3 from '../../../../../assets/Website_img/model_front_view_final5.png'
 import type { WebPage } from '../../../types'
-import { PrimaryButton } from '../../../components/PrimaryButton/PrimaryButton'
-import { OptimizedImage } from '../../../components/OptimizedImage/OptimizedImage'
 import './HeroSlider.scss'
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 📝 MODIFIER LE CONTENU DE CHAQUE SLIDE ICI
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//
-// Pour chaque univers, vous pouvez modifier:
-// - label: Petit titre en haut (ex: "STUDIO")
-// - title: Grand titre principal (ex: "IZLI — Studio")
-// - miniDescription: Sous-titre court (ex: "Where ideas take form.")
-// - description: Description complète
-// - cta: Texte du bouton (ex: "SHOP NOW")
-// - image: Image de background
-//
-export interface SlideData {
+export interface HeroCarouselProduct {
   id: string
-  label: string
-  extension: string
-  title: string
-  miniDescription: string
+  name: string
   description: string
-  cta: string
+  universe: string
+  price?: number
+  currency: string
   image: string
+  backImage?: string
 }
 
 interface Props {
-  scrollY: number
-  onNavigate: (page: WebPage) => void
+  products: HeroCarouselProduct[]
+  onNavigate: (page: WebPage, productId?: string) => void
   titleOverride?: string
   descriptionOverride?: string
   style?: CSSProperties
 }
 
-const SLIDES: SlideData[] = [
-  {
-    id: 'studio',
-    label: 'STUDIO',
-    extension: 'Studio',
-    title: 'Studio',
-    miniDescription: 'Where ideas take form.',
-    description: 'Experimental pieces shaped by contemporary design, materials and new perspectives.',
-    cta: 'SHOP NOW',
-    image: studio,
-  },
-  {
-    id: 'legacy',
-    label: 'LEGACY',
-    extension: 'Legacy',
-    title: 'Legacy',
-    miniDescription: 'What we inherit, we reinterpret.',
-    description: 'Stories, symbols and traditions carried forward through contemporary design.',
-    cta: 'SHOP NOW',
-    image: legacy,
-  },
-  {
-    id: 'essentials',
-    label: 'ESSENTIALS',
-    extension: 'Essantials',
-    title: 'Essentials',
-    miniDescription: 'The foundation of IZLI.',
-    description: 'Essential pieces defined by simplicity, quality and a lasting identity.',
-    cta: 'SHOP NOW',
-    image: essentials,
-  },
-  {
-    id: 'community-lab',
-    label: 'COMMUNITY LAB',
-    extension: 'Comunity lab',
-    title: 'Community Lab',
-    miniDescription: 'Ideas made together.',
-    description: 'A space where the IZLI community experiments, creates and shapes what comes next.',
-    cta: 'SHOP NOW',
-    image: communityLab,
-  },
-]
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const AUTOPLAY_INTERVAL = 5000
+export const SWEATSHIRT_FRONT_VIEW = 'https://res.cloudinary.com/tajbua8z/image/upload/e_background_removal,c_crop,g_center,w_900,h_1200,f_png/v1791214973/SWEATSHIRT_FRONT_VIEW.png'
+export const SWEATSHIRT_BACK_VIEW = 'https://res.cloudinary.com/tajbua8z/image/upload/e_background_removal,c_crop,g_center,w_900,h_1200,f_png/v1791214975/SWEATSHIRT_BACK_VIEW.png'
 
-const AUTOPLAY_DURATION = 5500
-const TRANSITION_DURATION = 900
+const FALLBACK_SWEATSHIRT: HeroCarouselProduct = {
+  id: '6abcefe9e4b73e0e772ed63c',
+  name: 'MODERN NORTH AFRICA SWEATSHIRT',
+  description: 'Oversized SweatShirt',
+  universe: 'Essentials',
+  price: 89,
+  currency: 'TND',
+  image: SWEATSHIRT_FRONT_VIEW,
+  backImage: SWEATSHIRT_BACK_VIEW,
+}
 
-export function HeroSlider({ scrollY, onNavigate, titleOverride, descriptionOverride, style }: Props) {
-  const [activeSlide, setActiveSlide] = useState(0)
-  const [isTransitioning, setIsTransitioning] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [isHovered, setIsHovered] = useState(false)
-  const [isHoveredOnProducts, setIsHoveredOnProducts] = useState(false)
-  const sliderRef = useRef<HTMLDivElement | null>(null)
-  const slideStartTimeRef = useRef<number>(Date.now())
-  const autoplayTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const elapsedTimeOnPauseRef = useRef<number>(0)
+export function HeroSlider({ products, onNavigate, titleOverride, descriptionOverride, style }: Props) {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
+  const [isCenterSettled, setIsCenterSettled] = useState(true)
+  const [shadowGeometry, setShadowGeometry] = useState<{ width: number; height: number; bottom: number } | null>(null)
+  const autoplayTimerRef = useRef<number | null>(null)
+  const carouselItemRefs = useRef<Array<HTMLButtonElement | null>>([])
+  const nextAdvanceAtRef = useRef(0)
+  const remainingTimeRef = useRef(AUTOPLAY_INTERVAL)
+  const carouselProducts = products.length > 0
+    ? products.slice(0, 3)
+    : [FALLBACK_SWEATSHIRT, FALLBACK_SWEATSHIRT, FALLBACK_SWEATSHIRT]
+  const normalizedActiveIndex = ((activeIndex % carouselProducts.length) + carouselProducts.length) % carouselProducts.length
+  const activeProduct = carouselProducts[normalizedActiveIndex]
+  const productTitle = titleOverride?.trim() || activeProduct.name
+  const productDescription = descriptionOverride?.trim() || activeProduct.description
 
-  // Hide extensions when scrolling
-  const shouldShowExtensions = scrollY < 50
-
-  const isTransitioningRef = useRef(false)
-
-  const handleNextSlide = useCallback(() => {
-    // Guard: prevent multiple simultaneous transitions
-    if (isTransitioningRef.current) {
-      console.warn(`⚠️  Blocked duplicate handleNextSlide call - transition already in progress`)
+  useEffect(() => {
+    const item = carouselItemRefs.current[normalizedActiveIndex]
+    const image = item?.querySelector<HTMLImageElement>('.hero-slider__carousel-image--front, .hero-slider__carousel-image')
+    if (!item || !image) {
+      setShadowGeometry(null)
       return
     }
 
-    isTransitioningRef.current = true
+    const updateShadowGeometry = () => {
+      if (!image.naturalWidth || !image.naturalHeight) return
 
-    setIsTransitioning(true)
-    setProgress(0)
-    setActiveSlide((prev) => {
-      const next = (prev + 1) % SLIDES.length
-      console.log(`🔄 Slide transition: ${SLIDES[prev].extension} (${prev}) → ${SLIDES[next].extension} (${next}) at ${new Date().toLocaleTimeString()}`)
-      return next
-    })
+      const scale = Math.min(item.clientWidth / image.naturalWidth, item.clientHeight / image.naturalHeight)
+      const imageWidth = image.naturalWidth * scale
+      const imageHeight = image.naturalHeight * scale
+      const shadowWidth = imageWidth * 0.78
+      const shadowHeight = imageHeight * 0.07
+      const imageBottomInset = (item.clientHeight - imageHeight) / 2
 
-    setTimeout(() => {
-      console.log(`✅ Transition animation complete (${TRANSITION_DURATION}ms)`)
-      setIsTransitioning(false)
-      isTransitioningRef.current = false
-    }, TRANSITION_DURATION)
-  }, [])
+      setShadowGeometry({
+        width: shadowWidth,
+        height: shadowHeight,
+        bottom: imageBottomInset + imageHeight * 0.36 - shadowHeight * 0.18,
+      })
+    }
 
-  const handleExtensionClick = useCallback((index: number) => {
-    setIsTransitioning((isTransiting) => {
-      if (isTransiting || index === activeSlide) return isTransiting
-      setProgress(0)
-      setActiveSlide(index)
-      setTimeout(() => setIsTransitioning(false), TRANSITION_DURATION)
-      return true
-    })
-  }, [activeSlide])
-
-  // Reset timer when slide changes (via click or autoplay)
-  useEffect(() => {
-    const slideStartTime = Date.now()
-    slideStartTimeRef.current = slideStartTime
-    setProgress(0)
-
-    console.log(`📺 Slide ${activeSlide} (${SLIDES[activeSlide].extension}) started at ${new Date(slideStartTime).toLocaleTimeString()}`)
+    setShadowGeometry(null)
+    image.addEventListener('load', updateShadowGeometry)
+    const resizeObserver = new ResizeObserver(updateShadowGeometry)
+    resizeObserver.observe(item)
+    updateShadowGeometry()
 
     return () => {
-      const slideDuration = Date.now() - slideStartTime
-      console.log(`⏱️  Slide ${activeSlide} (${SLIDES[activeSlide].extension}) lasted ${slideDuration}ms (expected 5500ms)`)
+      image.removeEventListener('load', updateShadowGeometry)
+      resizeObserver.disconnect()
     }
-  }, [activeSlide])
+  }, [activeProduct.backImage, activeProduct.image, normalizedActiveIndex])
 
-  // Handle pause/resume of autoplay on products hover
   useEffect(() => {
-    if (isHoveredOnProducts) {
-      elapsedTimeOnPauseRef.current = Date.now() - slideStartTimeRef.current
-    } else {
-      slideStartTimeRef.current = Date.now() - elapsedTimeOnPauseRef.current
+    if (autoplayTimerRef.current !== null) {
+      window.clearTimeout(autoplayTimerRef.current)
+      autoplayTimerRef.current = null
     }
-  }, [isHoveredOnProducts])
 
-  // Auto-play timer with timestamp-based progress
-  useEffect(() => {
-    // Clear any existing timers
-    if (autoplayTimerRef.current) clearTimeout(autoplayTimerRef.current)
-    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current)
+    if (isPaused) return
 
-    if (!shouldShowExtensions || isHoveredOnProducts) return
-
-    console.log(`⏰ Starting autoplay for slide ${activeSlide} (${SLIDES[activeSlide].extension})`)
-
-    progressIntervalRef.current = setInterval(() => {
-      const elapsed = Date.now() - slideStartTimeRef.current
-      const progressPercent = Math.min((elapsed / AUTOPLAY_DURATION) * 100, 100)
-      setProgress(progressPercent)
-    }, 16) // ~60fps
-
-    autoplayTimerRef.current = setTimeout(() => {
-      console.log(`⏰ Autoplay timer triggered after ${AUTOPLAY_DURATION}ms for slide ${activeSlide}`)
-      handleNextSlide()
-    }, AUTOPLAY_DURATION)
+    nextAdvanceAtRef.current = Date.now() + remainingTimeRef.current
+    autoplayTimerRef.current = window.setTimeout(() => {
+      remainingTimeRef.current = AUTOPLAY_INTERVAL
+      setIsCenterSettled(false)
+      setActiveIndex(index => (index + 1) % carouselProducts.length)
+    }, remainingTimeRef.current)
 
     return () => {
-      if (autoplayTimerRef.current) {
-        clearTimeout(autoplayTimerRef.current)
-        autoplayTimerRef.current = null
-      }
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current)
-        progressIntervalRef.current = null
+      if (autoplayTimerRef.current !== null) {
+        window.clearTimeout(autoplayTimerRef.current)
       }
     }
-  }, [activeSlide, shouldShowExtensions, handleNextSlide, isHoveredOnProducts])
+  }, [activeIndex, isPaused, carouselProducts.length])
 
+  const pauseAutoplay = () => {
+    if (autoplayTimerRef.current !== null) {
+      window.clearTimeout(autoplayTimerRef.current)
+      autoplayTimerRef.current = null
+      remainingTimeRef.current = Math.max(0, nextAdvanceAtRef.current - Date.now())
+      setIsPaused(true)
+    }
+  }
 
-  const currentSlide = SLIDES[activeSlide]
-  const previousSlide = SLIDES[(activeSlide - 1 + SLIDES.length) % SLIDES.length]
-  const currentTitle = titleOverride?.trim() || currentSlide.title
-  const currentDescription = descriptionOverride?.trim() || currentSlide.description
+  const resumeAutoplay = () => {
+    if (isPaused) setIsPaused(false)
+  }
+
+  const selectProduct = (index: number) => {
+    remainingTimeRef.current = AUTOPLAY_INTERVAL
+    if (index !== normalizedActiveIndex) setIsCenterSettled(false)
+    setActiveIndex(index)
+  }
 
   return (
-    <div
-      ref={sliderRef}
-      className="hero-slider"
-      style={style}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Chromatic Aberration SVG Filter */}
-      <svg style={{ display: 'none' }}>
-        <defs>
-          <filter id="chromatic-exit">
-            <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="3" result="noise" seed={activeSlide} />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-        </defs>
-      </svg>
-
-      {/* Background Images */}
-      <div className="hero-slider__background">
-        {/* Previous slide exits */}
-        {isTransitioning && (
-          <OptimizedImage
-            className="hero-slider__slide hero-slider__slide--exit"
-            src={previousSlide.image}
-            preset="heroDesktop"
-            priority
-            alt=""
-            aria-hidden="true"
-            style={{ objectPosition: previousSlide.focus }}
-          />
+    <section className="hero-slider" style={style} aria-label="Featured products">
+      <div key={activeProduct.id} className="hero-slider__product-details">
+        <span className="hero-slider__product-universe">{activeProduct.universe}</span>
+        <h1 className="hero-slider__product-name">{productTitle}</h1>
+        <p className="hero-slider__product-description">{productDescription}</p>
+        {activeProduct.price !== undefined && (
+          <p className="hero-slider__product-price">
+            {activeProduct.price} {activeProduct.currency}
+          </p>
         )}
-
-        {/* Current slide enters or stays active */}
-        <OptimizedImage
-          className={`hero-slider__slide ${isTransitioning ? 'hero-slider__slide--enter' : 'hero-slider__slide--active'}`}
-          src={currentSlide.image}
-          preset="heroDesktop"
-          priority
-          alt={currentSlide.title}
-          style={{ objectPosition: currentSlide.focus }}
-        />
-
-        <div className="hero-slider__overlay" />
+        <button
+          type="button"
+          className="hero-slider__product-link"
+          onClick={() => onNavigate('product-detail', activeProduct.id)}
+        >
+          Discover product <span aria-hidden="true">↗</span>
+        </button>
+        {carouselProducts.length > 1 && (
+          <nav className="hero-slider__pagination" aria-label="Featured products">
+            <span className="hero-slider__pagination-count">
+              {String(normalizedActiveIndex + 1).padStart(2, '0')}
+              <span aria-hidden="true"> / </span>
+              {String(carouselProducts.length).padStart(2, '0')}
+            </span>
+            <div className="hero-slider__pagination-track">
+              {carouselProducts.map((product, index) => (
+                <button
+                  key={`${product.id}-pagination-${index}`}
+                  type="button"
+                  className={`hero-slider__pagination-step${index === normalizedActiveIndex ? ' is-active' : ''}`}
+                  aria-label={`Show product ${index + 1}: ${product.name}`}
+                  aria-current={index === normalizedActiveIndex ? 'true' : undefined}
+                  onClick={() => selectProduct(index)}
+                >
+                  <span />
+                </button>
+              ))}
+            </div>
+          </nav>
+        )}
       </div>
 
-      {/* LEFT SIDE - CONTENT */}
-      <div className={`hero-slider__content ${isTransitioning ? 'hero-slider__content--exit' : 'hero-slider__content--enter'}`}>
-        {/* <div className="hero-slider__label">{currentSlide.label}</div> */}
-        <h1 className="hero-slider__title-text hero-slider__content-item--0">{currentTitle}</h1>
-        <p className="hero-slider__mini-description hero-slider__content-item--1">{currentSlide.miniDescription}</p>
-        <div className="hero-slider__divider hero-slider__content-item--2" />
-        <p className="hero-slider__description-text hero-slider__content-item--3">{currentDescription}</p>
-        <PrimaryButton className="hero-slider__cta hero-slider__content-item--4" onClick={() => onNavigate('shop')}>
-          {currentSlide.cta}
-        </PrimaryButton>
-      </div>
+      <div className="hero-slider__product-stage" aria-label="Featured product carousel">
+        {carouselProducts.map((product, index) => {
+          const position = (index - normalizedActiveIndex + carouselProducts.length) % carouselProducts.length
+          const positionClass = position === 0 ? 'is-center' : position === 1 ? 'is-below' : 'is-above'
 
-      {/* RIGHT SIDE - PRODUCT TILES */}
-      <div
-        className={`hero-slider__products ${isTransitioning ? 'hero-slider__products--exit' : 'hero-slider__products--enter'}`}
-        onMouseEnter={() => setIsHoveredOnProducts(true)}
-        onMouseLeave={() => setIsHoveredOnProducts(false)}
-      >
-        <div className="hero-slider__product-tile">
-          <img src={product1} alt="Product 1" loading="lazy" decoding="async" />
-          <button className="hero-slider__product-cta">View</button>
-        </div>
-        <div className="hero-slider__product-tile">
-          <img src={product2} alt="Product 2" loading="lazy" decoding="async" />
-          <button className="hero-slider__product-cta">View</button>
-        </div>
-        <div className="hero-slider__product-tile">
-          <img src={product3} alt="Product 3" loading="lazy" decoding="async" />
-          <button className="hero-slider__product-cta">View</button>
-        </div>
-      </div>
-
-
-
-      {/* Horizontal Navigation at Bottom */}
-      {shouldShowExtensions && (
-        <nav className="hero-slider__navigation">
-          {SLIDES.map((slide, index) => (
+          return (
             <button
-              key={slide.id}
-              className={`hero-slider__nav-button ${index === activeSlide ? 'hero-slider__nav-button--active' : ''}`}
-              onClick={() => handleExtensionClick(index)}
-              title={slide.extension}
+              key={`${product.id}-${index}`}
+              ref={element => {
+                carouselItemRefs.current[index] = element
+              }}
+              type="button"
+              className={`hero-slider__carousel-item hero-slider__carousel-item--${positionClass}${position === 0 && isCenterSettled ? ' is-settled' : ''}`}
+              aria-label={`Show ${product.name}`}
+              aria-current={position === 0 ? 'true' : undefined}
+              onClick={() => selectProduct(index)}
+              onTransitionEnd={event => {
+                if (position === 0 && event.propertyName === 'transform') setIsCenterSettled(true)
+              }}
+              onPointerEnter={pauseAutoplay}
+              onPointerLeave={resumeAutoplay}
             >
-              <span className="hero-slider__nav-label">{slide.extension}</span>
-              {index === activeSlide && (
-                <div
-                  className="hero-slider__progress-bar"
+              {position === 0 && shadowGeometry && (
+                <span
+                  className="hero-slider__product-shadow"
+                  aria-hidden="true"
                   style={{
-                    width: `${progress}%`,
+                    width: shadowGeometry.width,
+                    height: shadowGeometry.height,
+                    bottom: shadowGeometry.bottom,
                   }}
                 />
               )}
+              {product.backImage ? (
+                <span className="hero-slider__carousel-flip">
+                  <img
+                    className="hero-slider__carousel-image hero-slider__carousel-image--front"
+                    src={product.image || SWEATSHIRT_FRONT_VIEW}
+                    alt=""
+                    aria-hidden="true"
+                    loading={position === 0 ? 'eager' : 'lazy'}
+                    fetchPriority={position === 0 ? 'high' : 'auto'}
+                  />
+                  <img
+                    className="hero-slider__carousel-image hero-slider__carousel-image--back"
+                    src={product.backImage}
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                  />
+                </span>
+              ) : (
+                <img
+                  className="hero-slider__carousel-image"
+                  src={product.image || SWEATSHIRT_FRONT_VIEW}
+                  alt=""
+                  aria-hidden="true"
+                  loading={position === 0 ? 'eager' : 'lazy'}
+                  fetchPriority={position === 0 ? 'high' : 'auto'}
+                />
+              )}
             </button>
-          ))}
-        </nav>
-      )}
-    </div>
+          )
+        })}
+      </div>
+    </section>
   )
 }

@@ -1,5 +1,5 @@
 .shop-page {
-  --shop-main-header-height: 92px;
+  --shop-main-header-height: 80px;
   --shop-topbar-height: 132px;
   --shop-categorybar-height: 72px;
   min-height: 100vh;
@@ -14,7 +14,7 @@
 
 .shop-shell--category-bar {
   position: sticky;
-  top: 90px;
+  top: var(--shop-main-header-height);
   z-index: 95;
   background: #000 !important;
   padding: 8px 0 16px;
@@ -540,7 +540,7 @@
   }
 
   .shop-shell--category-bar {
-    top: 92px;
+    top: 80px;
     padding: 0 16px;
   }
 

@@ -1952,7 +1952,7 @@
 }
 
 .home-section--tops {
-  --home-main-header-height: 91px;
+  --home-main-header-height: 80px;
   height: auto;
   min-height: calc(100vh - var(--home-main-header-height));
   overflow: visible;
@@ -1962,7 +1962,7 @@
 }
 
 .home-section--bottoms {
-  --home-main-header-height: 83px;
+  --home-main-header-height: 80px;
   height: auto;
   min-height: calc(100vh - var(--home-main-header-height));
   overflow: visible;
@@ -2250,7 +2250,7 @@
 
   .home-tops-editorial__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: 6px;
     background: transparent;
   }
 

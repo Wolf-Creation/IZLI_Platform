@@ -2,11 +2,12 @@ import { BG, FONT_SERIF } from '../../../../tokens'
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import type { WebPage } from '../../types'
-import { HeroSlider } from './Hero/HeroSlider'
+import { HeroSlider, SWEATSHIRT_BACK_VIEW, SWEATSHIRT_FRONT_VIEW, type HeroCarouselProduct } from './Hero/HeroSlider'
 import { SplashScreen } from '../../components/SplashScreen/SplashScreen'
 import { ProductCarousel } from '../../components/ProductCarousel/ProductCarousel'
 import { ProductCard } from '../../components/ProductCard/ProductCard'
 import { PrimaryButton } from '../../components/PrimaryButton/PrimaryButton'
+import { MarqueeBanner } from '../../components/MarqueeBanner/MarqueeBanner'
 import { useProducts } from '../../../../shared/hooks/useProducts'
 import { DEFAULT_HOME_PAGE_CONFIG, getHomePageConfig } from '../../../../shared/services/home'
 import type { CartItemInput } from '../../cart'
@@ -126,42 +127,6 @@ function KeeperBenefitIcon({ number }: { number: string }) {
   )
 }
 
-const KEEPER_BENEFITS = [
-  {
-    number: '01',
-    title: [
-      [{ text: 'Before the release.', tone: 'muted' }],
-      [{ text: 'Before everyone else.', tone: 'primary' }],
-    ],
-    eyebrow: 'FIRST ACCESS',
-    copy: 'Discover new pieces earlier, access limited drops, and secure your size before the collection reaches everyone else.',
-    indicators: [['Discover', 'First'], ['Secure', 'Your Size'], ['Priority', 'Access']],
-    closing: [''],
-  },
-  {
-    number: '02',
-    title: [
-      [{ text: 'As you rise,', tone: 'muted' }],
-      [{ text: 'New doors open.', tone: 'primary' }],
-    ],
-    eyebrow: 'EXCLUSIVE EXPERIENCES',
-    copy: 'The circle opens onto the moments behind the collection. Meet the people, places, and stories that give each release its meaning.',
-    indicators: [['Private', 'Events'], ['Members-Only', 'Experiences'], ['Status-Based', 'Access']],
-    closing: [''],
-  },
-  {
-    number: '03',
-    title: [
-      [{ text: 'Grow within,', tone: 'muted' }],
-      [{ text: 'Go further.', tone: 'primary' }],
-    ],
-    eyebrow: 'IZLI COMMUNITY',
-    copy: 'Every piece you choose, every story you share, and every moment you take part in helps shape your journey within the IZLI community. As you grow, your Keeper Status evolves — opening the way to deeper access and new experiences.',
-    indicators: [['Grow', 'Your Status'], ['Share', ' the Story'], ['Carry', 'the Pieces']],
-    closing: [''],
-  },
-] as const
-
 const COLLECTIONS_STORIES = [
   {
     number: '01',
@@ -272,6 +237,27 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
   const [homeConfig, setHomeConfig] = useState(DEFAULT_HOME_PAGE_CONFIG)
   const [scrollY, setScrollY] = useState(0)
   const [showSplash, setShowSplash] = useState(true)
+  const availableHeroProducts: HeroCarouselProduct[] = products
+    .filter(product => product.status === 'published' && product.productType !== 'Bottoms' && !product.name.toLowerCase().includes(' copy'))
+    .map(product => ({
+      id: product.id,
+      name: product.name,
+      description: product.shortDescription || product.description,
+      universe: product.universe,
+      price: product.price,
+      currency: product.currency,
+      image: product.name.toLowerCase().includes('sweatshirt')
+        ? SWEATSHIRT_FRONT_VIEW
+        : product.coverImageUrl || product.images?.[0] || '',
+      backImage: product.name.toLowerCase().includes('sweatshirt') ? SWEATSHIRT_BACK_VIEW : undefined,
+    }))
+    .sort((first, second) => Number(second.name.toLowerCase().includes('sweatshirt')) - Number(first.name.toLowerCase().includes('sweatshirt')))
+  const heroSection = homeConfig.sections.find(section => section.type === 'hero')
+  const heroProductCount = heroSection?.productCount ?? 3
+  const selectedHeroProducts = heroSection?.productIds?.length
+    ? heroSection.productIds.map(id => availableHeroProducts.find(product => product.id === id)).filter((product): product is HeroCarouselProduct => Boolean(product)).slice(0, heroProductCount)
+    : []
+  const heroProducts = selectedHeroProducts.length ? selectedHeroProducts : availableHeroProducts.slice(0, heroProductCount)
   const websiteProducts = products.filter(product => (product.releaseSettings?.status ?? product.releaseStatus) === 'live' && product.releaseNumber === '01').map(product => ({
     id: product.id,
     name: product.name,
@@ -283,9 +269,10 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
     releaseStatus: 'live' as const,
   }))
   const displayedShopProducts = websiteProducts
-  const topsProducts = products.filter(product => product.status === 'published' && product.productType !== 'Bottoms')
-  const bottomsProducts = products.filter(product => product.status === 'published' && product.productType === 'Bottoms')
+  const availableTopsProducts = products.filter(product => product.status === 'published' && product.productType !== 'Bottoms')
+  const availableBottomsProducts = products.filter(product => product.status === 'published' && product.productType === 'Bottoms')
   const homeSections = homeConfig.sections.filter(section => section.enabled)
+  const heroSectionIndex = homeSections.findIndex(section => section.type === 'hero')
 
   const renderProductCards = (catalogueProducts: typeof products) => catalogueProducts.map(product => {
     const image = product.coverImageUrl || product.images?.[0] || ''
@@ -314,6 +301,12 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
     )
   })
 
+  const productsForSection = (section: typeof homeConfig.sections[number], catalogueProducts: typeof products) => {
+    if (section.productIds === undefined) return catalogueProducts
+    const productsById = new Map(catalogueProducts.map(product => [product.id, product]))
+    return section.productIds.map(id => productsById.get(id)).filter((product): product is typeof products[number] => Boolean(product))
+  }
+
   useEffect(() => {
     let isCurrent = true
     getHomePageConfig().then(config => {
@@ -337,12 +330,17 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
       {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
       {homeSections.map((section, sectionIndex) => section.type === 'hero' && <HeroSlider
         key={section.id}
-        scrollY={scrollY}
+        products={section.id === heroSection?.id ? heroProducts : availableHeroProducts.slice(0, 3)}
         onNavigate={onNavigate}
         titleOverride={section.title}
         descriptionOverride={section.description}
         style={{ order: sectionIndex }}
       />)}
+      {heroSectionIndex >= 0 && <MarqueeBanner
+        items={['IZLI — WEAR THE STORY', 'HERITAGE IN MOTION', 'MADE TO BE KEPT', 'FROM ROOTS TO NOW']}
+        className="home-hero-marquee"
+        style={{ order: heroSectionIndex + 0.5 }}
+      />}
       {homeSections.map((section, sectionIndex) => section.type === 'new-releases' && <section key={section.id} className="home-section home-section--shop" style={{ order: sectionIndex }}>
         <div className="home-shell">
           <div className="home-shop-tabs" role="tablist" aria-label="Shop releases">
@@ -380,8 +378,8 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
 
           <div className="home-tops-editorial__products">
             <div className="home-tops-editorial__grid">
-              {renderProductCards(topsProducts)}
-              {!productsLoading && topsProducts.length === 0 && <p className="home-tops-editorial__empty">New products will be available soon.</p>}
+              {renderProductCards(productsForSection(section, availableTopsProducts))}
+              {!productsLoading && productsForSection(section, availableTopsProducts).length === 0 && <p className="home-tops-editorial__empty">New products will be available soon.</p>}
             </div>
           </div>
         </div>
@@ -406,8 +404,8 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
 
           <div className="home-tops-editorial__products">
             <div className="home-tops-editorial__grid">
-              {renderProductCards(bottomsProducts)}
-              {!productsLoading && bottomsProducts.length === 0 && <p className="home-tops-editorial__empty">No Bottoms products are published yet.</p>}
+              {renderProductCards(productsForSection(section, availableBottomsProducts))}
+              {!productsLoading && productsForSection(section, availableBottomsProducts).length === 0 && <p className="home-tops-editorial__empty">No Bottoms products are published yet.</p>}
             </div>
           </div>
         </div>
@@ -466,46 +464,43 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
         <section key={section.id} className="home-section home-section--keeper-circle" style={{ order: sectionIndex }}>
           <div className="home-keeper-editorial">
             <aside className="home-keeper-intro">
-              <h2>KEEPER CIRCLE</h2>
-              <p>Get First Access to what comes next, Unlock Exclusive Experiences, and Become part of the IZLI Community.</p>
+              <h2>{section.title || 'KEEPER CIRCLE'}</h2>
+              <p>{section.description}</p>
               <PrimaryButton className="home-keeper-intro__cta" onClick={() => onNavigate('keeper-circle')}>
                 DISCOVER THE CIRCLE
               </PrimaryButton>
             </aside>
 
             <div className="keeper-benefit-tabs" aria-label="Keeper Circle benefits">
-              {KEEPER_BENEFITS.map(benefit => (
-                <article className="keeper-benefit-tabs__item" key={benefit.number}>
+              {(section.benefits ?? DEFAULT_HOME_PAGE_CONFIG.sections.find(item => item.type === 'keeper-circle')?.benefits ?? []).map((benefit, index) => (
+                <article className="keeper-benefit-tabs__item" key={index}>
                   <h3 className="keeper-benefit-tabs__tab">
                     <span className="keeper-benefit-tabs__icon">
-                      <KeeperBenefitIcon number={benefit.number} />
+                      <KeeperBenefitIcon number={String(index + 1).padStart(2, '0')} />
                     </span>
                     <span className="keeper-benefit-tabs__label">{benefit.eyebrow}</span>
                   </h3>
 
                   <div className="keeper-benefit-tab-panel">
                     <h3 className="keeper-benefit-tab-panel__title">
-                      {benefit.title.map((line, lineIndex) => (
-                        <span className="keeper-benefit-tab-panel__title-line" key={lineIndex}>
-                          {line.map((segment, segmentIndex) => (
-                            <span className={`keeper-benefit-tab-panel__title-segment keeper-benefit-tab-panel__title-segment--${segment.tone}`} key={segmentIndex}>
-                              {segment.text}
-                            </span>
-                          ))}
-                        </span>
-                      ))}
+                      <span className="keeper-benefit-tab-panel__title-line">
+                        <span className="keeper-benefit-tab-panel__title-segment keeper-benefit-tab-panel__title-segment--muted">{benefit.titleLead}</span>
+                      </span>
+                      <span className="keeper-benefit-tab-panel__title-line">
+                        <span className="keeper-benefit-tab-panel__title-segment keeper-benefit-tab-panel__title-segment--primary">{benefit.titleHighlight}</span>
+                      </span>
                     </h3>
-                    <p className="keeper-benefit-tab-panel__copy">{benefit.copy}</p>
+                    <p className="keeper-benefit-tab-panel__copy">{benefit.description}</p>
                     <ul className="keeper-benefit-tab-panel__benefits">
-                      {benefit.indicators.map(indicator => (
-                        <li key={indicator.join('-')}>
+                      {benefit.points.map(point => (
+                        <li key={point}>
                           <span className="keeper-benefit-tab-panel__benefit-mark" aria-hidden="true">
                             <svg viewBox="0 0 16 16" fill="none">
                               <path d="M3 8h9M8 4l4 4-4 4" />
                             </svg>
                           </span>
                           <span className="keeper-benefit-tab-panel__benefit-text">
-                            {indicator[0]} {indicator[1].trim()}
+                            {point}
                           </span>
                         </li>
                       ))}

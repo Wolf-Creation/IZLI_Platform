@@ -17,7 +17,7 @@ export const homePageController = {
         $set: {
           value: config,
           group: 'website-builder',
-          description: 'Home page section order, visibility, and content',
+          description: 'Home page section order, visibility, content, and hero products',
           updatedBy: request.user?.sub,
         },
       },
