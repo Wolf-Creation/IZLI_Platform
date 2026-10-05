@@ -326,6 +326,22 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .site-footer__column--about {
+    grid-column: 1 / -1;
+  }
+
+  .site-footer__column--pages,
+  .site-footer__column--discover {
+    display: contents;
+  }
+
+  .site-footer__column--pages .site-footer__group,
+  .site-footer__column--discover .site-footer__group {
+    min-height: auto;
+    padding: 32px;
+    border-bottom: 1px solid var(--footer-border);
+  }
+
   .site-footer__column--newsletter {
     grid-column: 1 / -1;
     border-left: 0 !important;
@@ -536,8 +552,9 @@
   .site-footer__column--discover {
     padding: 0 !important;
 
-    .site-footer__group:last-child {
-      border-bottom: unset !important;
+    .site-footer__group{
+      padding: 32px 24px !important;
+      border-bottom: 1px solid rgba(245, 241, 234, 0.14) !important;
     }
   }
 

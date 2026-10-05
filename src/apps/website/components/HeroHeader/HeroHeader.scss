@@ -87,7 +87,7 @@
   position: relative;
   background: none;
   border: none;
-  font-size: 15px;
+  font-size: clamp(14px, 1.3vw, 16px);
   font-family: 'Playfair Display', serif;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -218,6 +218,12 @@
   }
 }
 
+@media (min-width: 769px) and (max-width: 1199px) {
+  .hero-header__brand {
+    display: none;
+  }
+}
+
 .hero-header__icons {
   display: flex;
   gap: 24px;
@@ -230,8 +236,8 @@
   position: relative;
   background: none;
   border: none;
-  width: 22px;
-  height: 22px;
+  width: clamp(18px, 1.8vw, 24px);
+  height: clamp(18px, 1.8vw, 24px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -317,7 +323,7 @@
     align-items: center;
     width: 100%;
     height: 64px;
-    padding: 0 18px;
+    padding: 0 24px;
     border-bottom: 1px solid rgba(245, 241, 234, 0.14);
   }
 
@@ -356,7 +362,7 @@
   }
 
   .hero-header__mobile-brand .hero-header__logo {
-    width: 86px;
+    width: 76px;
   }
 
   .hero-header__mobile-actions {

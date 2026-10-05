@@ -17,12 +17,6 @@ import shirtsImage from '../../../../assets/Website_img/Shop/categories/Shirts.p
 import bandanaImage from '../../../../assets/Website_img/Shop/categories/bandana.png'
 import pantsImage from '../../../../assets/Website_img/Shop/categories/pants.png'
 import bannerImage from '../../../../assets/Website_img/banner/banner_001.png'
-import topsAtlasPrincipal from '../../../../assets/Website_img/Shop/new releases/Atlas_symbol_heavy_oversized/001-Principal.png'
-import topsAtlasDetail from '../../../../assets/Website_img/Shop/new releases/Atlas_symbol_heavy_oversized/001-A.png'
-import topsAtlasBack from '../../../../assets/Website_img/Shop/new releases/Atlas_symbol_heavy_oversized/001-B.png'
-import topsPortePrincipal from '../../../../assets/Website_img/Shop/new releases/Porte_ksour_heavy_oversized/002-Principal.png'
-import topsPorteDetail from '../../../../assets/Website_img/Shop/new releases/Porte_ksour_heavy_oversized/002-A.png'
-import topsPorteBack from '../../../../assets/Website_img/Shop/new releases/Porte_ksour_heavy_oversized/002-B.png'
 import arrowTopRightIcon from '../../../../assets/icons/arrow_top_right.svg'
 import motifIcon from '../../../../assets/icons/motif_001.svg'
 import './Home.scss'
@@ -131,15 +125,6 @@ function KeeperBenefitIcon({ number }: { number: string }) {
     </svg>
   )
 }
-
-const TOP_PRODUCTS = [
-  { name: 'Atlas Symbol Tee', color: 'Black', price: '65 TND', image: topsAtlasPrincipal, images: [topsAtlasPrincipal, topsAtlasDetail, topsAtlasBack] },
-  { name: 'Atlas Symbol Tee', color: 'Sand', price: '65 TND', image: topsAtlasDetail, images: [topsAtlasPrincipal, topsAtlasDetail, topsAtlasBack] },
-  { name: 'Atlas Symbol Tee', color: 'Charcoal', price: '65 TND', image: topsAtlasBack, images: [topsAtlasPrincipal, topsAtlasDetail, topsAtlasBack] },
-  { name: 'Porte Ksour Tee', color: 'Ecru', price: '85 TND', image: topsPortePrincipal, images: [topsPortePrincipal, topsPorteDetail, topsPorteBack] },
-  { name: 'Porte Ksour Tee', color: 'Marron', price: '85 TND', image: topsPorteDetail, images: [topsPortePrincipal, topsPorteDetail, topsPorteBack] },
-  { name: 'Porte Ksour Tee', color: 'Noir', price: '85 TND', image: topsPorteBack, images: [topsPortePrincipal, topsPorteDetail, topsPorteBack] },
-] as const
 
 const KEEPER_BENEFITS = [
   {
@@ -283,7 +268,7 @@ const bannerCtaVariants = {
 }
 
 export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWishlisted }: Props) {
-  const { products } = useProducts({ status: 'published' })
+  const { products, loading: productsLoading } = useProducts({ status: 'published' })
   const [homeConfig, setHomeConfig] = useState(DEFAULT_HOME_PAGE_CONFIG)
   const [scrollY, setScrollY] = useState(0)
   const [showSplash, setShowSplash] = useState(true)
@@ -298,7 +283,36 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
     releaseStatus: 'live' as const,
   }))
   const displayedShopProducts = websiteProducts
+  const topsProducts = products.filter(product => product.status === 'published' && product.productType !== 'Bottoms')
+  const bottomsProducts = products.filter(product => product.status === 'published' && product.productType === 'Bottoms')
   const homeSections = homeConfig.sections.filter(section => section.enabled)
+
+  const renderProductCards = (catalogueProducts: typeof products) => catalogueProducts.map(product => {
+    const image = product.coverImageUrl || product.images?.[0] || ''
+    const size = product.sizes?.find(item => item.stock > 0)?.size ?? product.sizes?.[0]?.size ?? 'M'
+    return (
+      <ProductCard
+        key={product.id}
+        name={product.name}
+        price={product.price === undefined ? 'Price TBA' : `${product.price} ${product.currency}`}
+        image={image}
+        images={product.images}
+        mediaAssets={product.mediaAssets}
+        badge={product.releaseStatus === 'live' ? 'New' : undefined}
+        onClick={() => onNavigate('product-detail', product.id)}
+        onAddToCart={() => onAddToCart({
+          id: product.id,
+          name: product.name,
+          universe: product.universe,
+          price: product.price,
+          currency: product.currency,
+          size,
+          img: image,
+        })}
+        className="home-tops-product-card"
+      />
+    )
+  })
 
   useEffect(() => {
     let isCurrent = true
@@ -366,18 +380,8 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
 
           <div className="home-tops-editorial__products">
             <div className="home-tops-editorial__grid">
-              {TOP_PRODUCTS.map((product, index) => (
-                <ProductCard
-                  key={`${product.name}-${product.color}`}
-                  name={product.name}
-                  price={product.price}
-                  image={product.image}
-                  images={product.images}
-                  badge="new"
-                  onClick={() => onNavigate('shop')}
-                  className="home-tops-product-card"
-                />
-              ))}
+              {renderProductCards(topsProducts)}
+              {!productsLoading && topsProducts.length === 0 && <p className="home-tops-editorial__empty">New products will be available soon.</p>}
             </div>
           </div>
         </div>
@@ -402,18 +406,8 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
 
           <div className="home-tops-editorial__products">
             <div className="home-tops-editorial__grid">
-              {TOP_PRODUCTS.map((product, index) => (
-                <ProductCard
-                  key={`${product.name}-${product.color}`}
-                  name={product.name}
-                  price={product.price}
-                  image={product.image}
-                  images={product.images}
-                  badge="new"
-                  onClick={() => onNavigate('shop')}
-                  className="home-tops-product-card"
-                />
-              ))}
+              {renderProductCards(bottomsProducts)}
+              {!productsLoading && bottomsProducts.length === 0 && <p className="home-tops-editorial__empty">No Bottoms products are published yet.</p>}
             </div>
           </div>
         </div>
@@ -510,8 +504,9 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
                               <path d="M3 8h9M8 4l4 4-4 4" />
                             </svg>
                           </span>
-                          <span>{indicator[0]}</span>
-                          <strong>{indicator[1]}</strong>
+                          <span className="keeper-benefit-tab-panel__benefit-text">
+                            {indicator[0]} {indicator[1].trim()}
+                          </span>
                         </li>
                       ))}
                     </ul>
