@@ -1,6 +1,7 @@
 import { api } from './api'
 
 export type HomeSectionType = 'hero' | 'new-releases' | 'tops' | 'bottoms' | 'keeper-circle'
+export type HeroOverlayPosition = 'center' | 'bottom' | 'left' | 'right'
 
 export interface KeeperBenefit {
   eyebrow: string
@@ -16,6 +17,9 @@ export interface HomePageSection {
   enabled: boolean
   title: string
   description: string
+  backgroundImage?: string
+  overlayPosition?: HeroOverlayPosition
+  overlayOpacity?: number
   productIds?: string[]
   productCount?: number
   benefits?: KeeperBenefit[]
@@ -27,7 +31,7 @@ export interface HomePageConfig {
 
 export const DEFAULT_HOME_PAGE_CONFIG: HomePageConfig = {
   sections: [
-    { id: 'hero', type: 'hero', enabled: true, title: '', description: '', productIds: [], productCount: 3 },
+    { id: 'hero', type: 'hero', enabled: true, title: '', description: '', productIds: [], productCount: 3, overlayPosition: 'left', overlayOpacity: 50 },
     { id: 'new-releases', type: 'new-releases', enabled: true, title: 'New releases', description: '' },
     { id: 'tops', type: 'tops', enabled: true, title: 'Tops', description: 'Built for every day' },
     { id: 'bottoms', type: 'bottoms', enabled: true, title: 'Bottoms', description: 'Made to move with you' },
@@ -62,6 +66,22 @@ export const DEFAULT_HOME_PAGE_CONFIG: HomePageConfig = {
       ],
     },
   ],
+}
+
+export function getHeroOverlayGradient(position: HeroOverlayPosition, opacity: number): string {
+  const alpha = Math.min(100, Math.max(0, opacity)) / 100
+  const black = (strength: number) => `rgba(0, 0, 0, ${alpha * strength})`
+
+  switch (position) {
+    case 'center':
+      return `radial-gradient(ellipse at center, transparent 0%, ${black(0.35)} 48%, ${black(1)} 100%)`
+    case 'bottom':
+      return `linear-gradient(0deg, ${black(1)} 0%, ${black(0.65)} 36%, transparent 82%)`
+    case 'right':
+      return `linear-gradient(270deg, ${black(1)} 0%, ${black(0.65)} 36%, transparent 82%)`
+    case 'left':
+      return `linear-gradient(90deg, ${black(1)} 0%, ${black(0.65)} 36%, transparent 82%)`
+  }
 }
 
 export function getHomePageConfig(): Promise<HomePageConfig> {

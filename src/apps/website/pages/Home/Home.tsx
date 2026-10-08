@@ -1,14 +1,18 @@
 import { BG, FONT_SERIF } from '../../../../tokens'
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
+import { Icon } from '@iconify/react'
 import type { WebPage } from '../../types'
 import { HeroSlider, SWEATSHIRT_BACK_VIEW, SWEATSHIRT_FRONT_VIEW, type HeroCarouselProduct } from './Hero/HeroSlider'
 import { SplashScreen } from '../../components/SplashScreen/SplashScreen'
-import { ProductCarousel } from '../../components/ProductCarousel/ProductCarousel'
-import { ProductCard } from '../../components/ProductCard/ProductCard'
+import { MinimalistProductRail } from '../../components/MinimalistProductRail/MinimalistProductRail'
+import { MinimalistProductCard } from '../../components/MinimalistProductCard/MinimalistProductCard'
 import { PrimaryButton } from '../../components/PrimaryButton/PrimaryButton'
+import { TopBarSection } from '../../components/TopBarSection/TopBarSection'
 import { MarqueeBanner } from '../../components/MarqueeBanner/MarqueeBanner'
+import { withHeroBackgroundRemoved } from '../../../../shared/heroMedia'
 import { useProducts } from '../../../../shared/hooks/useProducts'
+import { useCollections } from '../../../../shared/hooks/useCollections'
 import { DEFAULT_HOME_PAGE_CONFIG, getHomePageConfig } from '../../../../shared/services/home'
 import type { CartItemInput } from '../../cart'
 import tShirtsImage from '../../../../assets/Website_img/Shop/categories/T-shirts.png'
@@ -23,6 +27,8 @@ import motifIcon from '../../../../assets/icons/motif_001.svg'
 import './Home.scss'
 
 interface Props { onNavigate: (p: WebPage, productId?: string) => void; onAddToCart: (item: CartItemInput) => void; onToggleWishlist: (item: CartItemInput) => void; isWishlisted: (id: string) => boolean }
+
+const KEEPER_CIRCLE_HOME_BANNER = 'https://res.cloudinary.com/tajbua8z/image/upload/v1791386869/banner_001.png'
 
 const SHOP_CARDS = [
   { type: 'category', area: 'tshirts', name: 'T-Shirts', img: tShirtsImage, icon: '✳' },
@@ -95,37 +101,6 @@ const COLLECTION_FEATURES = [
   { title: 'Product', desc: 'Heavy Oversized Tee', icon: '👕' },
   { title: 'Release', desc: '001', icon: '✦' },
 ] as const
-
-const RELEASE_POINTS = ['Release 001 badge', '100 Keeper points', 'Exclusive archive access']
-
-function KeeperBenefitIcon({ number }: { number: string }) {
-  if (number === '01') {
-    return (
-      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
-        <circle cx="16" cy="16" r="11.5" />
-        <path d="M16 9v7l5 3" />
-        <path d="M5 6v6h6" />
-      </svg>
-    )
-  }
-
-  if (number === '02') {
-    return (
-      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
-        <path d="m16 3 2.8 9.2L28 15l-9.2 2.8L16 27l-2.8-9.2L4 15l9.2-2.8L16 3Z" />
-        <path d="m25 21 .9 3.1L29 25l-3.1.9L25 29l-.9-3.1L21 25l3.1-.9L25 21Z" />
-      </svg>
-    )
-  }
-
-  return (
-    <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
-      <circle cx="16" cy="10" r="4" />
-      <path d="M7 27v-2a9 9 0 0 1 18 0v2H7Z" />
-      <path d="M6 11a3.5 3.5 0 0 0 0 7m20-7a3.5 3.5 0 0 1 0 7" />
-    </svg>
-  )
-}
 
 const COLLECTIONS_STORIES = [
   {
@@ -234,23 +209,70 @@ const bannerCtaVariants = {
 
 export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWishlisted }: Props) {
   const { products, loading: productsLoading } = useProducts({ status: 'published' })
+  const { collections } = useCollections()
   const [homeConfig, setHomeConfig] = useState(DEFAULT_HOME_PAGE_CONFIG)
   const [scrollY, setScrollY] = useState(0)
   const [showSplash, setShowSplash] = useState(true)
+  const [newReleasesProgress, setNewReleasesProgress] = useState(0)
+  const [topsProgress, setTopsProgress] = useState(0)
+  const [bottomsProgress, setBottomsProgress] = useState(0)
+  const [keeperCircleProgress, setKeeperCircleProgress] = useState(0)
   const availableHeroProducts: HeroCarouselProduct[] = products
     .filter(product => product.status === 'published' && product.productType !== 'Bottoms' && !product.name.toLowerCase().includes(' copy'))
-    .map(product => ({
-      id: product.id,
-      name: product.name,
-      description: product.shortDescription || product.description,
-      universe: product.universe,
-      price: product.price,
-      currency: product.currency,
-      image: product.name.toLowerCase().includes('sweatshirt')
-        ? SWEATSHIRT_FRONT_VIEW
-        : product.coverImageUrl || product.images?.[0] || '',
-      backImage: product.name.toLowerCase().includes('sweatshirt') ? SWEATSHIRT_BACK_VIEW : undefined,
-    }))
+    .map(product => {
+      const linkedCollectionId = product.collectionId ?? product.collectionIds[0]
+      const collection = (linkedCollectionId
+        ? collections.find(item => item.id === linkedCollectionId)
+        : undefined) ?? collections.find(item => item.productIds.includes(product.id))
+      const hero3dFront = product.media?.hero3dFront?.[0]
+      const hero3dRight = product.media?.hero3dRight?.[0]
+      const hero3dBack = product.media?.hero3dBack?.[0]
+      const hero3dLeft = product.media?.hero3dLeft?.[0]
+      const hero3dImages = {
+        front: hero3dFront,
+        right: hero3dRight,
+        back: hero3dBack,
+        left: hero3dLeft,
+      }
+      const hero3dViews = (product.media?.hero3dOrder ?? ['front', 'right', 'back', 'left'])
+        .flatMap(view => hero3dImages[view] ? [{ view, image: withHeroBackgroundRemoved(hero3dImages[view]) }] : [])
+      const hasCustomHero3dImages = hero3dViews.length > 0
+      const isFallbackSweatshirt = product.name.toLowerCase().includes('sweatshirt')
+
+      return {
+        id: product.id,
+        name: product.name,
+        universe: product.universe,
+        collectionName: collection?.name,
+        collectionDescription: collection?.shortDescription || collection?.description,
+        collectionSlug: collection?.slug,
+        features: [
+          {
+            title: 'Premium fabric',
+            description: product.characteristics?.composition || product.characteristics?.fabric || 'Heavyweight cotton for lasting comfort.',
+          },
+          {
+            title: 'Modern silhouette',
+            description: product.characteristics?.fit || 'An oversized fit with considered details.',
+          },
+          {
+            title: 'Timeless design',
+            description: product.design?.heritageTheme || product.legacy || 'Rooted in heritage, made for today.',
+          },
+        ],
+        image: hero3dViews[0]?.image || withHeroBackgroundRemoved(isFallbackSweatshirt && !hasCustomHero3dImages
+          ? SWEATSHIRT_FRONT_VIEW
+          : product.coverImageUrl || product.images?.[0] || ''),
+        hero3dViews: hero3dViews.length > 0 ? hero3dViews : undefined,
+        rightImage: hero3dRight ? withHeroBackgroundRemoved(hero3dRight) : undefined,
+        backImage: hero3dBack
+          ? withHeroBackgroundRemoved(hero3dBack)
+          : !hasCustomHero3dImages && isFallbackSweatshirt
+            ? SWEATSHIRT_BACK_VIEW
+            : undefined,
+        leftImage: hero3dLeft ? withHeroBackgroundRemoved(hero3dLeft) : undefined,
+      }
+    })
     .sort((first, second) => Number(second.name.toLowerCase().includes('sweatshirt')) - Number(first.name.toLowerCase().includes('sweatshirt')))
   const heroSection = homeConfig.sections.find(section => section.type === 'hero')
   const heroProductCount = heroSection?.productCount ?? 3
@@ -261,42 +283,53 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
   const websiteProducts = products.filter(product => (product.releaseSettings?.status ?? product.releaseStatus) === 'live' && product.releaseNumber === '01').map(product => ({
     id: product.id,
     name: product.name,
-    price: product.price,
-    currency: product.currency,
-    release: `Release ${product.releaseNumber ?? '01'}`,
-    releaseNumber: product.releaseNumber,
-    images: product.images ?? [],
-    releaseStatus: 'live' as const,
+    price: product.price === undefined ? 'Price TBA' : `${product.price} ${product.currency}`,
+    image: product.coverImageUrl || product.images?.[0] || '',
+    hoverImage: product.images?.find(image => image !== (product.coverImageUrl || product.images?.[0])),
+    mediaAssets: product.mediaAssets,
   }))
   const displayedShopProducts = websiteProducts
   const availableTopsProducts = products.filter(product => product.status === 'published' && product.productType !== 'Bottoms')
   const availableBottomsProducts = products.filter(product => product.status === 'published' && product.productType === 'Bottoms')
+  const instagramPosts = products
+    .filter(product => product.status === 'published')
+    .flatMap(product => {
+      const images = [product.coverImageUrl, ...(product.images ?? [])]
+        .filter((image, index, allImages): image is string => Boolean(image) && allImages.indexOf(image) === index)
+      return images.map((image, index) => ({
+        id: `${product.id}-${index}`,
+        image,
+        alt: `${product.name} — IZLI Instagram`,
+      }))
+    })
   const homeSections = homeConfig.sections.filter(section => section.enabled)
   const heroSectionIndex = homeSections.findIndex(section => section.type === 'hero')
 
   const renderProductCards = (catalogueProducts: typeof products) => catalogueProducts.map(product => {
     const image = product.coverImageUrl || product.images?.[0] || ''
-    const size = product.sizes?.find(item => item.stock > 0)?.size ?? product.sizes?.[0]?.size ?? 'M'
+    const wishlistItem: CartItemInput = {
+      id: product.id,
+      name: product.name,
+      universe: product.universe,
+      price: product.price,
+      currency: product.currency,
+      size: product.sizes?.find(item => item.stock > 0)?.size ?? product.sizes?.[0]?.size ?? 'M',
+      img: image,
+    }
     return (
-      <ProductCard
+      <MinimalistProductCard
         key={product.id}
-        name={product.name}
-        price={product.price === undefined ? 'Price TBA' : `${product.price} ${product.currency}`}
-        image={image}
-        images={product.images}
-        mediaAssets={product.mediaAssets}
-        badge={product.releaseStatus === 'live' ? 'New' : undefined}
-        onClick={() => onNavigate('product-detail', product.id)}
-        onAddToCart={() => onAddToCart({
+        product={{
           id: product.id,
           name: product.name,
-          universe: product.universe,
-          price: product.price,
-          currency: product.currency,
-          size,
-          img: image,
-        })}
-        className="home-tops-product-card"
+          price: product.price === undefined ? 'Price TBA' : `${product.price} ${product.currency}`,
+          image,
+          hoverImage: product.images?.find(productImage => productImage !== image),
+          mediaAssets: product.mediaAssets,
+        }}
+        onClick={() => onNavigate('product-detail', product.id)}
+        onToggleWishlist={() => onToggleWishlist(wishlistItem)}
+        isWishlisted={isWishlisted(product.id)}
       />
     )
   })
@@ -317,13 +350,119 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
 
   useEffect(() => {
     const handleScroll = () => {
+      document.querySelectorAll<HTMLElement>('.home-tops-editorial__header').forEach(header => {
+        const section = header.closest<HTMLElement>('.home-section--shop, .home-section--tops, .home-section--bottoms, .home-section--keeper-circle')
+        if (!section) return
+
+        const stickyTop = Number.parseFloat(getComputedStyle(header).top) || 0
+        const headerBounds = header.getBoundingClientRect()
+        const sectionBounds = section.getBoundingClientRect()
+        const isStuck = headerBounds.top <= stickyTop + 1 && sectionBounds.bottom >= headerBounds.bottom
+        header.classList.toggle('is-stuck', isStuck)
+      })
+
+      const newReleasesRail = document.querySelector<HTMLElement>('.home-section--shop .minimalist-product-rail--scrollable')
+      const railViewport = newReleasesRail?.querySelector<HTMLElement>('.minimalist-product-rail__viewport')
+      const railTrack = newReleasesRail?.querySelector<HTMLElement>('.minimalist-product-rail__grid')
+      if (newReleasesRail && railViewport && railTrack) {
+        const railWidth = newReleasesRail.clientWidth
+        const cardsDistance = Math.max(0, railTrack.scrollWidth - railWidth)
+        const endMessage = newReleasesRail.querySelector<HTMLElement>('.minimalist-product-rail__end-message')
+        const endMessageTrack = endMessage?.querySelector<HTMLElement>('span')
+        const messageDistance = endMessage && endMessageTrack
+          ? endMessageTrack.scrollWidth
+          : 0
+        const totalDistance = cardsDistance + messageDistance
+        const distanceValue = `${totalDistance}px`
+        if (newReleasesRail.style.getPropertyValue('--minimalist-product-rail-scroll-distance') !== distanceValue) {
+          newReleasesRail.style.setProperty('--minimalist-product-rail-scroll-distance', distanceValue)
+        }
+
+        const stickyTop = Number.parseFloat(getComputedStyle(railViewport).top) || 0
+        const scrollDistance = totalDistance
+          ? Math.max(0, Math.min(totalDistance, stickyTop - newReleasesRail.getBoundingClientRect().top))
+          : 0
+        railTrack.style.position = ''
+        railTrack.style.top = ''
+        railTrack.style.left = ''
+        railTrack.style.transformOrigin = ''
+        railTrack.style.transform = `translate3d(${-Math.min(scrollDistance, cardsDistance)}px, 0, 0)`
+        if (endMessage) endMessage.style.top = ''
+        if (endMessage && endMessageTrack && messageDistance > 0) {
+          const messageProgress = Math.max(0, Math.min(1, (scrollDistance - cardsDistance) / messageDistance))
+          const messageOffset = railWidth - messageProgress * endMessageTrack.scrollWidth
+          if (scrollDistance >= cardsDistance) {
+            const messageBottom = Number.parseFloat(getComputedStyle(endMessage).bottom) || 0
+            const messageHeight = endMessage.offsetHeight
+            const messageGap = 32
+            const availableGridHeight = Math.max(0, railViewport.clientHeight - messageBottom - messageHeight - messageGap)
+            const heightScale = railTrack.offsetHeight > 0
+              ? availableGridHeight / railTrack.offsetHeight
+              : 1
+            const gridScale = Math.min(1, heightScale)
+            const scaledGridHeight = railTrack.offsetHeight * gridScale
+            railTrack.style.position = 'absolute'
+            railTrack.style.top = `${Math.max(0, (availableGridHeight - scaledGridHeight) / 2)}px`
+            railTrack.style.left = '50%'
+            railTrack.style.transformOrigin = 'top center'
+            railTrack.style.transform = `translateX(-50%) scale(${gridScale})`
+          }
+          endMessage.style.opacity = messageProgress > 0 ? '1' : '0'
+          endMessageTrack.style.transform = `translate3d(${messageOffset}px, 0, 0)`
+        }
+        const progress = totalDistance ? scrollDistance / totalDistance : 0
+        const progressPercent = Math.round(progress * 100)
+        setNewReleasesProgress(previousProgress => previousProgress === progressPercent ? previousProgress : progressPercent)
+      }
+
+      const updateSectionProgress = (sectionSelector: string, itemSelector: string, setProgress: (progress: number) => void) => {
+        const section = document.querySelector<HTMLElement>(sectionSelector)
+        const header = section?.querySelector<HTMLElement>('.home-tops-editorial__header')
+        const items = section?.querySelectorAll<HTMLElement>(itemSelector)
+        if (!header || !items?.length) {
+          setProgress(0)
+          return
+        }
+
+        const progressLine = header.getBoundingClientRect().bottom
+        const viewedItems = Array.from(items).filter(item => item.getBoundingClientRect().top < progressLine).length
+        setProgress(Math.round((viewedItems / items.length) * 100))
+      }
+
+      updateSectionProgress('.home-section--tops', '.home-tops-editorial__grid > .minimalist-product-card', setTopsProgress)
+      updateSectionProgress('.home-section--bottoms', '.home-tops-editorial__grid > .minimalist-product-card', setBottomsProgress)
+      const keeperSection = document.querySelector<HTMLElement>('.home-section--keeper-circle')
+      const keeperHeader = keeperSection?.querySelector<HTMLElement>('.home-tops-editorial__header')
+      if (keeperSection && keeperHeader) {
+        const sectionBounds = keeperSection.getBoundingClientRect()
+        const headerBounds = keeperHeader.getBoundingClientRect()
+        const progressRange = sectionBounds.height - headerBounds.height
+        const progress = progressRange > 0
+          ? Math.max(0, Math.min(1, (headerBounds.bottom - sectionBounds.top - headerBounds.height) / progressRange))
+          : 0
+        const progressPercent = Math.round(progress * 100)
+        setKeeperCircleProgress(previousProgress => previousProgress === progressPercent ? previousProgress : progressPercent)
+      } else {
+        setKeeperCircleProgress(0)
+      }
       setScrollY(window.scrollY)
     }
 
-    window.addEventListener('scroll', handleScroll)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    window.addEventListener('resize', handleScroll)
     handleScroll()
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+    const railResizeObserver = new ResizeObserver(handleScroll)
+    const rail = document.querySelector('.home-section--shop .minimalist-product-rail--scrollable')
+    const railViewport = rail?.querySelector('.minimalist-product-rail__viewport')
+    const railTrack = rail?.querySelector('.minimalist-product-rail__grid')
+    if (railViewport) railResizeObserver.observe(railViewport)
+    if (railTrack) railResizeObserver.observe(railTrack)
+    return () => {
+      railResizeObserver.disconnect()
+      window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('resize', handleScroll)
+    }
+  }, [homeConfig.sections, products.length])
 
   return (
     <div className="home-page" style={{ background: BG, display: 'flex', flexDirection: 'column' }}>
@@ -332,8 +471,9 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
         key={section.id}
         products={section.id === heroSection?.id ? heroProducts : availableHeroProducts.slice(0, 3)}
         onNavigate={onNavigate}
-        titleOverride={section.title}
-        descriptionOverride={section.description}
+        backgroundImage={section.backgroundImage}
+        overlayPosition={section.overlayPosition}
+        overlayOpacity={section.overlayOpacity}
         style={{ order: sectionIndex }}
       />)}
       {heroSectionIndex >= 0 && <MarqueeBanner
@@ -342,30 +482,31 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
         style={{ order: heroSectionIndex + 0.5 }}
       />}
       {homeSections.map((section, sectionIndex) => section.type === 'new-releases' && <section key={section.id} className="home-section home-section--shop" style={{ order: sectionIndex }}>
+        <TopBarSection
+          title={section.title || 'New releases'}
+          action={<PrimaryButton className="home-tops-editorial__cta" onClick={() => onNavigate('shop', 'new-releases')}>Shop new releases</PrimaryButton>}
+          progress={newReleasesProgress}
+        />
         <div className="home-shell">
-          <div className="home-shop-tabs" role="tablist" aria-label="Shop releases">
-            <span className="home-shop-tab home-shop-tab--active" role="tab" aria-selected="true" tabIndex={0}>{section.title || 'New releases'}</span>
-          </div>
           {section.description && <p className="home-shop-description">{section.description}</p>}
-          <ProductCarousel
+          <MinimalistProductRail
             products={displayedShopProducts}
-            onNavigate={onNavigate}
-            onAddToCart={productId => {
-              const product = products.find(item => item.id === productId)
-              if (!product) return
-              onAddToCart({ id: product.id, name: product.name, universe: product.universe, price: product.price, currency: product.currency, size: product.sizes?.find(size => size.stock > 0)?.size ?? 'M', img: product.coverImageUrl || product.images?.[0] || '' })
-            }}
+            label="New releases"
+            onNavigate={productId => onNavigate('product-detail', productId)}
+            onProgressChange={setNewReleasesProgress}
+            showProgress={false}
+            scrollable
+            endMessage="NOT JUST A NEW RELEASE. THE BEGINNING OF A STORY."
           />
         </div>
       </section>)}
 
       {homeSections.map((section, sectionIndex) => section.type === 'tops' && <section key={section.id} className="home-section home-section--tops" style={{ order: sectionIndex }}>
-        <header className="home-tops-editorial__header">
-          <div>
-            <h2>{section.title || 'Tops'}</h2>
-          </div>
-          <PrimaryButton className="home-tops-editorial__cta" onClick={() => onNavigate('shop')}>Shop tops</PrimaryButton>
-        </header>
+        <TopBarSection
+          title={section.title || 'Tops'}
+          action={<PrimaryButton className="home-tops-editorial__cta" onClick={() => onNavigate('shop')}>Shop tops</PrimaryButton>}
+          progress={topsProgress}
+        />
         <div className="home-tops-editorial">
           <div className="home-tops-editorial__visual">
             <img src={tafuktImage} alt="IZLI tops collection" loading="lazy" decoding="async" />
@@ -386,12 +527,11 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
       </section>)}
 
       {homeSections.map((section, sectionIndex) => section.type === 'bottoms' && <section key={section.id} className="home-section home-section--bottoms" style={{ order: sectionIndex }}>
-        <header className="home-tops-editorial__header">
-          <div>
-            <h2>{section.title || 'Bottoms'}</h2>
-          </div>
-          <PrimaryButton className="home-tops-editorial__cta" onClick={() => onNavigate('shop')}>Shop bottoms</PrimaryButton>
-        </header>
+        <TopBarSection
+          title={section.title || 'Bottoms'}
+          action={<PrimaryButton className="home-tops-editorial__cta" onClick={() => onNavigate('shop')}>Shop bottoms</PrimaryButton>}
+          progress={bottomsProgress}
+        />
         <div className="home-tops-editorial home-bottoms-editorial">
           <div className="home-tops-editorial__visual">
             <img src={tafuktBottomsImage} alt="IZLI bottoms collection" loading="lazy" decoding="async" />
@@ -462,56 +602,95 @@ export default function Home({ onNavigate, onAddToCart, onToggleWishlist, isWish
 
       {homeSections.map((section, sectionIndex) => section.type === 'keeper-circle' && (
         <section key={section.id} className="home-section home-section--keeper-circle" style={{ order: sectionIndex }}>
+          <TopBarSection
+            title={section.title || 'KEEPER CIRCLE'}
+            className="keeper-circle-topbar"
+            progress={keeperCircleProgress}
+            progressLabel="Benefits explored"
+            action={<PrimaryButton className="home-tops-editorial__cta" onClick={() => onNavigate('keeper-circle')}>
+              DISCOVER THE CIRCLE
+            </PrimaryButton>}
+          />
           <div className="home-keeper-editorial">
-            <aside className="home-keeper-intro">
-              <h2>{section.title || 'KEEPER CIRCLE'}</h2>
-              <p>{section.description}</p>
-              <PrimaryButton className="home-keeper-intro__cta" onClick={() => onNavigate('keeper-circle')}>
-                DISCOVER THE CIRCLE
-              </PrimaryButton>
-            </aside>
-
-            <div className="keeper-benefit-tabs" aria-label="Keeper Circle benefits">
+            <div className="keeper-circle-intro-row">
+              <div className="keeper-circle-intro-row__image">
+                <img src={KEEPER_CIRCLE_HOME_BANNER} alt="IZLI Keeper Circle members together" loading="lazy" decoding="async" />
+              </div>
+              <div className="keeper-circle-invitation">
+                <span className="keeper-circle-invitation__eyebrow">A WELCOME GIFT FOR YOU</span>
+                <h3>Your story begins here. <br />Enjoy 20% off.</h3>
+                <p>Become a Keeper to unlock your welcome reward and get closer to every IZLI story.</p>
+                <PrimaryButton className="keeper-circle-invitation__cta" onClick={() => onNavigate('keeper-circle')}>
+                  BECOME A KEEPER
+                </PrimaryButton>
+              </div>
+            </div>
+            <div className="keeper-benefit-tabs" role="list" aria-label="Keeper Circle benefits">
               {(section.benefits ?? DEFAULT_HOME_PAGE_CONFIG.sections.find(item => item.type === 'keeper-circle')?.benefits ?? []).map((benefit, index) => (
-                <article className="keeper-benefit-tabs__item" key={index}>
-                  <h3 className="keeper-benefit-tabs__tab">
-                    <span className="keeper-benefit-tabs__icon">
-                      <KeeperBenefitIcon number={String(index + 1).padStart(2, '0')} />
-                    </span>
+                <article className="keeper-benefit-tabs__item" role="listitem" key={index}>
+                  <div className="keeper-benefit-tabs__content">
+                    <span className="keeper-benefit-tabs__index">{String(index + 1).padStart(2, '0')}</span>
                     <span className="keeper-benefit-tabs__label">{benefit.eyebrow}</span>
-                  </h3>
-
-                  <div className="keeper-benefit-tab-panel">
-                    <h3 className="keeper-benefit-tab-panel__title">
-                      <span className="keeper-benefit-tab-panel__title-line">
-                        <span className="keeper-benefit-tab-panel__title-segment keeper-benefit-tab-panel__title-segment--muted">{benefit.titleLead}</span>
-                      </span>
-                      <span className="keeper-benefit-tab-panel__title-line">
-                        <span className="keeper-benefit-tab-panel__title-segment keeper-benefit-tab-panel__title-segment--primary">{benefit.titleHighlight}</span>
-                      </span>
+                    <h3 className="keeper-benefit-tabs__title">
+                      <span>{benefit.titleLead}</span>
+                      <span>{benefit.titleHighlight}</span>
                     </h3>
-                    <p className="keeper-benefit-tab-panel__copy">{benefit.description}</p>
-                    <ul className="keeper-benefit-tab-panel__benefits">
-                      {benefit.points.map(point => (
-                        <li key={point}>
-                          <span className="keeper-benefit-tab-panel__benefit-mark" aria-hidden="true">
-                            <svg viewBox="0 0 16 16" fill="none">
-                              <path d="M3 8h9M8 4l4 4-4 4" />
-                            </svg>
-                          </span>
-                          <span className="keeper-benefit-tab-panel__benefit-text">
-                            {point}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                    <p className="keeper-benefit-tabs__description">{benefit.description}</p>
                   </div>
+                  <button
+                    className="keeper-benefit-tabs__link"
+                    type="button"
+                    onClick={() => onNavigate('keeper-circle')}
+                    aria-label={`Learn more about ${benefit.eyebrow}`}
+                  >
+                    <span>LEARN MORE</span>
+                    <span className="keeper-benefit-tabs__link-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M5 12h13M12 6l6 6-6 6" />
+                      </svg>
+                    </span>
+                  </button>
                 </article>
               ))}
             </div>
           </div>
         </section>
       ))}
+
+      <section className="home-instagram" aria-labelledby="home-instagram-title" style={{ order: homeSections.length + 1 }}>
+        <div className="home-instagram__heading">
+          <span>Follow on Instagram</span>
+          <a id="home-instagram-title" href="https://www.instagram.com/izli.tn/" target="_blank" rel="noreferrer">
+            @izli.tn
+          </a>
+        </div>
+        {instagramPosts.length > 0 && (
+          <div className="home-instagram__marquee" role="region" aria-label="IZLI Instagram posts">
+            <div className="home-instagram__track">
+              {[0, 1].map(copy => (
+                <div className="home-instagram__group" key={copy} aria-hidden={copy === 1}>
+                  {instagramPosts.map((post, index) => (
+                    <a
+                      className="home-instagram__post"
+                      href="https://www.instagram.com/izli.tn/"
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`View ${post.alt} on Instagram`}
+                      key={`${copy}-${post.id}`}
+                      tabIndex={copy === 1 ? -1 : undefined}
+                    >
+                      <img src={post.image} alt={copy === 0 ? post.alt : ''} loading="lazy" decoding="async" />
+                      <span className="home-instagram__post-overlay" aria-hidden="true">
+                        <Icon icon="line-md:instagram" />
+                      </span>
+                    </a>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
 
     </div>
   )

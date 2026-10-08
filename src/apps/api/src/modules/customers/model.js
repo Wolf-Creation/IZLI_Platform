@@ -10,20 +10,22 @@ const addressSchema = new mongoose.Schema({
   line2: { type: String },
   city: { type: String, required: true },
   state: { type: String },
-  postalCode: { type: String, required: true },
+  postalCode: { type: String },
   country: { type: String, required: true },
   phone: { type: String },
+  phone2: { type: String },
   isDefault: { type: Boolean, default: false },
 }, { _id: true });
 
 // ─── Customer ──────────────────────────────────────────────────────────────
 const customerSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  email: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
   password: { type: String, select: false },
   firstName: { type: String, required: true, trim: true },
   lastName: { type: String, required: true, trim: true },
   gender: { type: String, enum: ['female', 'male', 'non-binary', 'prefer-not-to-say'] },
   phone: { type: String },
+  phone2: { type: String },
   governorate: { type: String, trim: true },
   age: { type: Number, min: 13, max: 120 },
   avatarUrl: { type: String },

@@ -3,6 +3,7 @@ import { authRouter } from '../modules/auth/routes.js';
 import { usersRouter } from '../modules/users/routes.js';
 import { resourcesRouter } from './resources.routes.js';
 import { uploadRouter } from './upload.routes.js';
+import { healthRouter } from './health.routes.js';
 import { qrRouter } from '../modules/qr/routes.js';
 import { analyticsRoutes } from '../modules/analytics/routes.js';
 import { adminCollectionsRoutes, collectionsRoutes } from '../modules/collections/routes.js';
@@ -13,6 +14,7 @@ import shippingRoutes from '../modules/shipping/routes.js';
 
 export const apiRouter = Router();
 
+apiRouter.use('/health', healthRouter);
 apiRouter.use('/auth', authRouter);
 apiRouter.use('/users', usersRouter);
 apiRouter.use('/resources', resourcesRouter);

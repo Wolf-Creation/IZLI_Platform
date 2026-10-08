@@ -1,5 +1,8 @@
-import { useEffect, useRef, useState, type DragEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 import type { Screen } from '../../../types'
+import type { MediaUploadResult } from '../../../entities'
+import { api } from '../../../shared/services/api'
+import { getHeroOverlayGradient, type HeroOverlayPosition } from '../../../shared/services/home'
 import {
   DEFAULT_HOME_PAGE_CONFIG,
   getHomePageConfig,
@@ -29,7 +32,12 @@ const SECTION_META: Record<HomeSectionType, { label: string; icon: string; summa
 
 const SECTION_TYPES = Object.keys(SECTION_META) as HomeSectionType[]
 
-interface Props { onNavigate: (screen: Screen) => void }
+interface Props {
+  onNavigate: (screen: Screen) => void
+  onUploadProgress: (label: string, progress: number) => void
+  onUploadComplete: (label: string) => void
+  onUploadError: () => void
+}
 
 function newSectionId(type: HomeSectionType) {
   return `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
@@ -40,7 +48,7 @@ function createSection(type: HomeSectionType): HomePageSection {
   return { ...defaults, id: newSectionId(type) }
 }
 
-export default function HomePageBuilder({ onNavigate }: Props) {
+export default function HomePageBuilder({ onNavigate, onUploadProgress, onUploadComplete, onUploadError }: Props) {
   const { products: catalogueProducts, loading: productsLoading, error: productsError } = useProducts({ status: 'published' })
   const [activeWebsitePage, setActiveWebsitePage] = useState<'home' | 'collections'>('home')
   const [config, setConfig] = useState<HomePageConfig>(DEFAULT_HOME_PAGE_CONFIG)
@@ -52,6 +60,7 @@ export default function HomePageBuilder({ onNavigate }: Props) {
   const [showAddSections, setShowAddSections] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [heroUploadProgress, setHeroUploadProgress] = useState<number | null>(null)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const addMenuRef = useRef<HTMLDivElement>(null)
@@ -154,6 +163,37 @@ export default function HomePageBuilder({ onNavigate }: Props) {
     setEditingSection(current => current?.type === 'hero'
       ? { ...current, productCount, productIds: (current.productIds ?? []).slice(0, productCount) }
       : current)
+  }
+
+  const uploadHeroBackground = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || editingSection?.type !== 'hero') return
+    event.target.value = ''
+
+    if (!file.type.startsWith('image/')) {
+      setError('Choose a valid image file for the hero background.')
+      return
+    }
+
+    setError('')
+    setHeroUploadProgress(0)
+    onUploadProgress('Hero background', 0)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'hero')
+      const uploaded = await api.upload<MediaUploadResult>('/uploads/images', formData, onProgress => {
+        setHeroUploadProgress(onProgress)
+        onUploadProgress('Hero background', onProgress)
+      })
+      setEditingSection(current => current?.type === 'hero' ? { ...current, backgroundImage: uploaded.url } : current)
+      setHeroUploadProgress(null)
+      onUploadComplete('Hero background')
+    } catch (uploadError) {
+      setHeroUploadProgress(null)
+      onUploadError()
+      setError(uploadError instanceof Error ? uploadError.message : 'Hero background upload failed.')
+    }
   }
 
   const applySectionEdits = () => {
@@ -373,27 +413,104 @@ export default function HomePageBuilder({ onNavigate }: Props) {
               <button type="button" onClick={() => setEditingSection(null)} aria-label="Close section editor" style={{ border: 0, background: 'transparent', color: MUTED, fontSize: 24, lineHeight: 1, cursor: 'pointer' }}>×</button>
             </div>
             <div style={{ display: 'grid', gap: 16, padding: 24 }}>
-              <label style={fieldLabelStyle}>
-                {editingSection.type === 'hero' ? 'HERO TITLE OVERRIDE' : 'TITLE'}
-                <input
-                  ref={titleInputRef}
-                  value={editingSection.title}
-                  onChange={event => setEditingSection(current => current ? { ...current, title: event.target.value } : current)}
-                  style={FIELD}
-                  maxLength={140}
-                  placeholder={editingSection.type === 'hero' ? 'Leave empty to use the product name' : undefined}
-                />
-              </label>
-              <label style={fieldLabelStyle}>
-                {editingSection.type === 'hero' ? 'HERO DESCRIPTION OVERRIDE' : 'DESCRIPTION'}
-                <textarea
-                  value={editingSection.description}
-                  onChange={event => setEditingSection(current => current ? { ...current, description: event.target.value } : current)}
-                  style={{ ...FIELD, minHeight: 120, resize: 'vertical' }}
-                  maxLength={1000}
-                  placeholder={editingSection.type === 'hero' ? 'Leave empty to use the product description' : undefined}
-                />
-              </label>
+              {editingSection.type === 'hero' ? (
+                <p style={{ margin: 0, color: MUTED, fontSize: 12, lineHeight: 1.6 }}>
+                  The hero displays the active product collection&apos;s description and links directly to that collection. Edit the collection description in the Collections manager.
+                </p>
+              ) : (
+                <>
+                  <label style={fieldLabelStyle}>
+                    TITLE
+                    <input
+                      ref={titleInputRef}
+                      value={editingSection.title}
+                      onChange={event => setEditingSection(current => current ? { ...current, title: event.target.value } : current)}
+                      style={FIELD}
+                      maxLength={140}
+                    />
+                  </label>
+                  <label style={fieldLabelStyle}>
+                    DESCRIPTION
+                    <textarea
+                      value={editingSection.description}
+                      onChange={event => setEditingSection(current => current ? { ...current, description: event.target.value } : current)}
+                      style={{ ...FIELD, minHeight: 120, resize: 'vertical' }}
+                      maxLength={1000}
+                    />
+                  </label>
+                </>
+              )}
+              {editingSection.type === 'hero' && (
+                <div style={{ display: 'grid', gap: 12, paddingTop: 14, borderTop: `1px solid ${BORDER}` }}>
+                  <div>
+                    <p style={{ margin: '0 0 6px', color: MUTED, fontSize: 10, fontWeight: 700, letterSpacing: '.06em' }}>HERO BACKGROUND IMAGE</p>
+                    <p style={{ margin: '0 0 10px', color: MUTED, fontSize: 11, lineHeight: 1.5 }}>
+                      Upload one image to use as the hero background on desktop, tablet, and mobile.
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <label style={{ display: 'inline-flex', alignItems: 'center', padding: '9px 12px', background: INK, color: '#F5F1EA', fontSize: 11, cursor: 'pointer' }}>
+                        {editingSection.backgroundImage ? 'Replace image' : 'Upload image'}
+                        <input type="file" accept="image/*" disabled={heroUploadProgress !== null} onChange={event => void uploadHeroBackground(event)} style={{ display: 'none' }} />
+                      </label>
+                      {editingSection.backgroundImage && (
+                        <button
+                          type="button"
+                          disabled={heroUploadProgress !== null}
+                          onClick={() => setEditingSection(current => current?.type === 'hero' ? { ...current, backgroundImage: '' } : current)}
+                          style={{ padding: '8px 10px', border: `1px solid ${BORDER}`, background: 'transparent', color: '#A63D2F', fontSize: 11, cursor: heroUploadProgress === null ? 'pointer' : 'wait' }}
+                        >
+                          Remove image
+                        </button>
+                      )}
+                      <span style={{ color: MUTED, fontSize: 10 }}>Image is published when you publish the Home page.</span>
+                    </div>
+                    {heroUploadProgress !== null && (
+                      <div role="status" style={{ marginTop: 8, color: MUTED, fontSize: 11 }}>
+                        Uploading hero background: {heroUploadProgress}%
+                      </div>
+                    )}
+                    {error && <p role="alert" style={{ margin: '8px 0 0', color: '#A63D2F', fontSize: 11 }}>{error}</p>}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12 }}>
+                    <label style={fieldLabelStyle}>
+                      OVERLAY POSITION
+                      <select
+                        value={editingSection.overlayPosition ?? 'left'}
+                        onChange={event => {
+                          const overlayPosition = event.target.value
+                          if (!isHeroOverlayPosition(overlayPosition)) return
+                          setEditingSection(current => current?.type === 'hero' ? { ...current, overlayPosition } : current)
+                        }}
+                        style={FIELD}
+                      >
+                        <option value="center">Center · transparent center, dark edges</option>
+                        <option value="bottom">Bottom</option>
+                        <option value="left">Left</option>
+                        <option value="right">Right</option>
+                      </select>
+                    </label>
+                    <label style={fieldLabelStyle}>
+                      OVERLAY OPACITY · {editingSection.overlayOpacity ?? 50}%
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={editingSection.overlayOpacity ?? 50}
+                        onChange={event => setEditingSection(current => current?.type === 'hero'
+                          ? { ...current, overlayOpacity: Number(event.target.value) }
+                          : current)}
+                        style={{ width: '100%', accentColor: INK }}
+                      />
+                    </label>
+                  </div>
+                  <HeroBackgroundPreviews
+                    imageUrl={editingSection.backgroundImage ?? ''}
+                    overlayPosition={editingSection.overlayPosition ?? 'left'}
+                    overlayOpacity={editingSection.overlayOpacity ?? 50}
+                  />
+                </div>
+              )}
               {editingSection.type === 'keeper-circle' && (
                 <div style={{ display: 'grid', gap: 14, paddingTop: 4, borderTop: `1px solid ${BORDER}` }}>
                   <p style={{ margin: 0, color: MUTED, fontSize: 11, lineHeight: 1.5 }}>
@@ -548,5 +665,69 @@ export default function HomePageBuilder({ onNavigate }: Props) {
   )
 }
 
+function HeroBackgroundPreviews({
+  imageUrl,
+  overlayPosition,
+  overlayOpacity,
+}: {
+  imageUrl: string
+  overlayPosition: HeroOverlayPosition
+  overlayOpacity: number
+}) {
+  const devices = [
+    { label: 'DESKTOP', dimensions: '1440 × 900', ratio: '16 / 9', placement: 'desktop' },
+    { label: 'TABLET', dimensions: '820 × 1180', ratio: '4 / 5', placement: 'tablet' },
+    { label: 'MOBILE', dimensions: '390 × 844', ratio: '9 / 16', placement: 'mobile' },
+  ] as const
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
+      {devices.map(device => (
+        <div key={device.label} style={{ minWidth: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 4, marginBottom: 5, color: MUTED, fontSize: 9, fontWeight: 700, letterSpacing: '.04em' }}>
+            <span>{device.label}</span>
+            <span style={{ fontWeight: 500, letterSpacing: 0 }}>{device.dimensions}</span>
+          </div>
+          <div
+            aria-label={`${device.label.toLowerCase()} hero background preview`}
+            style={{
+              position: 'relative',
+              overflow: 'hidden',
+              aspectRatio: device.ratio,
+              background: '#29251F',
+              color: '#F5F1EA',
+            }}
+          >
+            {imageUrl ? (
+              <img src={imageUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+            ) : (
+              <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', padding: 8, color: '#D8D0C4', textAlign: 'center', fontSize: 10 }}>
+                Upload an image to preview
+              </span>
+            )}
+            <div style={{ position: 'absolute', inset: 0, background: getHeroOverlayGradient(overlayPosition, overlayOpacity) }} />
+            {imageUrl && (
+              <div style={{
+                position: 'absolute',
+                ...(device.placement === 'desktop'
+                  ? { top: '50%', left: '9%', width: '43%', transform: 'translateY(-50%)', textAlign: 'left' as const }
+                  : { right: '8%', bottom: '9%', left: '8%', textAlign: 'center' as const }),
+              }}>
+                <span style={{ display: 'block', marginBottom: 4, color: '#D1AD79', fontSize: 'clamp(5px, .8vw, 8px)', letterSpacing: '.14em' }}>ESSENTIALS</span>
+                <strong style={{ display: 'block', font: "500 clamp(8px, 1.3vw, 14px) 'Playfair Display', Georgia, serif", lineHeight: 1.15 }}>Featured product</strong>
+                <span style={{ display: 'block', marginTop: 4, fontSize: 'clamp(5px, .75vw, 8px)' }}>Discover product ↗</span>
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 const menuItemStyle: React.CSSProperties = { padding: '8px 10px', border: 0, background: 'transparent', color: TEXT, textAlign: 'left', font: '12px Inter, sans-serif', cursor: 'pointer' }
 const fieldLabelStyle: React.CSSProperties = { display: 'grid', gap: 6, color: MUTED, fontSize: 10, fontWeight: 700, letterSpacing: '.06em' }
+
+function isHeroOverlayPosition(value: string): value is HeroOverlayPosition {
+  return value === 'center' || value === 'bottom' || value === 'left' || value === 'right'
+}

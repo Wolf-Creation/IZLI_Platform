@@ -140,6 +140,11 @@ const productSchema = new mongoose.Schema({
     mainImage: { type: String, default: '' },
     gallery: [{ type: String }],
     detailImages: [{ type: String }],
+    hero3dFront: [{ type: String }],
+    hero3dRight: [{ type: String }],
+    hero3dBack: [{ type: String }],
+    hero3dLeft: [{ type: String }],
+    hero3dOrder: [{ type: String, enum: ['front', 'right', 'back', 'left'] }],
     front: [{ type: String }],
     back: [{ type: String }],
     sleeve: [{ type: String }],
@@ -173,4 +178,3 @@ productSchema.index({ collectionIds: 1 });
 productSchema.index({ categoryIds: 1 });
 
 export const Product = mongoose.model('Product', productSchema);
-

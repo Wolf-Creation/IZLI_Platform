@@ -15,6 +15,7 @@ const CLOUDINARY_FOLDERS = {
   slider: 'IZLI_TN/Sliders',
   banners: 'IZLI_TN/Banners',
   banner: 'IZLI_TN/Banners',
+  hero: 'IZLI_TN/Banners/Hero',
   legacy: 'IZLI_TN/Banners',
   collections: 'IZLI_TN/Collections',
 };

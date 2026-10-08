@@ -1,0 +1,137 @@
+.minimalist-product-card {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 14px;
+  color: var(--website-text, #f5f1ea);
+}
+
+.minimalist-product-card__image {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: var(--website-surface-raised, #151515);
+  cursor: pointer;
+}
+
+.minimalist-product-card__media {
+  position: relative;
+  min-width: 0;
+}
+
+.minimalist-product-card__wishlist {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #242424;
+  cursor: pointer;
+  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, .8));
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.minimalist-product-card__wishlist svg {
+  width: 24px;
+  height: 24px;
+}
+
+.minimalist-product-card__wishlist:not(.is-active) {
+  color: #1c1c1c;
+  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, .8));
+}
+
+.minimalist-product-card__wishlist.is-active {
+  color: #1c1c1c;
+  transform: scale(1.06);
+}
+
+.minimalist-product-card__wishlist:hover {
+  transform: scale(1.2);
+}
+
+.minimalist-product-card__wishlist:focus-visible {
+  outline: 2px solid #e2b36f;
+  outline-offset: 3px;
+}
+
+.minimalist-product-card__image img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 500ms cubic-bezier(.2, .7, .2, 1), opacity 350ms ease;
+}
+
+.minimalist-product-card__image:hover img:first-child {
+  transform: scale(1.025);
+}
+
+.minimalist-product-card__image .minimalist-product-card__image-hover {
+  opacity: 0;
+}
+
+.minimalist-product-card__image:hover .minimalist-product-card__image-hover,
+.minimalist-product-card__image:focus-visible .minimalist-product-card__image-hover {
+  opacity: 1;
+}
+
+.minimalist-product-card__image:focus-visible,
+.minimalist-product-card__name:focus-visible {
+  outline: 2px solid var(--website-text-accent, #c9924e);
+  outline-offset: 3px;
+}
+
+.minimalist-product-card__details {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 10px;
+}
+
+.minimalist-product-card__name {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: 500 18px/1.35 'Outfit', sans-serif;
+  text-align: left;
+  text-transform: uppercase;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.minimalist-product-card__price {
+  flex: 0 0 auto;
+  color: var(--website-text-muted, #c7c0b7);
+  font: 500 13px/1.35 'Inter', sans-serif;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .minimalist-product-card {
+    gap: 10px;
+  }
+
+  .minimalist-product-card__name,
+  .minimalist-product-card__price {
+    font-size: 12px;
+  }
+}

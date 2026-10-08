@@ -13,7 +13,7 @@ interface TopBarPageProps {
 export function TopBarPage({ label, descriptions = [], action, leading, trailing, className = '' }: TopBarPageProps) {
   return (
     <header className={`top-bar-page ${className}`.trim()}>
-      <div className="top-bar-page__inner">
+      <div className="website-content-container top-bar-page__inner">
         {leading ?? <div className="top-bar-page__brand-block">
           <span className="top-bar-page__label">{label}</span>
           {descriptions.length > 0 && <div className="top-bar-page__descriptions">{descriptions.map(description => <small key={description}>{description}</small>)}</div>}

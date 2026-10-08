@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Screen } from '../../../types'
-import type { Currency, InventoryPiece, InventoryPieceStatus, MediaAsset, MediaUploadResult, Product, ProductActivity, ProductMedia, ProductSeo, ProductStatus, ProductStory, ProductType, ProductUniverse } from '../../../entities'
+import type { Currency, Hero3dView, InventoryPiece, InventoryPieceStatus, MediaAsset, MediaUploadResult, Product, ProductActivity, ProductMedia, ProductSeo, ProductStatus, ProductStory, ProductType, ProductUniverse } from '../../../entities'
 import { useProduct } from '../../../shared/hooks/useProducts'
 import { useCategories } from '../../../shared/hooks/useCategories'
 import { useCollections } from '../../../shared/hooks/useCollections'
 import { createProduct, getProductActivity, getProducts, updateProduct } from '../../../shared/services/products'
 import { api } from '../../../shared/services/api'
+import { withHeroBackgroundRemoved } from '../../../shared/heroMedia'
 
 const INDIGO = '#1E2F44'
 const TEXT = '#2E2E2E'
@@ -29,11 +30,37 @@ const GENDERS = ['Men', 'Women', 'Unisex']
 const UNIVERSES: ProductUniverse[] = ['Heritage', 'Essentials', 'Studio', 'Community Lab']
 const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 const INVENTORY_STATUSES: InventoryPieceStatus[] = ['available', 'reserved', 'sold', 'returned', 'damaged', 'lost']
-const EMPTY_MEDIA: ProductMedia = { mainImage: '', gallery: [], detailImages: [], front: [], back: [], sleeve: [], embroidery: [], modelImages: [], campaignVideo: '', lifestyleImages: [] }
+const HERO_3D_FIELDS = {
+  hero3dFront: 'front',
+  hero3dRight: 'right',
+  hero3dBack: 'back',
+  hero3dLeft: 'left',
+} as const
+const HERO_3D_VIEW_FIELDS: Record<Hero3dView, keyof ProductMedia> = {
+  front: 'hero3dFront',
+  right: 'hero3dRight',
+  back: 'hero3dBack',
+  left: 'hero3dLeft',
+}
+const HERO_3D_LABELS: Record<Hero3dView, string> = {
+  front: 'Front View',
+  right: 'Right Side View',
+  back: 'Back View',
+  left: 'Left Side View',
+}
+const DEFAULT_HERO_3D_ORDER: Hero3dView[] = ['front', 'right', 'back', 'left']
+const EMPTY_MEDIA: ProductMedia = { mainImage: '', gallery: [], detailImages: [], hero3dFront: [], hero3dRight: [], hero3dBack: [], hero3dLeft: [], hero3dOrder: DEFAULT_HERO_3D_ORDER, front: [], back: [], sleeve: [], embroidery: [], modelImages: [], campaignVideo: '', lifestyleImages: [] }
 const EMPTY_STORY: ProductStory = { fullStory: '', designStory: '' }
 const EMPTY_SEO: ProductSeo = { slug: '', metaTitle: '', metaDescription: '', keywords: [], ogImage: '' }
 
-interface Props { onNavigate: (s: Screen) => void; productId: string | null; onDone: () => void }
+interface Props {
+  onNavigate: (s: Screen) => void
+  productId: string | null
+  onDone: () => void
+  onUploadProgress: (label: string, progress: number) => void
+  onUploadComplete: (label: string) => void
+  onUploadError: () => void
+}
 interface ProductInformationForm {
   name: string; sku: string; categoryId: string; collectionId: string; legacy: string; universe: ProductUniverse | ''
   gender: string; productType: string; shortDescription: string; fullDescription: string; status: ProductStatus
@@ -71,9 +98,10 @@ function mediaAssetFromUpload(field: string, upload: MediaUploadResult): MediaAs
 type MediaCollectionField = Exclude<keyof ProductMedia, 'mainImage' | 'campaignVideo'>
 
 function MediaSlot({ label, field, media, uploading, onFiles, onReorder, onRemove }: { label: string; field: keyof ProductMedia; media: ProductMedia; uploading: boolean; onFiles: (field: keyof ProductMedia, files: FileList | File[]) => void; onReorder: (field: MediaCollectionField, fromIndex: number, toIndex: number) => void; onRemove: (field: keyof ProductMedia, index?: number) => void }) {
-  const single = field === 'mainImage' || field === 'campaignVideo'
-  const values = single ? (media[field] ? [media[field] as string] : []) : media[field] as string[]
-  return <div style={{ padding: 18, border: `1px solid ${BORDER}`, borderRadius: 10, background: '#FBF9F5' }}><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 12 }}><div style={{ color: INDIGO, fontSize: 14, fontWeight: 600 }}>{label}</div><label style={{ padding: '8px 11px', border: `1px solid ${BORDER}`, borderRadius: 8, background: '#F7F3EC', color: TEXT_SEC, fontSize: 11, cursor: 'pointer' }}>{uploading ? 'Uploading...' : single ? 'Upload' : 'Add files'}<input type="file" accept={field === 'campaignVideo' ? 'video/*' : 'image/*'} multiple={!single} onChange={event => { if (event.target.files) onFiles(field, event.target.files); event.currentTarget.value = '' }} style={{ display: 'none' }} /></label></div>{values.length === 0 ? <div onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); if (event.dataTransfer.files.length) onFiles(field, event.dataTransfer.files) }} style={{ minHeight: 72, display: 'grid', placeItems: 'center', border: `1px dashed ${BORDER}`, borderRadius: 8, color: TEXT_SEC, fontSize: 12 }}>Drag &amp; drop upload</div> : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 }}>{values.map((url, index) => <div key={`${url}-${index}`} draggable={!single} onDragStart={event => event.dataTransfer.setData('text/plain', String(index))} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); const fromIndex = Number(event.dataTransfer.getData('text/plain')); if (!single && Number.isInteger(fromIndex)) onReorder(field as MediaCollectionField, fromIndex, index) }} style={{ position: 'relative', minHeight: 110, overflow: 'hidden', border: `1px solid ${BORDER}`, borderRadius: 8, background: '#EFE8DD', cursor: single ? 'default' : 'grab' }}>{field === 'campaignVideo' ? <video src={url} controls style={{ width: '100%', height: 110, objectFit: 'cover' }} /> : <img src={url} alt={`${label} ${index + 1}`} style={{ width: '100%', height: 110, objectFit: 'cover', display: 'block' }} />}<button type="button" onClick={() => onRemove(field, single ? undefined : index)} aria-label={`Remove ${label} ${index + 1}`} style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, border: 0, borderRadius: '50%', background: 'rgba(30, 47, 68, .82)', color: '#fff', cursor: 'pointer' }}>×</button></div>)}</div>}</div>
+  const single = field === 'mainImage' || field === 'campaignVideo' || field === 'hero3dFront' || field === 'hero3dRight' || field === 'hero3dBack' || field === 'hero3dLeft'
+  const isHero3dView = field === 'hero3dFront' || field === 'hero3dRight' || field === 'hero3dBack' || field === 'hero3dLeft'
+  const values = field === 'mainImage' || field === 'campaignVideo' ? (media[field] ? [media[field] as string] : []) : media[field] as string[]
+  return <div style={{ padding: 18, border: `1px solid ${BORDER}`, borderRadius: 10, background: '#FBF9F5' }}><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 12 }}><div style={{ color: INDIGO, fontSize: 14, fontWeight: 600 }}>{label}</div><label style={{ padding: '8px 11px', border: `1px solid ${BORDER}`, borderRadius: 8, background: '#F7F3EC', color: TEXT_SEC, fontSize: 11, cursor: 'pointer' }}>{uploading ? 'Uploading...' : single ? 'Upload' : 'Add files'}<input type="file" accept={field === 'campaignVideo' ? 'video/*' : 'image/*'} multiple={!single} onChange={event => { if (event.target.files) onFiles(field, event.target.files); event.currentTarget.value = '' }} style={{ display: 'none' }} /></label></div>{values.length === 0 ? <div onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); if (event.dataTransfer.files.length) onFiles(field, event.dataTransfer.files) }} style={{ minHeight: 72, display: 'grid', placeItems: 'center', border: `1px dashed ${BORDER}`, borderRadius: 8, color: TEXT_SEC, fontSize: 12 }}>Drag &amp; drop upload</div> : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 }}>{values.map((url, index) => <div key={`${url}-${index}`} draggable={!single} onDragStart={event => event.dataTransfer.setData('text/plain', String(index))} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); const fromIndex = Number(event.dataTransfer.getData('text/plain')); if (!single && Number.isInteger(fromIndex)) onReorder(field as MediaCollectionField, fromIndex, index) }} style={{ position: 'relative', minHeight: 110, overflow: 'hidden', border: `1px solid ${BORDER}`, borderRadius: 8, background: '#EFE8DD', cursor: single ? 'default' : 'grab' }}>{field === 'campaignVideo' ? <video src={url} controls style={{ width: '100%', height: 110, objectFit: 'cover' }} />   : <img src={isHero3dView ? withHeroBackgroundRemoved(url) : url} alt={`${label} ${index + 1}`} style={{ width: '100%', height: 110, objectFit: isHero3dView ? 'contain' : 'cover', display: 'block' }} />}<button type="button" onClick={() => onRemove(field, single ? undefined : index)} aria-label={`Remove ${label} ${index + 1}`} style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, border: 0, borderRadius: '50%', background: 'rgba(30, 47, 68, .82)', color: '#fff', cursor: 'pointer' }}>×</button></div>)}</div>}</div>
 }
 
 function RichTextEditor({ value, onChange, placeholder }: { value: string; onChange: (value: string) => void; placeholder: string }) {
@@ -83,7 +111,7 @@ function RichTextEditor({ value, onChange, placeholder }: { value: string; onCha
   return <div style={{ border: `1px solid ${BORDER}`, borderRadius: 10, overflow: 'hidden', background: '#FBF9F5' }}><div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: 10, borderBottom: `1px solid ${BORDER}`, background: '#F1ECE4' }}>{[['bold', 'B'], ['italic', 'I'], ['insertUnorderedList', '• List'], ['formatBlock', 'H2']].map(([action, label]) => <button key={action} type="button" onMouseDown={event => { event.preventDefault(); command(action, action === 'formatBlock' ? 'h2' : undefined) }} style={{ padding: '6px 9px', border: `1px solid ${BORDER}`, borderRadius: 6, background: '#FBF9F5', color: INDIGO, cursor: 'pointer', fontSize: 12, fontWeight: action === 'bold' ? 700 : 500 }}>{label}</button>)}<button type="button" onMouseDown={event => { event.preventDefault(); const url = window.prompt('Link URL'); if (url) command('createLink', url) }} style={{ padding: '6px 9px', border: `1px solid ${BORDER}`, borderRadius: 6, background: '#FBF9F5', color: INDIGO, cursor: 'pointer', fontSize: 12 }}>Link</button></div><div contentEditable suppressContentEditableWarning dangerouslySetInnerHTML={{ __html: value }} onInput={event => onChange(event.currentTarget.innerHTML)} data-placeholder={placeholder} style={{ minHeight: 180, padding: 14, color: TEXT, fontSize: 14, lineHeight: 1.65, outline: 'none' }} /></div>
 }
 
-export default function ProductEditor({ onNavigate, productId, onDone }: Props) {
+export default function ProductEditor({ onNavigate, productId, onDone, onUploadProgress, onUploadComplete, onUploadError }: Props) {
   const { product, loading } = useProduct(productId ?? '')
   const { categories } = useCategories()
   const { collections } = useCollections()
@@ -114,7 +142,7 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
   useEffect(() => {
     if (!product) return
     setInventoryPieces(product.inventoryPieces ?? [])
-    setMedia({ ...EMPTY_MEDIA, mainImage: product.media?.mainImage || product.coverImageUrl || '', ...product.media })
+    setMedia({ ...EMPTY_MEDIA, mainImage: product.media?.mainImage || product.coverImageUrl || '', ...product.media, hero3dOrder: product.media?.hero3dOrder?.length ? product.media.hero3dOrder : DEFAULT_HERO_3D_ORDER })
     setMediaAssets(product.mediaAssets ?? [])
     setStory({ ...EMPTY_STORY, ...product.story })
     setSeo({ ...EMPTY_SEO, ...product.seo })
@@ -185,22 +213,56 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
   const uploadMediaFiles = async (field: keyof ProductMedia, files: FileList | File[]) => {
     const selectedFiles = Array.from(files)
     if (selectedFiles.length === 0) return
+    const isHero3dView = field === 'hero3dFront' || field === 'hero3dRight' || field === 'hero3dBack' || field === 'hero3dLeft'
+    const filesToUpload = isHero3dView ? selectedFiles.slice(0, 1) : selectedFiles
+    const label = ({
+      mainImage: 'Main Product Image',
+      gallery: 'Product Images',
+      detailImages: 'Detail Images',
+      hero3dFront: 'Hero 3D Front View',
+      hero3dRight: 'Hero 3D Right Side View',
+      hero3dBack: 'Hero 3D Back View',
+      hero3dLeft: 'Hero 3D Left Side View',
+      front: 'Front',
+      back: 'Back',
+      sleeve: 'Sleeve',
+      embroidery: 'Embroidery',
+      modelImages: 'Model Images',
+      campaignVideo: 'Campaign Video',
+      lifestyleImages: 'Lifestyle Images',
+    } satisfies Record<keyof ProductMedia, string>)[field]
     setUploadingMedia(field)
     try {
       const uploaded = [] as MediaAsset[]
-      for (const file of selectedFiles) {
+      for (const [index, file] of filesToUpload.entries()) {
+        onUploadProgress(label, Math.round((index / filesToUpload.length) * 100))
         const formData = new FormData()
         formData.append('file', file)
         formData.append('folder', 'products')
-        const result = await api.upload<MediaUploadResult>('/uploads/images', formData)
+        const result = await api.upload<MediaUploadResult>('/uploads/images', formData, progress => {
+          onUploadProgress(label, Math.round(((index + progress / 100) / filesToUpload.length) * 100))
+        })
         uploaded.push(mediaAssetFromUpload(field, result))
       }
-      setMedia(current => field === 'mainImage' || field === 'campaignVideo' ? { ...current, [field]: uploaded[0].url } : { ...current, [field]: [...current[field], ...uploaded.map(asset => asset.url)] })
+      setMedia(current => {
+        if (field === 'mainImage' || field === 'campaignVideo') return { ...current, [field]: uploaded[0].url }
+        if (isHero3dView) {
+          const view = HERO_3D_FIELDS[field as keyof typeof HERO_3D_FIELDS]
+          return {
+            ...current,
+            [field]: [uploaded[0].url],
+            hero3dOrder: current.hero3dOrder.includes(view) ? current.hero3dOrder : [...current.hero3dOrder, view],
+          }
+        }
+        return { ...current, [field]: [...current[field], ...uploaded.map(asset => asset.url)] }
+      })
       setMediaAssets(current => [
-        ...(field === 'mainImage' || field === 'campaignVideo' ? current.filter(asset => asset.field !== field) : current),
+        ...(field === 'mainImage' || field === 'campaignVideo' || isHero3dView ? current.filter(asset => asset.field !== field) : current),
         ...uploaded,
       ])
+      onUploadComplete(label)
     } catch (error) {
+      onUploadError()
       setMessage(error instanceof Error ? error.message : 'Media upload failed.')
     } finally {
       setUploadingMedia(null)
@@ -209,14 +271,17 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
 
   const uploadOgImage = async (file: File) => {
     setUploadingOgImage(true)
+    onUploadProgress('SEO OG Image', 0)
     try {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('folder', 'products')
-      const result = await api.upload<MediaUploadResult>('/uploads/images', formData)
+      const result = await api.upload<MediaUploadResult>('/uploads/images', formData, progress => onUploadProgress('SEO OG Image', progress))
       setSeo(current => ({ ...current, ogImage: result.url }))
       setMediaAssets(current => [...current.filter(asset => asset.field !== 'seo.ogImage'), mediaAssetFromUpload('seo.ogImage', result)])
+      onUploadComplete('SEO OG Image')
     } catch (error) {
+      onUploadError()
       setMessage(error instanceof Error ? error.message : 'OG image upload failed.')
     } finally {
       setUploadingOgImage(false)
@@ -234,13 +299,25 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
   }
 
   const removeMedia = (field: keyof ProductMedia, index?: number) => {
+    const singleImageCollection = field === 'hero3dFront' || field === 'hero3dRight' || field === 'hero3dBack' || field === 'hero3dLeft'
     const removedUrl = field === 'mainImage' || field === 'campaignVideo'
       ? media[field] as string
-      : (media[field] as string[])[index ?? -1]
+      : (media[field] as string[])[index ?? (singleImageCollection ? 0 : -1)]
     if (removedUrl) setMediaAssets(current => current.filter(asset => !(asset.field === field && asset.url === removedUrl)))
     setMedia(current => {
       if (field === 'mainImage' || field === 'campaignVideo') return { ...current, [field]: '' }
-      return { ...current, [field]: current[field].filter((_, itemIndex) => itemIndex !== index) }
+      return { ...current, [field]: current[field].filter((_, itemIndex) => itemIndex !== (index ?? (singleImageCollection ? 0 : -1))) }
+    })
+  }
+
+  const reorderHero3dViews = (fromView: Hero3dView, toView: Hero3dView) => {
+    setMedia(current => {
+      const order = [...current.hero3dOrder]
+      const fromIndex = order.indexOf(fromView)
+      const toIndex = order.indexOf(toView)
+      if (fromIndex === -1 || toIndex === -1) return current
+      order.splice(toIndex, 0, ...order.splice(fromIndex, 1))
+      return { ...current, hero3dOrder: order }
     })
   }
 
@@ -378,6 +455,36 @@ export default function ProductEditor({ onNavigate, productId, onDone }: Props) 
           <div data-required-field="mainImage" tabIndex={-1} style={{ padding: validationAttempted && requiredFieldError('mainImage') ? 5 : 0, border: `1px solid ${validationAttempted && requiredFieldError('mainImage') ? '#B42318' : 'transparent'}`, borderRadius: 11 }}><MediaSlot label="Main Product Image" field="mainImage" media={media} uploading={uploadingMedia === 'mainImage'} onFiles={uploadMediaFiles} onReorder={reorderMedia} onRemove={removeMedia} />{validationAttempted && requiredFieldError('mainImage') && <div style={{ marginTop: 7, padding: '8px 10px', border: '1px solid #B42318', borderRadius: 7, color: '#B42318', fontSize: 11 }}>* {requiredFieldError('mainImage')}</div>}</div>
           <h2 style={{ margin: '18px 0 0', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Gallery</h2>
           {([['gallery', 'Product Images'], ['detailImages', 'Detail Images'], ['front', 'Front'], ['back', 'Back'], ['sleeve', 'Sleeve'], ['embroidery', 'Embroidery']] as const).map(([field, label]) => <MediaSlot key={field} label={label} field={field} media={media} uploading={uploadingMedia === field} onFiles={uploadMediaFiles} onReorder={reorderMedia} onRemove={removeMedia} />)}
+          <h2 style={{ margin: '18px 0 0', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Hero 3D Images</h2>
+          <p style={{ margin: '-6px 0 0', color: TEXT_SEC, fontSize: 12 }}>Upload the available angles, then drag them into the order you want the product to rotate through in the website hero.</p>
+          {([['hero3dFront', 'Hero 3D Front View'], ['hero3dRight', 'Hero 3D Right Side View'], ['hero3dBack', 'Hero 3D Back View'], ['hero3dLeft', 'Hero 3D Left Side View']] as const).map(([field, label]) => <MediaSlot key={field} label={label} field={field} media={media} uploading={uploadingMedia === field} onFiles={uploadMediaFiles} onReorder={reorderMedia} onRemove={removeMedia} />)}
+          {media.hero3dOrder.some(view => media[HERO_3D_VIEW_FIELDS[view]].length > 0) && (
+            <div style={{ display: 'grid', gap: 8, marginTop: 2 }}>
+              <div style={{ color: INDIGO, fontSize: 13, fontWeight: 600 }}>Animation order</div>
+              <div style={{ color: TEXT_SEC, fontSize: 11 }}>Drag the uploaded views to set the rotation sequence.</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {media.hero3dOrder.filter(view => {
+                  return media[HERO_3D_VIEW_FIELDS[view]].length > 0
+                }).map(view => (
+                  <div
+                    key={view}
+                    draggable
+                    onDragStart={event => event.dataTransfer.setData('text/plain', view)}
+                    onDragOver={event => event.preventDefault()}
+                    onDrop={event => {
+                      event.preventDefault()
+                      const fromView = event.dataTransfer.getData('text/plain') as Hero3dView
+                      reorderHero3dViews(fromView, view)
+                    }}
+                    style={{ padding: '9px 12px', border: `1px solid ${BORDER}`, borderRadius: 8, background: '#FBF9F5', color: INDIGO, fontSize: 12, cursor: 'grab' }}
+                  >
+                    <span style={{ marginRight: 7, color: CLAY }}>{media.hero3dOrder.filter(item => media[HERO_3D_VIEW_FIELDS[item]].length > 0).indexOf(view) + 1}.</span>
+                    {HERO_3D_LABELS[view]}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <h2 style={{ margin: '18px 0 0', color: INDIGO, fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 500 }}>Campaign</h2>
           {([['modelImages', 'Model Images'], ['campaignVideo', 'Campaign Video'], ['lifestyleImages', 'Lifestyle Images']] as const).map(([field, label]) => <MediaSlot key={field} label={label} field={field} media={media} uploading={uploadingMedia === field} onFiles={uploadMediaFiles} onReorder={reorderMedia} onRemove={removeMedia} />)}
         </div>

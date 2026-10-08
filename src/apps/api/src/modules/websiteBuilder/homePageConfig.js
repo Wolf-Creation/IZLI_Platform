@@ -82,6 +82,9 @@ export function normalizeHomePageConfig(input = {}) {
         const parsedProductCount = Number(section.productCount ?? 3);
         return {
           ...normalizedSection,
+          backgroundImage: String(section.backgroundImage ?? '').trim().slice(0, 2000),
+          overlayPosition: ['center', 'bottom', 'left', 'right'].includes(section.overlayPosition) ? section.overlayPosition : 'left',
+          overlayOpacity: Number.isFinite(Number(section.overlayOpacity)) ? Math.min(100, Math.max(0, Number(section.overlayOpacity))) : 50,
           productIds: (productIds ?? []).slice(0, 3),
           productCount: Number.isInteger(parsedProductCount) ? Math.min(3, Math.max(1, parsedProductCount)) : 3,
         };

@@ -85,6 +85,14 @@ export default function AdminApp() {
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 	const [sidebarHovered, setSidebarHovered] = useState(false)
 	const [adminUser, setAdminUser] = useState<User | null>(() => hasStoredSession() ? getStoredUser() : null)
+	const [uploadProgress, setUploadProgress] = useState<{ label: string; progress: number } | null>(null)
+	const [uploadToast, setUploadToast] = useState<string | null>(null)
+
+	useEffect(() => {
+		if (!uploadToast) return
+		const timeoutId = window.setTimeout(() => setUploadToast(null), 4500)
+		return () => window.clearTimeout(timeoutId)
+	}, [uploadToast])
 
 	useEffect(() => {
 		const syncFromLocation = () => {
@@ -197,14 +205,32 @@ export default function AdminApp() {
 			case 'admin-profile': return <AdminProfile onNavigate={navigate} onUpdated={user => setAdminUser(current => current ? { ...current, ...user } : current)} />
 			case 'products': return <ProductsList onNavigate={navigate} onCreateProduct={openProductCreate} onEditProduct={openProductEdit} />
 			case 'stock': return <StockManagement onNavigate={navigate} />
-			case 'product-editor': return <ProductEditor onNavigate={navigate} productId={productEditorId} onDone={closeProductEditor} />
+			case 'product-editor': return <ProductEditor
+				onNavigate={navigate}
+				productId={productEditorId}
+				onDone={closeProductEditor}
+				onUploadProgress={(label, progress) => setUploadProgress({ label, progress })}
+				onUploadComplete={label => {
+					setUploadProgress(null)
+					setUploadToast(`${label} uploaded successfully.`)
+				}}
+				onUploadError={() => setUploadProgress(null)}
+			/>
 			case 'categories': return <CategoriesList onNavigate={navigate} />
 			case 'collections': return <CollectionsList onNavigate={navigate} onCreate={openCollectionCreate} onEdit={openCollectionEdit} />
 			case 'collection-editor': return <CollectionEditor collectionId={collectionEditorId} onNavigate={navigate} onDone={closeCollectionEditor} />
 			case 'orders': return <OrdersList onNavigate={navigate} />
 			case 'shipping-settings': return <ShippingSettings onNavigate={navigate} />
 			case 'customer': return <CustomerDetail onNavigate={navigate} />
-			case 'home-builder': return <HomeBuilder onNavigate={navigate} />
+			case 'home-builder': return <HomeBuilder
+				onNavigate={navigate}
+				onUploadProgress={(label, progress) => setUploadProgress({ label, progress })}
+				onUploadComplete={label => {
+					setUploadProgress(null)
+					setUploadToast(`${label} uploaded successfully.`)
+				}}
+				onUploadError={() => setUploadProgress(null)}
+			/>
 			case 'site-page-editor': return <SitePageEditor onNavigate={navigate} />
 			case 'media-library': return <MediaLibrary onNavigate={navigate} />
 			case 'stories': return <StoriesList onNavigate={navigate} />
@@ -240,7 +266,15 @@ export default function AdminApp() {
 			case 'print-presets': return <PrintPresets onNavigate={navigate} />
 			case 'batch-generator': return <BatchGenerator onNavigate={navigate} />
 			case 'export-center': return <ExportCenter onNavigate={navigate} />
-			case 'legacies': return <Legacies onNavigate={navigate} />
+			case 'legacies': return <Legacies
+				onNavigate={navigate}
+				onUploadProgress={(label, progress) => setUploadProgress({ label, progress })}
+				onUploadComplete={label => {
+					setUploadProgress(null)
+					setUploadToast(`${label} uploaded successfully.`)
+				}}
+				onUploadError={() => setUploadProgress(null)}
+			/>
 			case 'legacy-archives': return <LegacyArchives onNavigate={navigate} />
 			case 'legacy-timeline': return <LegacyTimeline onNavigate={navigate} />
 			case 'legacy-keeper-circle': return <LegacyKeeperCircle onNavigate={navigate} />
@@ -270,8 +304,46 @@ export default function AdminApp() {
 			<Sidebar active={screen} onNavigate={navigate} collapsed={sidebarCollapsed} hovered={sidebarHovered} onToggleCollapse={() => setSidebarCollapsed(value => !value)} onHoverChange={setSidebarHovered} user={adminUser} />
 			<div style={{ marginLeft: sidebarWidth, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'margin-left 0.18s ease' }}>
 				<Topbar screen={screen} onNavigate={navigate} onProfile={() => navigate('admin-profile')} onLogout={handleLogout} user={adminUser} />
+				{uploadProgress && <div
+					role="status"
+					aria-label={`Uploading ${uploadProgress.label}: ${uploadProgress.progress}%`}
+					style={{ flexShrink: 0, background: '#F5F1EA' }}
+				>
+					<div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 16px 4px', color: '#506681', fontSize: 11 }}>
+						<span>Uploading {uploadProgress.label}</span>
+						<span>{uploadProgress.progress}%</span>
+					</div>
+					<div style={{ height: 3, background: '#D8D0C4' }}>
+						<div style={{
+							height: '100%',
+							width: `${uploadProgress.progress}%`,
+							background: '#8C6B52',
+							transition: 'width 120ms ease-out',
+						}} />
+					</div>
+				</div>}
 				<main style={{ flex: 1, overflowY: 'auto' }}>{renderScreen()}</main>
 			</div>
+			{uploadToast && <div
+				role="status"
+				aria-live="polite"
+				style={{
+					position: 'fixed',
+					right: 24,
+					bottom: 24,
+					zIndex: 1000,
+					maxWidth: 'min(360px, calc(100vw - 32px))',
+					padding: '14px 18px',
+					borderRadius: 10,
+					background: '#1E2F44',
+					color: '#FBF9F5',
+					boxShadow: '0 8px 24px rgba(30, 47, 68, 0.22)',
+					fontSize: 13,
+					fontWeight: 600,
+				}}
+			>
+				{uploadToast}
+			</div>}
 		</div>
 	)
 }

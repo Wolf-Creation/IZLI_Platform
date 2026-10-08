@@ -64,17 +64,12 @@ export default function Footer({ onNavigate, showHomeAbout = false }: Props) {
 
   return (
     <footer className={`site-footer ${showHomeAbout ? 'site-footer--home' : ''}`}>
-      <div className="site-footer__grid">
+      <div className="website-content-container site-footer__grid">
         <div className="site-footer__column site-footer__column--about">
           <div className="home-about-copy">
             <div className="home-about-copy__text">
               <img className="site-footer__logo" src={izliLogoText} alt="IZLI" />
               <p className="home-legacy-editorial__intro">IZLI is more than a clothing brand — <br /> It is a contemporary universe inspired by Amazigh heritage, carrying stories, identity, and culture from one generation to the next.</p>
-            </div>
-            <div className="home-about-socials" aria-label="IZLI social media links">
-              <a href="https://www.instagram.com/izli.tn/" target="_blank" rel="noreferrer" aria-label="Instagram @izli.tn"><Icon icon="line-md:instagram" aria-hidden="true" /></a>
-              <a href="https://www.facebook.com/izli.tn/" target="_blank" rel="noreferrer" aria-label="Facebook @izli.tn"><Icon icon="line-md:facebook" aria-hidden="true" /></a>
-              <a href="https://tiktok.com/@izli_tn" target="_blank" rel="noreferrer" aria-label="TikTok @izli_tn"><Icon icon="line-md:tiktok" aria-hidden="true" /></a>
             </div>
           </div>
         </div>
@@ -87,7 +82,26 @@ export default function Footer({ onNavigate, showHomeAbout = false }: Props) {
           <FooterGroup title="Categories" links={CATEGORY_LINKS} onNavigate={onNavigate} />
         </div>
       </div>
-
+      <div className="website-content-container site-footer__bottom">
+        <div className="site-footer__social-follow">
+          <span className="site-footer__social-label">Follow on</span>
+          <div className="site-footer__social-links" aria-label="IZLI social media links">
+            <a href="https://www.instagram.com/izli.tn/" target="_blank" rel="noreferrer" aria-label="Instagram @izli.tn">
+              <Icon icon="line-md:instagram" aria-hidden="true" />
+              <span>Instagram</span>
+            </a>
+            <a href="https://www.facebook.com/izli.tn/" target="_blank" rel="noreferrer" aria-label="Facebook @izli.tn">
+              <Icon icon="line-md:facebook" aria-hidden="true" />
+              <span>Facebook</span>
+            </a>
+            <a href="https://tiktok.com/@izli_tn" target="_blank" rel="noreferrer" aria-label="TikTok @izli_tn">
+              <Icon icon="line-md:tiktok" aria-hidden="true" />
+              <span>TikTok</span>
+            </a>
+          </div>
+        </div>
+        <p className="site-footer__copyright">All rights reserved@IZLI 2026.</p>
+      </div>
     </footer>
   )
 }

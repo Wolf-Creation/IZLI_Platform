@@ -98,29 +98,31 @@ export default function Shop({ onNavigate, onAddToCart, onToggleWishlist, isWish
       />
 
       <div className="shop-shell shop-shell--category-bar">
-        <div className="shop-category-strip" aria-label="Shop categories">
-          <div className="shop-category-strip__categories">
-            {[{ id: 'All', label: 'All' }, ...productCategories].map(category => (
-              <button
-                key={category.id}
-                type="button"
-                className={activeCategory === category.id ? 'is-active' : ''}
-                onClick={() => selectCategory(category.id)}
-              >
-                {category.label}
-              </button>
-            ))}
+        <div className="website-content-container shop-shell__inner">
+          <div className="shop-category-strip" aria-label="Shop categories">
+            <div className="shop-category-strip__categories">
+              {[{ id: 'All', label: 'All' }, ...productCategories].map(category => (
+                <button
+                  key={category.id}
+                  type="button"
+                  className={activeCategory === category.id ? 'is-active' : ''}
+                  onClick={() => selectCategory(category.id)}
+                >
+                  {category.label}
+                </button>
+              ))}
+            </div>
+            <button type="button" className={`shop-filter-trigger ${isFilterOpen ? 'is-open' : ''}`} onClick={() => setIsFilterOpen(true)} aria-expanded={isFilterOpen}>
+              <span aria-hidden="true">+</span> Filter ({activeFilterCount})
+            </button>
           </div>
-          <button type="button" className={`shop-filter-trigger ${isFilterOpen ? 'is-open' : ''}`} onClick={() => setIsFilterOpen(true)} aria-expanded={isFilterOpen}>
-            <span aria-hidden="true">+</span> Filter ({activeFilterCount})
-          </button>
+          {showNewReleaseFilter && (
+            <div className="shop-active-filters">
+              <span>Showing new releases</span>
+              <button type="button" onClick={removeNewReleaseFilter} aria-label="Remove new releases filter">×</button>
+            </div>
+          )}
         </div>
-        {showNewReleaseFilter && (
-          <div className="shop-active-filters">
-            <span>Showing new releases</span>
-            <button type="button" onClick={removeNewReleaseFilter} aria-label="Remove new releases filter">×</button>
-          </div>
-        )}
       </div>
 
       <AnimatePresence>
@@ -170,8 +172,8 @@ export default function Shop({ onNavigate, onAddToCart, onToggleWishlist, isWish
         </motion.aside>}
       </AnimatePresence>
 
-      <section className="shop-catalogue" id="shop-catalogue">
-        <div className="shop-shell">
+      <section className="shop-catalogue website-section-spacing" id="shop-catalogue">
+        <div className="website-content-container shop-shell">
           
 
           {loading || categoriesLoading || collectionsLoading ? <div className="shop-empty"><h3>Loading catalogue...</h3></div> : error || categoriesError || collectionsError ? <div className="shop-empty"><h3>Catalogue unavailable.</h3><p>{error ?? categoriesError ?? collectionsError}</p></div> : visibleProducts.length > 0 ? <div className="shop-product-grid">

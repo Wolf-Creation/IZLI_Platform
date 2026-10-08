@@ -16,7 +16,9 @@ function roundAmount(amount) {
 }
 
 async function saveCustomer(customerInput, currency) {
-  let customer = await Customer.findOne({ email: customerInput.email });
+  let customer = customerInput.email
+    ? await Customer.findOne({ email: customerInput.email })
+    : null;
   if (customer) return customer;
 
   const address = {
@@ -24,6 +26,7 @@ async function saveCustomer(customerInput, currency) {
     firstName: customerInput.firstName,
     lastName: customerInput.lastName,
     phone: customerInput.phone,
+    phone2: customerInput.phone2,
     line1: customerInput.addressLine1,
     line2: customerInput.addressLine2,
     city: customerInput.city,
@@ -38,8 +41,9 @@ async function saveCustomer(customerInput, currency) {
       customer = await Customer.create({
         firstName: customerInput.firstName,
         lastName: customerInput.lastName,
-        email: customerInput.email,
+        ...(customerInput.email ? { email: customerInput.email } : {}),
         phone: customerInput.phone,
+        phone2: customerInput.phone2,
         governorate: customerInput.governorate,
         status: 'guest',
         authProvider: 'email',
@@ -48,7 +52,9 @@ async function saveCustomer(customerInput, currency) {
       });
     } catch (error) {
       if (error.code !== 11000) throw error;
-      customer = await Customer.findOne({ email: customerInput.email });
+      customer = customerInput.email
+        ? await Customer.findOne({ email: customerInput.email })
+        : null;
       if (!customer) throw error;
       return customer;
     }
@@ -115,8 +121,9 @@ export async function createCheckoutOrder(request, response) {
   const order = await Order.create({
     customerId: customer._id,
     customerName: `${checkout.customer.firstName} ${checkout.customer.lastName}`,
-    customerEmail: checkout.customer.email,
+    customerEmail: checkout.customer.email || undefined,
     customerPhone: checkout.customer.phone,
+    customerPhone2: checkout.customer.phone2,
     status: 'pending',
     paymentStatus: 'pending',
     paymentMethod: checkout.paymentMethod,

@@ -69,13 +69,13 @@
 .izli-product-card__wishlist svg {
   width: 24px;
   height: 24px;
-  stroke: #242424;
-  stroke-width: 1.8;
+  color: #242424;
+  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, .8));
 }
 
 
 .izli-product-card__wishlist.is-active {
-  color: #242424 !important;
+  color: #1c1c1c !important;
   transform: scale(1.06);
 }
 .izli-product-card__wishlist:hover {

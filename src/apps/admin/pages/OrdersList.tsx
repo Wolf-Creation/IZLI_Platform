@@ -12,6 +12,7 @@ interface OrderRecord {
   customerName?: string
   customerEmail?: string
   customerPhone?: string
+  customerPhone2?: string
   shippingAddress: string
   shippingCarrier?: string
   paymentMethod?: string
@@ -78,7 +79,7 @@ export default function OrdersList(_props: Props) {
     return orders.filter(order => {
       const fulfillment = fulfillmentLabels[order.status] ?? order.status
       const matchesFilter = filter === 'All' || (filter === 'Unfulfilled' ? order.status === 'pending' : fulfillment === filter)
-      const matchesSearch = !query || [order.id, order.customerName, order.customerEmail, order.customerPhone]
+      const matchesSearch = !query || [order.id, order.customerName, order.customerEmail, order.customerPhone, order.customerPhone2]
         .some(value => value?.toLowerCase().includes(query))
       return matchesFilter && matchesSearch
     })
@@ -140,8 +141,9 @@ export default function OrdersList(_props: Props) {
                     <strong style={{ display: 'block', fontSize: 13, color: TEXT }}>{order.customerName || 'Customer'}</strong>
                     <span style={{ display: 'block', marginTop: 3, fontSize: 11, color: TEXT_SEC }}>{order.customerEmail}</span>
                     <span style={{ display: 'block', marginTop: 3, fontSize: 11, color: TEXT_SEC }}>{order.customerPhone}</span>
+                    {order.customerPhone2 && <span style={{ display: 'block', marginTop: 3, fontSize: 11, color: TEXT_SEC }}>{order.customerPhone2}</span>}
                     <details style={{ marginTop: 7, fontSize: 11, color: TEXT_SEC }}>
-                      <summary style={{ cursor: 'pointer' }}>Delivery &amp; items</summary>
+                      <summary style={{ cursor: 'pointer' }}>Delivery Address &amp; items</summary>
                       <p>{order.shippingAddress}</p>
                       <p>{order.shippingCarrier || 'Carrier not saved'} · Cash on delivery</p>
                       {order.lineItems.map((item, index) => (

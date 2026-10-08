@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import type { WebPage } from './types'
 import { HeroHeader } from './components/HeroHeader/HeroHeader'
 import Footer from './components/Footer'
@@ -25,6 +25,7 @@ import type { User } from '../../entities'
 import { SplashScreen } from './components/SplashScreen/SplashScreen'
 import { trackCtaClick, trackPageView } from '../../shared/services/analytics'
 import { WhatsAppContact } from './components/ScrollToTop'
+import { CartDrawer } from './components/CartDrawer/CartDrawer'
 import Cart, { type CartItem, type CartItemInput, type WishlistItem } from './cart.tsx'
 import Wishlist from './pages/Wishlist/Wishlist'
 import './WebsiteTheme.scss'
@@ -57,6 +58,17 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
   })
   const [scrollY, setScrollY] = useState(0)
   const [isIntroTransitioning, setIsIntroTransitioning] = useState(false)
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false)
+
+  useLayoutEffect(() => {
+    const previousScrollRestoration = window.history.scrollRestoration
+    window.history.scrollRestoration = 'manual'
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+
+    return () => {
+      window.history.scrollRestoration = previousScrollRestoration
+    }
+  }, [page, productId, collectionSlug, shopFilter])
 
   useEffect(() => {
     const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -203,14 +215,15 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
   const addToCart = (item: CartItemInput) => {
     const addedQuantity = item.qty ?? 1
     setCartItems(current => {
-      const existing = current.find(cartItem => cartItem.id === item.id && cartItem.size === item.size)
+      const existing = current.find(cartItem => cartItem.id === item.id && cartItem.size === item.size && cartItem.colorId === item.colorId)
       if (existing) return current.map(cartItem => cartItem === existing ? { ...cartItem, qty: cartItem.qty + addedQuantity } : cartItem)
       return [...current, { ...item, qty: addedQuantity } as CartItem]
     })
   }
 
-  const updateCartQuantity = (id: string, delta: number) => setCartItems(current => current.map(item => item.id === id ? { ...item, qty: Math.max(1, item.qty + delta) } : item))
-  const removeCartItem = (id: string) => setCartItems(current => current.filter(item => item.id !== id))
+  const updateCartQuantity = (id: string, size: string, delta: number, colorId?: string) => setCartItems(current => current.map(item => item.id === id && item.size === size && item.colorId === colorId ? { ...item, qty: Math.max(1, item.qty + delta) } : item))
+  const removeCartItem = (id: string, size: string, colorId?: string) => setCartItems(current => current.filter(item => item.id !== id || item.size !== size || item.colorId !== colorId))
+  const closeCartDrawer = useCallback(() => setIsCartDrawerOpen(false), [])
   const toggleWishlist = (item: CartItemInput) => setWishlistItems(current => current.some(existing => existing.id === item.id) ? current.filter(existing => existing.id !== item.id) : [...current, item])
   const removeWishlistItem = (id: string) => setWishlistItems(current => current.filter(item => item.id !== id))
 
@@ -267,13 +280,11 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
       window.history.pushState({}, '', destination)
     }
 
-    setIsIntroTransitioning(true)
+    setIsIntroTransitioning(p !== 'cart')
     setPage(p)
     setProductId(p === 'product-detail' ? routeParam ?? null : null)
     setCollectionSlug(p === 'collection-detail' ? routeParam ?? null : null)
     setShopFilter(p === 'shop' && routeParam === 'new-releases' ? routeParam : '')
-    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'
-    window.scrollTo({ top: 0, behavior })
   }
 
   const handleAuthenticated = (user: User) => {
@@ -289,8 +300,8 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
     switch (page) {
       case 'not-found': return <NotFoundPage onReturnHome={() => navigate('home')} />
       case 'home':           return <Home onNavigate={navigate} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} isWishlisted={id => wishlistItems.some(item => item.id === id)} />
-      case 'collections':    return <Collections onNavigate={navigate} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} isWishlisted={id => wishlistItems.some(item => item.id === id)} />
-      case 'collection-detail': return <CollectionDetailPage slug={collectionSlug ?? ''} onNavigate={navigate} />
+      case 'collections':    return <Collections onNavigate={navigate} />
+      case 'collection-detail': return <CollectionDetailPage slug={collectionSlug ?? ''} onNavigate={navigate} onToggleWishlist={toggleWishlist} isWishlisted={id => wishlistItems.some(item => item.id === id)} />
       case 'shop':           return <Shop initialFilter={shopFilter} onNavigate={navigate} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} isWishlisted={id => wishlistItems.some(item => item.id === id)} />
       case 'product-detail': return <ProductDetail productId={productId} onNavigate={navigate} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} isWishlisted={id => wishlistItems.some(item => item.id === id)} />
       case 'heritage':       return <Heritage onNavigate={navigate} />
@@ -312,19 +323,35 @@ export default function WebsiteApp({ onAdminRequest }: Props) {
     }
   }
 
-  const showFooter = !PAGES_WITHOUT_FOOTER.includes(page)
-  const showHeader = true
+  const showFooter = page !== 'cart' && !PAGES_WITHOUT_FOOTER.includes(page)
+  const showHeader = page !== 'cart'
   const isHeroHomeStyle = page === 'home' || page === 'shop'
 
   return (
-    <div className="website-app" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div className={`website-app${page === 'home' ? ' website-app--home' : ''}${page === 'cart' ? ' website-app--checkout' : ''}`} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {isIntroTransitioning && <SplashScreen onComplete={() => setIsIntroTransitioning(false)} />}
-      {showHeader && <HeroHeader onNavigate={navigate} scrollY={scrollY} isHomePage={isHeroHomeStyle} currentPage={page} cartCount={cartCount} wishlistCount={wishlistCount} onCart={() => navigate('cart')} onWishlist={() => navigate('wishlist')} />}
+      {showHeader && <HeroHeader onNavigate={navigate} scrollY={scrollY} isHomePage={page === 'home'} currentPage={page} cartCount={cartCount} wishlistCount={wishlistCount} onCart={() => setIsCartDrawerOpen(true)} onWishlist={() => navigate('wishlist')} />}
       <main style={{ flex: 1 }}>
         {renderPage()}
       </main>
       {showFooter && <Footer onNavigate={navigate} showHomeAbout />}
-      <WhatsAppContact />
+      <CartDrawer
+        isOpen={isCartDrawerOpen}
+        items={cartItems}
+        onClose={closeCartDrawer}
+        onCheckout={() => {
+          closeCartDrawer()
+          navigate('cart')
+        }}
+        onViewProduct={productId => {
+          closeCartDrawer()
+          navigate('product-detail', productId)
+        }}
+        onUpdateQuantity={updateCartQuantity}
+        onRemove={removeCartItem}
+        onClearCart={() => setCartItems([])}
+      />
+      {page !== 'cart' && <WhatsAppContact />}
     </div>
   )
 }

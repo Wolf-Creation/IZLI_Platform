@@ -20,7 +20,7 @@ export default function Wishlist({ items, onNavigate, onAddToCart, onRemove }: P
         label={`Wishlist (${items.length})`}
         descriptions={['IZLI / YOUR SELECTION', 'Keep the pieces that speak to you close.']}
       />
-      <div className="wishlist-shell">
+      <div className="wishlist-shell website-section-spacing">
 
         {items.length === 0 ? (
           <div className="wishlist-empty">
@@ -41,6 +41,7 @@ export default function Wishlist({ items, onNavigate, onAddToCart, onRemove }: P
                   onAddToCart={() => onAddToCart(item)}
                   onToggleWishlist={() => onRemove(item.id)}
                   isWishlisted
+                  wishlistIcon="bookmark"
                   className="wishlist-product-card"
                 />
               </div>

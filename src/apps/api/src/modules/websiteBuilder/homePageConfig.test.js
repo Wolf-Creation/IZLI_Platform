@@ -46,6 +46,31 @@ test('hero product selection preserves order and normalizes product count', () =
   assert.equal(minimumCount.sections[0].productCount, 1);
 });
 
+test('hero background image is normalized and retained in the saved configuration', () => {
+  const config = normalizeHomePageConfig({
+    sections: [{ id: 'hero', type: 'hero', backgroundImage: '  https://cdn.example.com/hero.jpg  ' }],
+  });
+
+  assert.equal(config.sections[0].backgroundImage, 'https://cdn.example.com/hero.jpg');
+  assert.equal(normalizeHomePageConfig({ sections: [{ id: 'hero', type: 'hero' }] }).sections[0].backgroundImage, '');
+});
+
+test('hero overlay settings use supported positions and clamp opacity', () => {
+  const config = normalizeHomePageConfig({
+    sections: [
+      { id: 'hero', type: 'hero', overlayPosition: 'center', overlayOpacity: 72 },
+      { id: 'hero-invalid', type: 'hero', overlayPosition: 'diagonal', overlayOpacity: 140 },
+      { id: 'hero-low', type: 'hero', overlayOpacity: -20 },
+    ],
+  });
+
+  assert.equal(config.sections[0].overlayPosition, 'center');
+  assert.equal(config.sections[0].overlayOpacity, 72);
+  assert.equal(config.sections[1].overlayPosition, 'left');
+  assert.equal(config.sections[1].overlayOpacity, 100);
+  assert.equal(config.sections[2].overlayOpacity, 0);
+});
+
 test('tops and bottoms preserve explicit product selection and order', () => {
   const config = normalizeHomePageConfig({
     sections: [

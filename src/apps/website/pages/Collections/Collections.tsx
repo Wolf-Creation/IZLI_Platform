@@ -1,24 +1,20 @@
 import type { WebPage } from '../../types'
 import { useEffect, useMemo, useState } from 'react'
-import { ProductCard } from '../../components/ProductCard/ProductCard'
+import { MinimalistProductRail } from '../../components/MinimalistProductRail/MinimalistProductRail'
 import { OptimizedImage } from '../../components/OptimizedImage/OptimizedImage'
 import { PrimaryButton } from '../../components/PrimaryButton/PrimaryButton'
 import { TopBarPage } from '../../components/TopBarPage/TopBarPage'
 import { useProducts } from '../../../../shared/hooks/useProducts'
 import { useCollections } from '../../../../shared/hooks/useCollections'
 import { DEFAULT_COLLECTIONS_PAGE_CONFIG, getCollectionsPageConfig } from '../../../../shared/services/collections'
-import type { CartItemInput } from '../../cart'
 import bannerImage from '../../../../assets/Website_img/banner/banner_001.png'
 import './Collections.scss'
 
 interface Props {
   onNavigate: (page: WebPage, slug?: string) => void
-  onAddToCart: (item: CartItemInput) => void
-  onToggleWishlist: (item: CartItemInput) => void
-  isWishlisted: (id: string) => boolean
 }
 
-export default function Collections({ onNavigate, onAddToCart, onToggleWishlist, isWishlisted }: Props) {
+export default function Collections({ onNavigate }: Props) {
   const { collections, loading, error } = useCollections()
   const { products, loading: productsLoading, error: productsError } = useProducts({ status: 'published' })
   const [pageConfig, setPageConfig] = useState(DEFAULT_COLLECTIONS_PAGE_CONFIG)
@@ -36,8 +32,22 @@ export default function Collections({ onNavigate, onAddToCart, onToggleWishlist,
   }, [collections, pageConfig.collectionOrder, pageConfig.visibleCollectionSlugs])
 
   const newProducts = useMemo(
-    () => products.filter(product => (product.releaseSettings?.status ?? product.releaseStatus) === 'live' && product.releaseNumber === '01').slice(0, 4),
+    () => products.filter(product => (product.releaseSettings?.status ?? product.releaseStatus) === 'live' && product.releaseNumber === '01'),
     [products],
+  )
+  const minimalistProducts = useMemo(
+    () => newProducts.map(product => {
+      const image = product.coverImageUrl || product.images?.[0] || ''
+      return {
+        id: product.id,
+        name: product.name,
+        price: product.price === undefined ? 'Price TBA' : `${product.price} ${product.currency}`,
+        image,
+        hoverImage: product.images?.find(productImage => productImage !== image),
+        mediaAssets: product.mediaAssets,
+      }
+    }),
+    [newProducts],
   )
 
   return (
@@ -47,7 +57,7 @@ export default function Collections({ onNavigate, onAddToCart, onToggleWishlist,
         label={'Collections'}
         descriptions={['Four creative directions, each with its own purpose, all connected by the same roots.']}
       />
-      <section className="collections-sections">
+      <section className="collections-sections website-section-spacing">
         <div className="collections-directory" data-columns={pageConfig.columns}>
           {visibleCollections.map(collection => {
             const image = collection.coverImage || collection.coverImageUrl
@@ -74,43 +84,26 @@ export default function Collections({ onNavigate, onAddToCart, onToggleWishlist,
         </div>
       </section>
 
-      <section className="collections-new-products" aria-labelledby="collections-new-products-title">
-        <header className="collections-new-products__title-panel">
-          <div className="collections-new-products__intro">
-            <span className="collections-new-products__eyebrow">JUST ARRIVED</span>
-            <h2 id="collections-new-products-title">New releases</h2>
-            <p>Explore the latest pieces from IZLI, rooted in heritage and made for what comes next.</p>
-            <PrimaryButton onClick={() => onNavigate('shop', 'new-releases')}>
-              DISCOVER NEW RELEASES
-            </PrimaryButton>
-          </div>
-        </header>
+      <section className="collections-new-products website-section-spacing" aria-labelledby="collections-new-products-title">
+        <div className="collections-new-products__layout website-content-container">
+          <header className="collections-new-products__title-panel">
+            <div className="collections-new-products__intro">
+              <span className="collections-new-products__eyebrow">JUST ARRIVED</span>
+              <h2 id="collections-new-products-title">New releases</h2>
+              <p>Explore the latest pieces from IZLI, rooted in heritage and made for what comes next.</p>
+              <PrimaryButton onClick={() => onNavigate('shop', 'new-releases')}>
+                DISCOVER NEW RELEASES
+              </PrimaryButton>
+            </div>
+          </header>
 
-        <div className="collections-new-products__rail">
-          {productsLoading ? <p className="collections-new-products__message">Loading products...</p> : productsError ? <p className="collections-new-products__message">Products are temporarily unavailable.</p> : newProducts.length ? <div className="collections-new-products__track">
-            {[false, true].map(isDuplicate => (
-              <div className="collections-new-products__group" key={isDuplicate ? 'duplicate' : 'original'} aria-hidden={isDuplicate}>
-                {newProducts.map(product => {
-                  const image = product.coverImageUrl || product.images?.[0] || ''
-                  return <div className="collections-new-products__item" key={`${isDuplicate ? 'duplicate-' : ''}${product.id}`}>
-                    <ProductCard
-                      name={product.name}
-                      price={product.price === undefined ? 'Price TBA' : `${product.price} ${product.currency}`}
-                      image={image}
-                      images={product.images}
-                      mediaAssets={product.mediaAssets}
-                      onClick={isDuplicate ? undefined : () => onNavigate('product-detail', product.id)}
-                      onAddToCart={isDuplicate ? undefined : () => onAddToCart({ id: product.id, name: product.name, universe: product.universe, price: product.price, currency: product.currency, size: product.sizes?.find(size => size.stock > 0)?.size ?? 'M', img: image })}
-                      onToggleWishlist={isDuplicate ? undefined : () => onToggleWishlist({ id: product.id, name: product.name, universe: product.universe, price: product.price, currency: product.currency, size: product.sizes?.find(size => size.stock > 0)?.size ?? 'M', img: image })}
-                      isWishlisted={isWishlisted(product.id)}
-                      isInteractive={!isDuplicate}
-                      className="collections-new-products__card"
-                    />
-                  </div>
-                })}
-              </div>
-            ))}
-          </div> : <p className="collections-new-products__message">No new releases available right now.</p>}
+          <div className="collections-new-products__rail">
+            {productsLoading ? <p className="collections-new-products__message">Loading products...</p> : productsError ? <p className="collections-new-products__message">Products are temporarily unavailable.</p> : minimalistProducts.length ? <MinimalistProductRail
+              products={minimalistProducts}
+              label="New releases"
+              onNavigate={productId => onNavigate('product-detail', productId)}
+            /> : <p className="collections-new-products__message">No new releases available right now.</p>}
+          </div>
         </div>
       </section>
     </div>

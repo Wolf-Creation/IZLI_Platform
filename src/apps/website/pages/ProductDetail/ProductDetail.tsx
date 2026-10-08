@@ -21,6 +21,7 @@ export default function ProductDetail({ productId, onNavigate, onAddToCart, onTo
     const [mobileImageIndex, setMobileImageIndex] = useState(0)
     const [isManuallySwiping, setIsManuallySwiping] = useState(false)
     const [selectedSize, setSelectedSize] = useState('')
+    const [selectedColorwayId, setSelectedColorwayId] = useState('')
     const [qty, setQty] = useState(1)
     const [specsTab, setSpecsTab] = useState<'details' | 'returns'>('details')
     const swipeStartXRef = useRef<number | null>(null)
@@ -46,6 +47,7 @@ export default function ProductDetail({ productId, onNavigate, onAddToCart, onTo
 
     useEffect(() => {
         setMobileImageIndex(0)
+        setSelectedColorwayId('')
     }, [productId])
 
     useEffect(() => {
@@ -71,11 +73,11 @@ export default function ProductDetail({ productId, onNavigate, onAddToCart, onTo
         ? product.inventoryPieces.filter(piece => piece.status === 'available').length
         : product.quantity ?? 0
     const releaseLabel = product.releaseNumber ? `Release ${product.releaseNumber}` : 'Active release'
-    const color = product.colorways?.[0]
+    const color = product.colorways?.find(colorway => colorway.id === selectedColorwayId) ?? product.colorways?.[0]
     const productIsWishlisted = isWishlisted(product.id)
     const wishlistItem = { id: product.id, name: product.name, universe: product.universe, price: product.price, currency: product.currency, size: activeSize || 'M', img: images[0] }
     const addToCart = () => {
-        onAddToCart({ id: product.id, name: product.name, universe: product.universe, price: product.price, currency: product.currency, size: activeSize || 'M', img: images[0], qty })
+        onAddToCart({ id: product.id, name: product.name, universe: product.universe, price: product.price, currency: product.currency, size: activeSize || 'M', img: color?.images?.[0] || images[0], qty, colorId: color?.id, colorName: color?.name, colorHex: color?.hex })
         onNavigate('cart')
     }
 
@@ -133,7 +135,7 @@ export default function ProductDetail({ productId, onNavigate, onAddToCart, onTo
                     </div>
                     <p className="product-detail-sku">{product.sku}</p>
                     <p className="product-detail-description">{product.shortDescription || product.description}</p>
-                    {product.colorways?.length ? <div className="product-detail-color"><span>Color</span><div className="product-detail-color__swatches">{product.colorways.map(colorway => <button type="button" key={colorway.id} aria-label={colorway.name}>{colorway.images?.[0] ? <OptimizedImage src={colorway.images[0]} preset="thumbnail" alt={colorway.name} /> : <i style={{ background: colorway.hex }} />}</button>)}</div></div> : color && <div className="product-detail-color"><span>Color</span><strong><i style={{ background: color.hex }} />{color.name}</strong></div>}
+                    {product.colorways?.length ? <div className="product-detail-color"><span>Color: {color?.name}</span><div className="product-detail-color__swatches">{product.colorways.map(colorway => <button type="button" key={colorway.id} className={color?.id === colorway.id ? 'is-selected' : ''} aria-label={colorway.name} aria-pressed={color?.id === colorway.id} onClick={() => setSelectedColorwayId(colorway.id)}>{colorway.images?.[0] ? <OptimizedImage src={colorway.images[0]} preset="thumbnail" alt={colorway.name} /> : <i style={{ background: colorway.hex }} />}</button>)}</div></div> : color && <div className="product-detail-color"><span>Color</span><strong><i style={{ background: color.hex }} />{color.name}</strong></div>}
                     {sizes.length > 0 && <div className="product-detail-size"><div className="product-detail-field-label"><span>Size</span><span>Choose your fit</span></div><div className="product-detail-size__options">{sizes.map(size => { const available = isSizeAvailable(size.size, size.stock); return <button type="button" key={size.size} className={activeSize === size.size ? 'is-selected' : ''} disabled={!available} onClick={() => setSelectedSize(size.size)}>{size.size}</button> })}</div></div>}
                     <div className="product-detail-buy"><div className="product-detail-quantity"><button type="button" onClick={() => setQty(value => Math.max(1, value - 1))} aria-label="Decrease quantity">−</button><span>{qty}</span><button type="button" onClick={() => setQty(value => value + 1)} aria-label="Increase quantity">+</button></div><button type="button" className="product-detail-add" onClick={addToCart}>Add to Cart <span>{totalLabel}</span></button></div><p className="product-detail-shipping">Complimentary delivery on orders over 250 {product.currency}. Secure checkout.</p>
                     <div className="product-detail-tabs">

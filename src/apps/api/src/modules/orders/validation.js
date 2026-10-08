@@ -6,12 +6,10 @@ export function validateCheckoutInput(input) {
   const requiredFields = [
     ['firstName', customer.firstName],
     ['lastName', customer.lastName],
-    ['email', customer.email],
     ['phone', customer.phone],
     ['addressLine1', customer.addressLine1],
     ['city', customer.city],
     ['governorate', customer.governorate],
-    ['postalCode', customer.postalCode],
     ['country', customer.country],
   ];
   const missing = requiredFields
@@ -24,8 +22,8 @@ export function validateCheckoutInput(input) {
     throw error;
   }
 
-  const normalizedEmail = customer.email.trim().toLowerCase();
-  if (!emailPattern.test(normalizedEmail)) {
+  const normalizedEmail = typeof customer.email === 'string' ? customer.email.trim().toLowerCase() : '';
+  if (normalizedEmail && !emailPattern.test(normalizedEmail)) {
     const error = new Error('Enter a valid email address.');
     error.statusCode = 400;
     throw error;
@@ -61,11 +59,12 @@ export function validateCheckoutInput(input) {
       lastName: customer.lastName.trim(),
       email: normalizedEmail,
       phone: customer.phone.trim(),
+      phone2: typeof customer.phone2 === 'string' ? customer.phone2.trim() : '',
       addressLine1: customer.addressLine1.trim(),
       addressLine2: typeof customer.addressLine2 === 'string' ? customer.addressLine2.trim() : '',
       city: customer.city.trim(),
       governorate: customer.governorate.trim(),
-      postalCode: customer.postalCode.trim(),
+      postalCode: typeof customer.postalCode === 'string' ? customer.postalCode.trim() : '',
       country: customer.country.trim(),
     },
     items,

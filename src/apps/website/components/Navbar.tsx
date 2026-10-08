@@ -187,7 +187,7 @@ export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
                     border: 'none',
                     cursor: 'pointer',
                     padding: 0,
-                    fontFamily: FONT_SANS,
+                    fontFamily: "'Outfit', sans-serif",
                     letterSpacing: '0.14em',
                     textTransform: 'uppercase',
                     transition: 'color 0.12s ease, opacity 0.12s ease',
@@ -255,10 +255,10 @@ export default function Navbar({ current, onNavigate, cartCount = 2 }: Props) {
               onClick={() => onNavigate(page)}
               style={{
                 fontSize: 13,
-                fontWeight: current === page ? 500 : 400,
+                fontWeight: 400,
                 color: current === page ? INDIGO : TEXT_SEC,
                 background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                fontFamily: FONT_SANS,
+                fontFamily: "'Outfit', sans-serif",
                 letterSpacing: '0.01em',
                 borderBottom: current === page ? `1.5px solid ${INDIGO}` : '1.5px solid transparent',
                 paddingBottom: 2,

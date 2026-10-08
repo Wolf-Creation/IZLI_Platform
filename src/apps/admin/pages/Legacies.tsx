@@ -142,6 +142,9 @@ interface LegacyFormState {
 
 interface Props {
   onNavigate: (s: Screen) => void
+  onUploadProgress: (label: string, progress: number) => void
+  onUploadComplete: (label: string) => void
+  onUploadError: () => void
 }
 
 const createRef = (title = 'Reference', category = 'Objects') => ({
@@ -498,7 +501,7 @@ function ImageUploadField({ label, previewUrl, uploading, onUpload, editing }: {
   )
 }
 
-export default function Legacies({ onNavigate }: Props) {
+export default function Legacies({ onNavigate, onUploadProgress, onUploadComplete, onUploadError }: Props) {
   const [legacies, setLegacies] = useState<LegacyRecord[]>(FALLBACK_LEGACIES)
   const [selectedId, setSelectedId] = useState<string | null>(FALLBACK_LEGACIES[0]?.id ?? null)
   const [detailOpen, setDetailOpen] = useState(false)
@@ -685,11 +688,12 @@ export default function Legacies({ onNavigate }: Props) {
     }
 
     setUploadingImage(true)
+    onUploadProgress('Legacy Hero Image', 0)
     try {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('folder', 'banners')
-      const result = await api.upload<MediaUploadResult>('/uploads/images', formData)
+      const result = await api.upload<MediaUploadResult>('/uploads/images', formData, progress => onUploadProgress('Legacy Hero Image', progress))
       const imageUrl = result.url
       updateDraft('coverImageUrl', imageUrl)
       updateDraft('heroImageUrl', imageUrl)
@@ -704,7 +708,9 @@ export default function Legacies({ onNavigate }: Props) {
         bytes: result.bytes,
       }])
       setMessage('Image uploaded and attached to the legacy.')
+      onUploadComplete('Legacy Hero Image')
     } catch {
+      onUploadError()
       setMessage('Image upload failed. Please try another file.')
     } finally {
       setUploadingImage(false)

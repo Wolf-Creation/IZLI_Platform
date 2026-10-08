@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Icon } from '@iconify/react'
 import type { WebPage } from '../../types'
 import izliLogoText from '../../../../assets/logo/IZLI_logo_text.svg'
 import './HeroHeader.scss'
@@ -39,8 +40,9 @@ function AccountMenu({ onProfile, onLogout }: AccountMenuProps) {
   )
 }
 
-export function HeroHeader({ onNavigate, currentPage, cartCount, wishlistCount, onCart, onWishlist }: Props) {
+export function HeroHeader({ onNavigate, scrollY, isHomePage = false, currentPage, cartCount, wishlistCount, onCart, onWishlist }: Props) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [mobileMenuBackground, setMobileMenuBackground] = useState('')
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -71,6 +73,20 @@ export function HeroHeader({ onNavigate, currentPage, cartCount, wishlistCount, 
   const navigateFromMobileMenu = (page: WebPage) => {
     setIsMobileMenuOpen(false)
     onNavigate(page)
+  }
+
+  const openMobileMenu = () => {
+    const hero = document.querySelector<HTMLElement>('.hero-slider')
+    const heroImage = hero?.querySelector<HTMLImageElement>('.hero-slider__background-image')
+    const backgroundImage = heroImage?.currentSrc || heroImage?.src
+    const background = backgroundImage
+      ? `url(${JSON.stringify(backgroundImage)})`
+      : hero
+        ? getComputedStyle(hero).backgroundImage
+        : ''
+
+    setMobileMenuBackground(background)
+    setIsMobileMenuOpen(true)
   }
 
   const navigateToMobileProfile = () => {
@@ -116,18 +132,18 @@ export function HeroHeader({ onNavigate, currentPage, cartCount, wishlistCount, 
 
   return (
     <header
-      className="hero-header"
+      className={`hero-header${isHomePage && scrollY > 100 ? ' hero-header--scrolled' : ''}${isHomePage && scrollY <= 100 ? ' hero-header--home-top' : ''}`}
       style={{
         '--text-color': '#ffffff',
         zIndex: 1000,
       } as any}
     >
-      <div className="hero-header__container">
+      <div className="website-content-container hero-header__container">
         <div className="hero-header__mobile-bar">
           <button
             type="button"
             className="hero-header__mobile-menu-button"
-            onClick={() => setIsMobileMenuOpen(true)}
+            onClick={openMobileMenu}
             aria-label="Open menu"
             aria-expanded={isMobileMenuOpen}
           >
@@ -141,11 +157,11 @@ export function HeroHeader({ onNavigate, currentPage, cartCount, wishlistCount, 
 
           <div className="hero-header__mobile-actions">
             <button className="hero-header__mobile-action" onClick={onWishlist} aria-label={`Wishlist${wishlistCount > 0 ? `, ${wishlistCount} items` : ''}`}>
-              <svg viewBox="0 0 24 24" fill={wishlistCount > 0 ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.7"><path d="M7.25 3.75h9.5A1.75 1.75 0 0 1 18.5 5.5v14.75L12 16.4l-6.5 3.85V5.5a1.75 1.75 0 0 1 1.75-1.75Z" /></svg>
+              <Icon icon="solar:bookmark-linear" aria-hidden="true" />
               {wishlistCount > 0 && <span className="hero-header__wishlist-badge">{wishlistCount}</span>}
             </button>
             <button className="hero-header__mobile-action hero-header__cart-action" onClick={onCart} aria-label={`Cart${cartCount > 0 ? `, ${cartCount} items` : ''}`}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 5h2l2.2 9.2a1.4 1.4 0 0 0 1.4 1.1h7.9a1.4 1.4 0 0 0 1.4-1.1L21 8H6.1" /><circle cx="10" cy="19" r="1.4" /><circle cx="17" cy="19" r="1.4" /></svg>
+              <Icon icon="solar:bag-3-linear" aria-hidden="true" />
               {cartCount > 0 && <span className="hero-header__cart-badge">{cartCount}</span>}
             </button>
           </div>
@@ -191,34 +207,32 @@ export function HeroHeader({ onNavigate, currentPage, cartCount, wishlistCount, 
         {/* Right Icons */}
         <div className="hero-header__icons">
           <button className={`hero-header__icon${wishlistCount > 0 ? ' is-active' : ''}`} title="Wishlist" aria-label={`Wishlist${wishlistCount > 0 ? `, ${wishlistCount} items` : ''}`} onClick={onWishlist}>
-            <svg viewBox="0 0 24 24" fill={wishlistCount > 0 ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-              <path d="M7.25 3.75h9.5A1.75 1.75 0 0 1 18.5 5.5v14.75L12 16.4l-6.5 3.85V5.5a1.75 1.75 0 0 1 1.75-1.75Z" />
-            </svg>
+            <Icon icon="solar:bookmark-linear" aria-hidden="true" />
             {wishlistCount > 0 && <span className="hero-header__wishlist-badge">{wishlistCount}</span>}
           </button>
           <button className="hero-header__icon hero-header__cart-action" title="Cart" onClick={onCart} aria-label={`Cart${cartCount > 0 ? `, ${cartCount} items` : ''}`}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="9" cy="21" r="1" />
-              <circle cx="20" cy="21" r="1" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-            </svg>
+            <Icon icon="solar:bag-3-linear" aria-hidden="true" />
             {cartCount > 0 && <span className="hero-header__cart-badge">{cartCount}</span>}
           </button>
           <div className="hero-header__account-menu">
             <button className="hero-header__icon" title="Account" aria-label="Account" onClick={handleAccountClick} aria-expanded={isAccountMenuOpen} aria-haspopup="menu">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
+              <Icon icon="solar:user-linear" aria-hidden="true" />
             </button>
             {isAccountMenuOpen && <AccountMenu onProfile={navigateToProfile} onLogout={logout} />}
           </div>
         </div>
       </div>
 
-      <div className={`hero-header__mobile-panel ${isMobileMenuOpen ? 'is-open' : ''}`} aria-hidden={!isMobileMenuOpen}>
+      <div
+        className={`hero-header__mobile-panel ${isMobileMenuOpen ? 'is-open' : ''}`}
+        aria-hidden={!isMobileMenuOpen}
+        style={mobileMenuBackground ? { backgroundImage: mobileMenuBackground } : undefined}
+      >
         <div className="hero-header__mobile-panel-top">
-          <span>IZLI / MENU</span>
+          <div className="hero-header__mobile-panel-brand">
+            <img className="hero-header__logo" src={izliLogoText} alt="IZLI" />
+            <span>MENU <i>·</i> NAVIGATION</span>
+          </div>
           <button type="button" className="hero-header__mobile-close" onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
               <path d="M5 5l14 14M19 5L5 19" />
@@ -227,9 +241,13 @@ export function HeroHeader({ onNavigate, currentPage, cartCount, wishlistCount, 
         </div>
         <div className="hero-header__mobile-panel-body">
           <nav className="hero-header__mobile-nav" aria-label="Mobile navigation">
-            {MENU_ITEMS.map(item => (
+            {MENU_ITEMS.map((item, index) => (
               <button key={item.label} type="button" className={isMenuItemActive(item.page) ? 'is-active' : ''} onClick={() => navigateFromMobileMenu(item.page)}>
-                <span>{item.label}{item.page === 'keeper-circle' && <small className="hero-header__mobile-discover-badge">Discover</small>}</span>
+                {/* <span className="hero-header__mobile-nav-index">{String(index + 1).padStart(2, '0')}</span> */}
+                <span className="hero-header__mobile-nav-label">
+                  {item.label}
+                  {item.page === 'keeper-circle' && <small className="hero-header__mobile-discover-badge">Discover</small>}
+                </span>
                 <b aria-hidden="true">↗</b>
               </button>
             ))}
@@ -237,11 +255,19 @@ export function HeroHeader({ onNavigate, currentPage, cartCount, wishlistCount, 
           <div className="hero-header__mobile-account-actions">
             <button type="button" className="hero-header__mobile-profile" onClick={navigateToMobileProfile}>
               <span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="12" cy="7" r="3.5" /><path d="M5 20c1.2-4 12.8-4 14 0" /></svg>
+                <Icon icon="solar:user-linear" aria-hidden="true" />
                 {isAuthenticated ? 'Profile' : 'Join our Keeper Circle'}
               </span>
               <b aria-hidden="true">↗</b>
             </button>
+            <div className="hero-header__mobile-quick-links">
+              <button type="button" onClick={() => { setIsMobileMenuOpen(false); onWishlist() }}>
+                Wishlist{wishlistCount > 0 ? ` (${wishlistCount})` : ''}
+              </button>
+              <button type="button" onClick={() => { setIsMobileMenuOpen(false); onCart() }}>
+                Cart{cartCount > 0 ? ` (${cartCount})` : ''}
+              </button>
+            </div>
             {isAuthenticated && <button type="button" className="hero-header__mobile-logout" onClick={() => { setIsMobileMenuOpen(false); logout() }}>
               <span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M10 17l5-5-5-5" /><path d="M15 12H3" /><path d="M21 3v18" /></svg>

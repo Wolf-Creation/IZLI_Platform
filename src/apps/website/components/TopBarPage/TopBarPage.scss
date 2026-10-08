@@ -12,6 +12,11 @@
   justify-content: space-between;
 }
 
+.top-bar-page__inner.website-content-container {
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+
 .top-bar-page__brand-block {
   display: flex;
   align-items: center;
@@ -23,7 +28,7 @@
   padding: 40px;
   border-right: 1px solid rgba(245, 241, 234, .12);
   color: #ffffff;
-  font-family: 'Playfair Display', serif;
+  font-family: 'Outfit', sans-serif;
   font-size: 24px;
   font-weight: 500;
   letter-spacing: .08em;

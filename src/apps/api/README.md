@@ -23,6 +23,7 @@ The seed upserts by slug, preserves administrator-assigned cover and hero images
 
 Public endpoints:
 
+- `GET /api/health`
 - `GET /api/collections`
 - `GET /api/collections/:slug` (includes published products)
 

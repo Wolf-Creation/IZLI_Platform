@@ -137,6 +137,11 @@ export interface ProductMedia {
   mainImage: string
   gallery: string[]
   detailImages: string[]
+  hero3dFront: string[]
+  hero3dRight: string[]
+  hero3dBack: string[]
+  hero3dLeft: string[]
+  hero3dOrder: Hero3dView[]
   front: string[]
   back: string[]
   sleeve: string[]
@@ -145,6 +150,8 @@ export interface ProductMedia {
   campaignVideo: string
   lifestyleImages: string[]
 }
+
+export type Hero3dView = 'front' | 'right' | 'back' | 'left'
 
 export interface MediaUploadResult {
   url: string
@@ -337,6 +344,8 @@ export interface OrderLineItem {
 export interface Order {
   id: ID
   customerId: ID
+  customerPhone?: string
+  customerPhone2?: string
   status: OrderStatus
   paymentStatus: PaymentStatus
   lineItems: OrderLineItem[]

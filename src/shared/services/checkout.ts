@@ -3,8 +3,9 @@ import { api } from './api'
 export interface CheckoutCustomer {
   firstName: string
   lastName: string
-  email: string
+  email?: string
   phone: string
+  phone2?: string
   addressLine1: string
   addressLine2: string
   city: string
@@ -16,8 +17,9 @@ export interface CheckoutCustomer {
 export interface CheckoutOrder {
   id: string
   customerName: string
-  customerEmail: string
+  customerEmail?: string
   customerPhone: string
+  customerPhone2?: string
   status: string
   paymentStatus: string
   paymentMethod: 'cash_on_delivery'

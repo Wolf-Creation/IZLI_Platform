@@ -1,4 +1,5 @@
 import type { KeyboardEvent } from 'react'
+import { Icon } from '@iconify/react'
 import type { MediaAsset } from '../../../entities'
 import { OptimizedImage } from '../OptimizedImage/OptimizedImage'
 import { PrimaryButton } from '../PrimaryButton/PrimaryButton'
@@ -15,7 +16,7 @@ interface ProductCardProps {
   onAddToCart?: () => void
   onToggleWishlist?: () => void
   isWishlisted?: boolean
-  wishlistIcon?: 'heart' | 'trash'
+  wishlistIcon?: 'bookmark' | 'trash'
   isInteractive?: boolean
   className?: string
 }
@@ -31,7 +32,7 @@ export function ProductCard({
   onAddToCart,
   onToggleWishlist,
   isWishlisted = false,
-  wishlistIcon = 'heart',
+  wishlistIcon = 'bookmark',
   isInteractive = true,
   className = '',
 }: ProductCardProps) {
@@ -72,7 +73,7 @@ export function ProductCard({
           aria-label={wishlistIcon === 'trash' ? `Remove ${name} from wishlist` : isWishlisted ? `Remove ${name} from wishlist` : `Add ${name} to wishlist`}
           aria-pressed={isWishlisted}
         >
-          {wishlistIcon === 'trash' ? <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg> : <svg viewBox="0 0 24 24" fill={isWishlisted ? 'currentColor' : 'none'} aria-hidden="true"><path d="M7.25 3.75h9.5A1.75 1.75 0 0 1 18.5 5.5v14.75L12 16.4l-6.5 3.85V5.5a1.75 1.75 0 0 1 1.75-1.75Z" /></svg>}
+          {wishlistIcon === 'trash' ? <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg> : <Icon icon={isWishlisted ? 'solar:bookmark-bold' : 'solar:bookmark-linear'} aria-hidden="true" />}
         </button>}
         {onAddToCart && isInteractive && <button
           type="button"

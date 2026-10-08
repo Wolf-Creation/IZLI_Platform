@@ -9,7 +9,7 @@
 
 .keeper-access__panel { width: min(100%, 680px); }
 .keeper-access__eyebrow { color: #c9924e; font-size: 10px; font-weight: 700; letter-spacing: .18em; }
-.keeper-access h1 { max-width: 620px; margin: 18px 0 12px; font: 500 clamp(38px, 7vw, 72px)/1.02 'Playfair Display', serif; }
+.keeper-access h1 { max-width: 620px; margin: 18px 0 12px; font: 500 clamp(38px, 7vw, 72px)/1.02 'Outfit', sans-serif; }
 .keeper-access p { max-width: 480px; margin: 0 0 30px; color: rgba(245,241,234,.62); line-height: 1.7; }
 .keeper-access__tabs { display: flex; gap: 8px; margin-bottom: 22px; }
 .keeper-access__tabs button, .keeper-access__back { border: 1px solid rgba(245,241,234,.22); background: transparent; color: rgba(245,241,234,.65); cursor: pointer; padding: 10px 16px; font: inherit; }

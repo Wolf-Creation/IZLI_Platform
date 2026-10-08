@@ -1,0 +1,247 @@
+.minimalist-product-rail {
+  position: relative;
+  display: grid;
+  width: 100%;
+  max-width: 1920px;
+  grid-template-columns: minmax(0, 1fr);
+  box-sizing: border-box;
+  margin-inline: auto;
+  padding-top: 48px;
+}
+
+.minimalist-product-rail__viewport {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.minimalist-product-rail--scrollable .minimalist-product-rail__viewport {
+  position: sticky;
+  top: var(--minimalist-product-rail-sticky-top, 156px);
+  display: flex;
+  height: calc(100svh - var(--minimalist-product-rail-sticky-top, 156px));
+  align-items: center;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+.minimalist-product-rail--scrollable {
+  display: block;
+  height: calc(
+    100svh - var(--minimalist-product-rail-sticky-top, 156px) +
+    var(--minimalist-product-rail-scroll-distance, 0px)
+  );
+  padding-top: 0;
+}
+
+.minimalist-product-rail--scrollable .minimalist-product-rail__grid {
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+  gap: 16px;
+  will-change: transform;
+}
+
+.minimalist-product-rail--scrollable .minimalist-product-card {
+  flex: 0 0 clamp(200px, calc((100vw - 128px - 48px) / 4), 436px);
+}
+
+@media (max-width: 768px) {
+  .minimalist-product-rail--scrollable .minimalist-product-rail__grid {
+    gap: 12px;
+  }
+
+  .minimalist-product-rail--scrollable .minimalist-product-card {
+    flex-basis: clamp(280px, 82vw, 380px);
+  }
+}
+
+.minimalist-product-rail__track {
+  display: flex;
+  width: 100%;
+  transition: transform 650ms cubic-bezier(.22, 1, .36, 1);
+  will-change: transform;
+}
+
+.minimalist-product-rail__page {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
+.minimalist-product-rail__page[aria-hidden='true'] {
+  pointer-events: none;
+}
+
+.minimalist-product-rail__progress {
+  width: 100%;
+  position: relative;
+  height: 2px;
+  overflow: hidden;
+}
+
+.minimalist-product-rail__progress::before {
+  display: none;
+}
+
+.minimalist-product-rail__progress span {
+  display: block;
+  width: 0;
+  height: 2px;
+  background: #c9924e;
+  transition: width 650ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.minimalist-product-rail__grid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.minimalist-product-rail__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  color: rgba(28, 25, 22, .72);
+}
+
+.minimalist-product-rail__pagination-count {
+  color: #c9924e;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  white-space: nowrap;
+}
+
+.minimalist-product-rail__pagination-count span {
+  color: rgba(28, 25, 22, .35);
+}
+
+.minimalist-product-rail__pagination-track {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.minimalist-product-rail__pagination-step {
+  display: grid;
+  width: 30px;
+  height: 24px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.minimalist-product-rail__pagination-step span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: rgb(207 203 198 / 60%);
+  transition: background 220ms ease, height 220ms ease;
+}
+
+.minimalist-product-rail__pagination-step.is-active span {
+  height: 3px;
+  background: #c9924e;
+}
+
+.minimalist-product-rail__pagination-step:focus-visible {
+  outline: 1px solid #1c1916;
+  outline-offset: 1px;
+}
+
+.minimalist-product-rail__arrow {
+  position: absolute;
+  z-index: 2;
+  top: calc(48px + (100% - 48px) / 2);
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  color: #f4eee4;
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
+  transform: translateY(-50%);
+}
+
+.minimalist-product-rail__arrow svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.5;
+}
+
+.minimalist-product-rail__arrow--previous {
+  left: clamp(-56px, -4vw, -20px);
+}
+
+.minimalist-product-rail__arrow--next {
+  right: clamp(-56px, -4vw, -20px);
+}
+
+.minimalist-product-rail__arrow:hover {
+  border-color: #d1ad79;
+  background: rgba(209, 173, 121, .2);
+  color: #fff;
+}
+
+.minimalist-product-rail__arrow:focus-visible {
+  outline: 2px solid #f4eee4;
+  outline-offset: 3px;
+}
+
+.minimalist-product-rail__arrow--next {
+  color: #ffffff73;
+}
+
+@media (max-width: 900px) {
+  .minimalist-product-rail__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .minimalist-product-rail__controls {
+    gap: 10px;
+  }
+
+  .minimalist-product-rail__arrow {
+    width: 34px;
+    height: 34px;
+  }
+
+  .minimalist-product-rail__arrow svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .minimalist-product-rail__arrow--previous {
+    left: -17px;
+  }
+
+  .minimalist-product-rail__arrow--next {
+    right: -17px;
+  }
+
+  .minimalist-product-rail__pagination-track {
+    gap: 3px;
+  }
+
+  .minimalist-product-rail__pagination-step {
+    width: 20px;
+  }
+
+  .minimalist-product-rail__pagination-count {
+    font-size: 9px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .minimalist-product-rail__track {
+    transition: none;
+  }
+}

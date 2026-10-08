@@ -15,6 +15,7 @@ const orderSchema = new mongoose.Schema({
   customerName: { type: String, trim: true },
   customerEmail: { type: String, trim: true, lowercase: true },
   customerPhone: { type: String, trim: true },
+  customerPhone2: { type: String, trim: true },
   status: {
     type: String,
     enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled', 'refunded'],
